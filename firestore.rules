@@ -1,41 +1,53 @@
 rules_version = '2';
 
 // The site is public, so every visitor is an anonymous signed-in user.
-// These rules do two things: keep drive-by traffic that has not signed in
-// out entirely, and confine writes to the five collections the app uses so
+// These rules do two things: keep traffic that has not signed in out
+// entirely, and confine writes to the five collections the app uses so
 // nobody can dump arbitrary data into the project.
 //
-// They deliberately do NOT restrict who may edit the meal list. The Manage
-// tab's code is a UI gate only. Anyone who finds this URL can write here.
+// create/update and delete are listed separately on purpose. A delete is a
+// write, but it carries no request.resource, so folding both into one
+// `allow write` with a shape check would block every delete: removing a
+// meal, dismissing a suggestion, clearing a week.
+//
+// These rules deliberately do NOT restrict who may edit the meal list. The
+// Manage tab's code is a UI gate only. Anyone with this URL can write here.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     match /meals/{id} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.data.name is string
-                   && request.resource.data.name.size() <= 60;
+      allow create, update: if request.auth != null
+                            && request.resource.data.name is string
+                            && request.resource.data.name.size() > 0
+                            && request.resource.data.name.size() <= 60;
+      allow delete: if request.auth != null;
     }
 
     match /suggestions/{id} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.data.name is string
-                   && request.resource.data.name.size() <= 60;
+      allow create, update: if request.auth != null
+                            && request.resource.data.name is string
+                            && request.resource.data.name.size() > 0
+                            && request.resource.data.name.size() <= 60;
+      allow delete: if request.auth != null;
     }
 
     match /people/{id} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.data.name is string
-                   && request.resource.data.name.size() <= 24;
+      allow create, update: if request.auth != null
+                            && request.resource.data.name is string
+                            && request.resource.data.name.size() > 0
+                            && request.resource.data.name.size() <= 24;
+      allow delete: if request.auth != null;
     }
 
     match /votes/{id} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.data.mealIds is list
-                   && request.resource.data.mealIds.size() <= 200;
+      allow create, update: if request.auth != null
+                            && request.resource.data.mealIds is list
+                            && request.resource.data.mealIds.size() <= 200;
+      allow delete: if request.auth != null;
     }
 
     match /weeks/{id} {
