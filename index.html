@@ -679,6 +679,26 @@
     z-index: 30;
   }
 
+  /* Bleeds to the edges of the bar's own padding so it reads as a strip. */
+  .bar-update {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: -12px -16px 11px;
+    padding: 10px 16px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .bar-update .btn {
+    background: var(--accent-ink);
+    color: var(--accent);
+    border: 0;
+  }
+
   .bar-inner {
     max-width: 680px;
     margin: 0 auto;
@@ -807,9 +827,14 @@
 </div>
 
 <div class="bar">
+  <div class="bar-update" id="updateBar" hidden>
+    <span>A newer version is ready.</span>
+    <button class="btn btn-tiny" id="updateBtn" type="button">Update</button>
+  </div>
   <div class="bar-inner">
     <span class="bar-count" id="barCount"><strong>0</strong> picked</span>
     <span class="bar-status" id="barStatus">Connecting</span>
+    <button class="bar-more" id="refreshBtn" type="button" title="Reload the app">Reload</button>
     <button class="bar-more" id="managerBtn" type="button">Manage</button>
   </div>
 </div>
@@ -1501,7 +1526,7 @@
 
     // Clicks can land on a child span, so resolve the owning control.
     var hit = ev.target.closest
-      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage")
+      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage")
       : null;
     var id = hit ? hit.id : ev.target.id;
 
@@ -1510,6 +1535,7 @@
     if (id === "showAddName") return openSheet(true);
     if (id === "personAdd") return submitPerson($("personInput").value);
     if (id === "clearBtn") return clearWeek();
+    if (id === "refreshBtn" || id === "updateBtn") return location.reload();
     if (id === "managerBtn") return openManageMenu();
     if (id === "managePinGo") return submitManagePin();
     if (id === "stopManagingBtn") return stopManaging();
@@ -1614,6 +1640,33 @@
     status("Connected", true);
     render();
   }
+
+  // Standalone mode has no address bar and no pull-to-refresh, so a phone on
+  // the home screen would otherwise sit on old code until it was force quit.
+  //
+  // The check deliberately does NOT bust the CDN cache: it asks for the same
+  // copy a reload would get. Asking the origin directly would report a new
+  // version that a reload cannot actually fetch yet, and prompt in a loop.
+  var BUILD_TAG = null;
+
+  function checkForUpdate() {
+    fetch(location.pathname, { cache: "no-store" })
+      .then(function (r) {
+        var tag = r.headers.get("etag") || r.headers.get("last-modified");
+        if (!tag) return;
+        if (BUILD_TAG === null) { BUILD_TAG = tag; return; }
+        if (tag !== BUILD_TAG) $("updateBar").hidden = false;
+      })
+      .catch(function () {});
+  }
+
+  checkForUpdate();
+  setInterval(function () {
+    if (!document.hidden) checkForUpdate();
+  }, 300000);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) checkForUpdate();
+  });
 
   hydrateFromCache();
   status("Connecting");
