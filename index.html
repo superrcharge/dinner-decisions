@@ -113,8 +113,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--line);
+    padding-bottom: 2px;
   }
 
   .wordmark {
@@ -172,10 +171,23 @@
 
   /* ---------- tabs ---------- */
 
+  /* Sticks to the top so the tabs stay reachable from anywhere in a long
+     list. It bleeds past the wrap's padding so the ground and the rule run
+     the full width rather than leaving gutters for content to show through. */
+  .tabbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin: 14px -16px 18px;
+    padding: 8px 16px 12px;
+    background: var(--ground);
+    border-bottom: 1px solid var(--line);
+  }
+
   .tabs {
     display: flex;
     gap: 4px;
-    margin: 16px 0 20px;
+    margin: 0;
     background: var(--surface-sunk);
     padding: 4px;
     border-radius: var(--r-pill);
@@ -776,10 +788,12 @@
     </div>
   </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" id="tab-pick" role="tab" aria-selected="true" aria-controls="panel-pick" type="button">Pick meals</button>
-    <button class="tab" id="tab-shop" role="tab" aria-selected="false" aria-controls="panel-shop" type="button">Shopping<span class="tab-count" id="shopCount"></span></button>
-    <button class="tab" id="tab-manage" role="tab" aria-selected="false" aria-controls="panel-manage" type="button" hidden>Manage<span class="tab-count" id="manageCount"></span></button>
+  <div class="tabbar">
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-pick" role="tab" aria-selected="true" aria-controls="panel-pick" type="button">Pick meals</button>
+      <button class="tab" id="tab-shop" role="tab" aria-selected="false" aria-controls="panel-shop" type="button">Shopping<span class="tab-count" id="shopCount"></span></button>
+      <button class="tab" id="tab-manage" role="tab" aria-selected="false" aria-controls="panel-manage" type="button" hidden>Manage<span class="tab-count" id="manageCount"></span></button>
+    </div>
   </div>
 
   <div id="banner"></div>
