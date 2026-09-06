@@ -1494,12 +1494,12 @@
   // The apiKey is not a secret - it names the project. What protects the
   // data is the Firestore security rules, not hiding this block.
   var FIREBASE_CONFIG = {
-    apiKey: "PASTE_ME",
-    authDomain: "PASTE_ME",
-    projectId: "PASTE_ME",
-    storageBucket: "PASTE_ME",
-    messagingSenderId: "PASTE_ME",
-    appId: "PASTE_ME"
+    apiKey: "AIzaSyDRLyhSWxemxkjqDgoTUCAOyvhNYy890Wc",
+    authDomain: "dinner-decisions-6af97.firebaseapp.com",
+    projectId: "dinner-decisions-6af97",
+    storageBucket: "dinner-decisions-6af97.firebasestorage.app",
+    messagingSenderId: "43719856083",
+    appId: "1:43719856083:web:364169a2206338ccc3a926"
   };
 
   function offline(why) {
@@ -1509,7 +1509,7 @@
     render();
   }
 
-  if (window.firebase && FIREBASE_CONFIG.apiKey !== "PASTE_ME") {
+  if (window.firebase && FIREBASE_CONFIG.apiKey.indexOf("AIza") === 0) {
     try {
       firebase.initializeApp(FIREBASE_CONFIG);
       var store = firebase.firestore();
