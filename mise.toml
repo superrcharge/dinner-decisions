@@ -2,6 +2,10 @@
 description = "Compile the diagrams to dual-theme SVGs"
 run = "bash diagrams/render.sh"
 
+[tasks.icons]
+description = "Regenerate the home-screen and favicon PNGs"
+run = "bash icons/render-icons.sh"
+
 [tasks.clean-diagrams]
 description = "Remove the rendered diagram SVGs"
 run = "find diagrams -type f -name '*.svg' -delete"

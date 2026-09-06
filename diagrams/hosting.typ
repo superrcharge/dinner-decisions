@@ -82,5 +82,8 @@
   size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
   "A push reaches every phone within about ten minutes: the Pages build takes " +
   "seconds, then the edge cache holds the previous copy until max-age expires. " +
-  "Appending any new query string (?v=2) bypasses the cached entry immediately.",
+  "Nobody has to watch for it - the app asks the edge periodically whether a " +
+  "newer build is available and offers a reload once one actually is, which " +
+  "matters because a phone running it from the home screen has no address bar " +
+  "and no pull to refresh.",
 )))

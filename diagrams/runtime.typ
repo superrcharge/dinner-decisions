@@ -54,7 +54,8 @@
 
   // ---- where the page comes from ----
   box-node((0, 0), "\u{F0C2}", "GitHub Pages", "static host",
-    "Hands over one file: index.html. Holds no data and never sees a vote.",
+    "Hands over one file: index.html. Holds no data and never sees a vote. "
+    + "Also answers the app when it asks whether a newer build exists.",
     palette.orange, <pages>),
 
   box-node((1, 0), "\u{F0C1}", "gstatic + Fonts", "third-party cdn",
@@ -95,7 +96,19 @@
     palette.coral, <others>),
 
   // ---- signals ----
-  sig(<pages>, <page>, "index.html"),
+  sig(<pages>, <page>, "index.html", label-pos: 0.4),
+
+  // Installed to a home screen there is no address bar, so the app has to ask
+  // for itself whether it is stale.
+  edge(<page>, <pages>, "->",
+    stroke: tokens.stroke-default + palette.ink-muted,
+    label-fill: palette.surface,
+    label-sep: tokens.label-sep,
+    label-pos: 0.62,
+    bend: 32deg,
+    text(size: tokens.label-size, weight: tokens.weight-bold, fill: palette.ink,
+      "newer build?"),
+  ),
   sig(<cdn>, <page>, "SDK + fonts"),
   // One bidirectional edge rather than two: a return edge here bent back
   // through the CDN node and put its label on top of it.
