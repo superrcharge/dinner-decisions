@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="What the family wants for dinner this week.">
+<title>What's For Dinner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+  html { color-scheme: light dark; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --ground: #F3F5F0;
+    --surface: #FFFFFF;
+    --surface-sunk: #EAEEE5;
+    --ink: #17201A;
+    --ink-muted: #5C6B5E;
+    --ink-faint: #8A968C;
+    --line: #DCE2D6;
+    --line-strong: #C3CCBC;
+    --accent: #176B4B;
+    --accent-hover: #12583D;
+    --accent-ink: #FFFFFF;
+    --warm: #B76D14;
+    --warm-wash: #F7EBD9;
+    --shadow: 0 1px 2px rgba(23, 32, 26, .06), 0 6px 16px -10px rgba(23, 32, 26, .18);
+
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "DM Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+    --r-tile: 14px;
+    --r-pill: 999px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12160F;
+      --surface: #1B2118;
+      --surface-sunk: #232A1F;
+      --ink: #E9EEE4;
+      --ink-muted: #9DAA97;
+      --ink-faint: #77836F;
+      --line: #2D3628;
+      --line-strong: #3E4938;
+      --accent: #57C28E;
+      --accent-hover: #6ED2A0;
+      --accent-ink: #0D1710;
+      --warm: #E0A44E;
+      --warm-wash: #2C2618;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12160F;
+    --surface: #1B2118;
+    --surface-sunk: #232A1F;
+    --ink: #E9EEE4;
+    --ink-muted: #9DAA97;
+    --ink-faint: #77836F;
+    --line: #2D3628;
+    --line-strong: #3E4938;
+    --accent: #57C28E;
+    --accent-hover: #6ED2A0;
+    --accent-ink: #0D1710;
+    --warm: #E0A44E;
+    --warm-wash: #2C2618;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    padding-bottom: 96px;
+  }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px 0;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .week-line {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-top: 6px;
+  }
+
+  .whoami {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .whoami-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .chip {
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    padding: 6px 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .chip:hover { border-color: var(--accent); }
+  .chip .caret { color: var(--ink-faint); font-size: 11px; }
+
+  /* ---------- tabs ---------- */
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin: 16px 0 20px;
+    background: var(--surface-sunk);
+    padding: 4px;
+    border-radius: var(--r-pill);
+  }
+
+  .tab {
+    flex: 1;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink-muted);
+    background: none;
+    border: 0;
+    border-radius: var(--r-pill);
+    padding: 9px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .tab[aria-selected="true"] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+
+  .tab .tab-count {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-left: 4px;
+  }
+
+  .tab[aria-selected="true"] .tab-count { color: var(--accent); }
+
+  /* ---------- shared bits ---------- */
+
+  h2.section {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    margin: 26px 0 10px;
+  }
+
+  h2.section:first-child { margin-top: 0; }
+
+  .hint {
+    color: var(--ink-muted);
+    font-size: 14px;
+    margin: 0 0 14px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 26px 0 10px;
+  }
+
+  .notice {
+    background: var(--warm-wash);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .empty {
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--r-tile);
+    padding: 26px 20px;
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- meal tiles ---------- */
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 10px;
+  }
+
+  .tile {
+    font: inherit;
+    text-align: left;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-tile);
+    padding: 13px 14px;
+    min-height: 104px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 7px;
+    transition: background-color .12s ease, border-color .12s ease, transform .12s ease;
+  }
+
+  .tile:hover { border-color: var(--line-strong); }
+  .tile:active { transform: scale(.985); }
+
+  .tile-icon {
+    font-size: 27px;
+    line-height: 1;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  }
+
+  .tile-name {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  .tile-foot {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 18px;
+  }
+
+  .tile-votes {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .02em;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tile-mark {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line-strong);
+    flex: none;
+  }
+
+  .tile[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .tile[aria-pressed="true"] .tile-votes { color: var(--accent-ink); opacity: .78; }
+
+  .tile[aria-pressed="true"] .tile-mark {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+    position: relative;
+  }
+
+  .tile[aria-pressed="true"] .tile-mark::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid var(--accent);
+    border-width: 0 2px 2px 0;
+    transform: rotate(43deg);
+  }
+
+  .tile.is-new .tile-name::after {
+    content: "new";
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--warm);
+    margin-left: 6px;
+    vertical-align: 2px;
+  }
+
+  .tile[aria-pressed="true"].is-new .tile-name::after { color: var(--accent-ink); opacity: .8; }
+
+  /* ---------- add form ---------- */
+
+  .addrow {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  input[type="text"]::placeholder { color: var(--ink-faint); }
+
+  .btn {
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-quiet {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+
+  .btn-quiet:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-tiny {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+
+  /* ---------- tally ---------- */
+
+  .tally { display: flex; flex-direction: column; }
+
+  .tally-row {
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tally-row:first-child { border-top: 1px solid var(--line); }
+
+  .tally-count {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 21px;
+    font-variant-numeric: tabular-nums;
+    color: var(--warm);
+    text-align: right;
+    line-height: 1.1;
+  }
+
+  .tally-count.zero { color: var(--ink-faint); }
+
+  .tally-name { font-weight: 600; font-size: 16px; line-height: 1.3; }
+
+  .tally-who {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    line-height: 1.35;
+  }
+
+  .tally-pick {
+    font: inherit;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    color: var(--ink-muted);
+    padding: 4px 10px;
+    cursor: pointer;
+    align-self: center;
+  }
+
+  .tally-pick:hover { border-color: var(--accent); color: var(--accent); }
+
+  .tally-row.is-planned .tally-pick {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .tally-row.is-planned .tally-name::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 7px;
+    vertical-align: 3px;
+  }
+
+  /* ---------- plan ---------- */
+
+  .plan {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-tile);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .plan-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .plan-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 11px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .plan-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+
+  .plan-list .n {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+    width: 16px;
+  }
+
+  .plan-empty { color: var(--ink-muted); font-size: 14px; margin: 0; }
+
+  .waiting {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 12px;
+  }
+
+  .waiting strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- manage ---------- */
+
+  .rows { display: flex; flex-direction: column; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .row:first-child { border-top: 1px solid var(--line); }
+  .row-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+  .row-sub { font-size: 12px; color: var(--ink-faint); font-family: var(--mono); }
+
+  .row-actions { display: flex; gap: 6px; flex: none; }
+
+  /* ---------- who-is-picking menu ---------- */
+
+  .menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+  }
+
+  .menu {
+    position: fixed;
+    z-index: 41;
+    min-width: 210px;
+    max-width: calc(100vw - 24px);
+    max-height: 62vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .10), 0 18px 40px -18px rgba(0, 0, 0, .5);
+    padding: 6px;
+  }
+
+  .menu-head {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 8px 12px 6px;
+  }
+
+  .menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    background: none;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 12px;
+    cursor: pointer;
+  }
+
+  .menu-item:hover { background: var(--surface-sunk); }
+  .menu-item[aria-current="true"] { color: var(--accent); }
+  .menu-item[aria-current="true"]::after { content: " \2713"; }
+
+  .menu-add { color: var(--ink-muted); }
+
+  .menu-sep {
+    height: 1px;
+    background: var(--line);
+    margin: 6px 4px;
+  }
+
+  .menu-form {
+    display: flex;
+    gap: 6px;
+    padding: 6px 6px 4px;
+  }
+
+  /* ---------- sticky bar ---------- */
+
+  .bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    z-index: 30;
+  }
+
+  .bar-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .bar-count { font-size: 14px; color: var(--ink-muted); }
+
+  .bar-count strong {
+    font-family: var(--mono);
+    font-weight: 500;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bar-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .bar-status.saved { color: var(--accent); }
+
+  .bar-more {
+    font: inherit;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--ink-faint);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    flex: none;
+  }
+
+  .bar-more:hover { color: var(--accent); }
+
+  .skeleton {
+    background: var(--surface-sunk);
+    border-radius: var(--r-tile);
+    min-height: 104px;
+    border: 1px solid var(--line);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media (max-width: 420px) {
+    .wordmark { font-size: 25px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <h1 class="wordmark">What&rsquo;s for dinner</h1>
+      <div class="week-line" id="weekLine">&nbsp;</div>
+    </div>
+    <div class="whoami">
+      <span class="whoami-label">Picking as</span>
+      <button class="chip" id="whoBtn" type="button">
+        <span id="whoName">Choose&hellip;</span><span class="caret">&#9662;</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" id="tab-pick" role="tab" aria-selected="true" aria-controls="panel-pick" type="button">Pick meals</button>
+    <button class="tab" id="tab-shop" role="tab" aria-selected="false" aria-controls="panel-shop" type="button">Shopping<span class="tab-count" id="shopCount"></span></button>
+    <button class="tab" id="tab-manage" role="tab" aria-selected="false" aria-controls="panel-manage" type="button" hidden>Manage<span class="tab-count" id="manageCount"></span></button>
+  </div>
+
+  <div id="banner"></div>
+
+  <section id="panel-pick" role="tabpanel" aria-labelledby="tab-pick">
+    <p class="hint">Tap everything you&rsquo;d be happy to eat this week. Pick as many as you like.</p>
+    <div class="grid" id="mealGrid"></div>
+    <div class="addrow" id="addRow" hidden>
+      <input type="text" id="addInput" placeholder="Something else&hellip;" autocomplete="off" maxlength="60">
+      <button class="btn btn-primary" id="addBtn" type="button">Add</button>
+    </div>
+  </section>
+
+  <section id="panel-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+    <h2 class="section">This week&rsquo;s plan</h2>
+    <div class="plan" id="planBox"></div>
+    <p class="waiting" id="waitingLine"></p>
+    <h2 class="section">Everything voted for</h2>
+    <p class="hint" id="tallyHint">Ranked by how many people picked it.</p>
+    <div class="tally" id="tally"></div>
+  </section>
+
+  <section id="panel-manage" role="tabpanel" aria-labelledby="tab-manage" hidden>
+    <h2 class="section">Suggested by the family</h2>
+    <p class="hint">Keep one and it joins the meal list for good. Dismiss and it disappears after this week.</p>
+    <div class="rows" id="suggestionRows"></div>
+
+    <h2 class="section">Meal list</h2>
+    <div class="addrow">
+      <input type="text" id="manageAddInput" placeholder="Add a meal&hellip;" autocomplete="off" maxlength="60">
+      <button class="btn btn-primary" id="manageAddBtn" type="button">Add</button>
+    </div>
+    <div class="rows" id="mealRows"></div>
+
+    <h2 class="section">Who&rsquo;s in the house</h2>
+    <div class="rows" id="peopleRows"></div>
+
+    <p class="eyebrow">Start over</p>
+    <button class="btn btn-quiet" id="clearBtn" type="button">Clear this week&rsquo;s votes</button>
+
+    <p class="eyebrow">This phone</p>
+    <button class="btn btn-quiet" id="stopManagingBtn" type="button">Stop managing on this phone</button>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <span class="bar-count" id="barCount"><strong>0</strong> picked</span>
+    <span class="bar-status" id="barStatus">Connecting</span>
+    <button class="bar-more" id="managerBtn" type="button" aria-label="Manage access">&hellip;</button>
+  </div>
+</div>
+
+<div id="sheetHost"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  // Change this to whatever the household should use. It hides Manage from
+  // the kids' phones; it is not real security, and anyone who opens the
+  // browser's dev tools can read it.
+  var MANAGE_PIN = "chef";
+
+  var S = {
+    db: null,
+    ready: false,
+    connected: false,
+    admin: false,
+    meals: [],
+    suggestions: [],
+    people: [],
+    votes: [],
+    chosen: [],
+    meId: null,
+    localPicks: [],
+    saveTimer: null,
+    sheetOpen: false
+  };
+
+  var LS = {
+    get: function (k) { try { return localStorage.getItem("dinner." + k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem("dinner." + k, v); } catch (e) {} }
+  };
+
+  /* ---------------- the week ---------------- */
+
+  function weekStartOf(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - x.getDay()); // 0 = Sunday
+    return x;
+  }
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  var WEEK_START = weekStartOf(new Date());
+  var WEEK_ID = WEEK_START.getFullYear() + "-" + pad(WEEK_START.getMonth() + 1) + "-" + pad(WEEK_START.getDate());
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var WEEK_LABEL = "Week of " + MONTHS[WEEK_START.getMonth()] + " " + WEEK_START.getDate();
+
+  /* ---------------- helpers ---------------- */
+
+  function $(id) { return document.getElementById(id); }
+
+  function slug(name) {
+    var s = String(name).toLowerCase().trim()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40);
+    return s || "meal";
+  }
+
+  function rid() { return Math.random().toString(36).slice(2, 8); }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function byName(a, b) { return a.name.localeCompare(b.name); }
+
+  function cacheWrite(key, arr) { LS.set(key, JSON.stringify(arr)); }
+
+  function cacheRead(key) {
+    var raw = LS.get(key);
+    if (!raw) return null;
+    try {
+      var v = JSON.parse(raw);
+      return Array.isArray(v) ? v : null;
+    } catch (e) { return null; }
+  }
+
+  /* ---------------- derived views ---------------- */
+
+  // A published page cannot load an image from anywhere, so each meal gets a
+  // glyph matched from its name. First keyword wins, so specific phrases lead.
+  var ICONS = [
+    ["grilled cheese", 0x1F9C0], ["mac", 0x1F9C0], ["chicken noodle", 0x1F35C],
+    ["ramen", 0x1F35C], ["noodle", 0x1F35C], ["blt", 0x1F953], ["bacon", 0x1F953],
+    ["taco", 0x1F32E], ["burrito", 0x1F32F], ["quesadilla", 0x1FAD3],
+    ["nacho", 0x1F9C0], ["fajita", 0x1F958], ["pizza", 0x1F355],
+    ["sloppy joe", 0x1F354], ["burger", 0x1F354], ["hot dog", 0x1F32D],
+    ["pulled pork", 0x1F96A], ["sandwich", 0x1F96A], ["meatball", 0x1F35D],
+    ["spaghetti", 0x1F35D], ["alfredo", 0x1F35D], ["pasta", 0x1F35D],
+    ["ziti", 0x1F35D], ["lasagna", 0x1F35D], ["penne", 0x1F35D], ["pie", 0x1F967],
+    ["meatloaf", 0x1F356], ["steak", 0x1F969], ["roast", 0x1F969],
+    ["brisket", 0x1F969], ["pork", 0x1F356], ["ham", 0x1F356], ["rib", 0x1F356],
+    ["salmon", 0x1F41F], ["fish", 0x1F41F], ["tuna", 0x1F41F], ["shrimp", 0x1F990],
+    ["sushi", 0x1F363], ["teriyaki", 0x1F35A], ["rice", 0x1F35A], ["bowl", 0x1F35A],
+    ["stir", 0x1F961], ["lo mein", 0x1F961], ["curry", 0x1F35B], ["chili", 0x1F372],
+    ["stew", 0x1F372], ["soup", 0x1F372], ["salad", 0x1F957],
+    ["breakfast", 0x1F95E], ["pancake", 0x1F95E], ["waffle", 0x1F9C7],
+    ["omelet", 0x1F373], ["egg", 0x1F373], ["wing", 0x1F357], ["chicken", 0x1F357],
+    ["turkey", 0x1F983], ["cheese", 0x1F9C0], ["leftover", 0x1F371],
+    ["broccoli", 0x1F966], ["veg", 0x1F966], ["potato", 0x1F954], ["corn", 0x1F33D]
+  ];
+
+  function iconFor(name, override) {
+    if (override) return override;
+    var n = String(name).toLowerCase();
+    for (var i = 0; i < ICONS.length; i++) {
+      if (n.indexOf(ICONS[i][0]) !== -1) return String.fromCodePoint(ICONS[i][1]);
+    }
+    return String.fromCodePoint(0x1F374);
+  }
+
+  // Everything tappable this week: the curated list plus live suggestions.
+  function pickable() {
+    var out = S.meals.map(function (m) { return { id: m.id, name: m.name, icon: m.icon, isNew: false }; });
+    var known = {};
+    out.forEach(function (m) { known[m.id] = true; });
+    S.suggestions.forEach(function (s) {
+      if (!known[s.id]) out.push({ id: s.id, name: s.name, icon: s.icon, isNew: true });
+    });
+    return out.sort(byName);
+  }
+
+  function me() {
+    for (var i = 0; i < S.people.length; i++) {
+      if (S.people[i].id === S.meId) return S.people[i];
+    }
+    return null;
+  }
+
+  function myPicks() {
+    if (!S.connected) return S.localPicks;
+    for (var i = 0; i < S.votes.length; i++) {
+      if (S.votes[i].personId === S.meId) return S.votes[i].mealIds || [];
+    }
+    return [];
+  }
+
+  function voteCounts() {
+    var counts = {};
+    S.votes.forEach(function (v) {
+      (v.mealIds || []).forEach(function (id) { counts[id] = (counts[id] || 0) + 1; });
+    });
+    return counts;
+  }
+
+  function tallyRows() {
+    var names = {};
+    pickable().forEach(function (m) { names[m.id] = m.name; });
+
+    var counts = {};
+    var voters = {};
+    S.votes.forEach(function (v) {
+      (v.mealIds || []).forEach(function (id) {
+        if (!names[id]) return; // a suggestion that was dismissed
+        counts[id] = (counts[id] || 0) + 1;
+        (voters[id] = voters[id] || []).push(v.name);
+      });
+    });
+
+    return Object.keys(counts).map(function (id) {
+      return { id: id, name: names[id], count: counts[id], voters: voters[id].sort() };
+    }).sort(function (a, b) {
+      return b.count - a.count || a.name.localeCompare(b.name);
+    });
+  }
+
+  /* ---------------- writing ---------------- */
+
+  function status(text, ok) {
+    var el = $("barStatus");
+    el.textContent = text;
+    el.className = "bar-status" + (ok ? " saved" : "");
+  }
+
+  function savePicks(ids) {
+    if (!S.connected) {
+      S.localPicks = ids;
+      cacheWrite("localPicks." + WEEK_ID, ids);
+      status("Saved here", true);
+      return;
+    }
+    var person = me();
+    if (!person) return;
+
+    status("Saving");
+    clearTimeout(S.saveTimer);
+    S.saveTimer = setTimeout(function () {
+      S.db.doc("votes/" + WEEK_ID + "__" + person.id).set({
+        weekId: WEEK_ID,
+        personId: person.id,
+        name: person.name,
+        mealIds: ids,
+        updatedAt: new Date().toISOString()
+      }).then(function () {
+        status("Saved", true);
+      }).catch(function (e) {
+        status("Not saved");
+        console.warn("vote write failed", e);
+      });
+    }, 350);
+  }
+
+  function togglePick(id) {
+    if (!S.meId) { openSheet(); return; }
+
+    var ids = myPicks().slice();
+    var i = ids.indexOf(id);
+    if (i === -1) ids.push(id); else ids.splice(i, 1);
+
+    // Optimistic: the tile responds now, the store catches up.
+    if (S.connected) {
+      var found = false;
+      S.votes = S.votes.map(function (v) {
+        if (v.personId !== S.meId) return v;
+        found = true;
+        return { id: v.id, personId: v.personId, name: v.name, mealIds: ids };
+      });
+      if (!found) {
+        var p = me();
+        S.votes = S.votes.concat([{
+          id: WEEK_ID + "__" + S.meId,
+          personId: S.meId,
+          name: p ? p.name : "",
+          mealIds: ids
+        }]);
+      }
+    } else {
+      S.localPicks = ids;
+    }
+
+    savePicks(ids);
+    render();
+  }
+
+  function addMeal(rawName, asAdmin) {
+    var name = String(rawName || "").trim().replace(/\s+/g, " ");
+    if (!name) return;
+    var id = slug(name);
+
+    var already = pickable().filter(function (m) { return m.id === id; })[0];
+    if (already) {
+      if (!asAdmin && myPicks().indexOf(id) === -1) togglePick(id);
+      return;
+    }
+
+    if (!S.connected) {
+      S.suggestions = S.suggestions.concat([{ id: id, name: name, addedBy: (me() || {}).name || "" }]);
+      cacheWrite("suggestions", S.suggestions);
+      if (myPicks().indexOf(id) === -1) togglePick(id); else render();
+      return;
+    }
+
+    var write;
+    if (asAdmin && S.admin) {
+      write = S.db.doc("meals/" + id).set({ name: name, active: true, createdAt: new Date().toISOString() });
+    } else {
+      write = S.db.doc("suggestions/" + id).set({
+        name: name,
+        addedBy: (me() || {}).name || "",
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    write.then(function () {
+      if (!asAdmin && myPicks().indexOf(id) === -1) togglePick(id);
+    }).catch(function (e) {
+      console.warn("add failed", e);
+      status("Could not add that");
+    });
+  }
+
+  function keepSuggestion(s) {
+    S.db.doc("meals/" + s.id).set({ name: s.name, active: true, createdAt: new Date().toISOString() })
+      .then(function () { return S.db.doc("suggestions/" + s.id).delete(); })
+      .catch(function (e) { console.warn("keep failed", e); });
+  }
+
+  function dismissSuggestion(s) {
+    S.db.doc("suggestions/" + s.id).delete().catch(function (e) { console.warn("dismiss failed", e); });
+  }
+
+  function removeMeal(m) {
+    S.db.doc("meals/" + m.id).delete().catch(function (e) { console.warn("remove failed", e); });
+  }
+
+  function setIcon(m) {
+    var next = window.prompt("Paste an emoji for " + m.name + ", or clear it to go back to the automatic one.", m.icon || "");
+    if (next === null) return;
+    S.db.doc("meals/" + m.id).update({ icon: next.trim() }).catch(function (e) { console.warn("icon failed", e); });
+  }
+
+  function renameMeal(m) {
+    var next = window.prompt("Rename this meal", m.name);
+    if (next === null) return;
+    next = next.trim().replace(/\s+/g, " ");
+    if (!next || next === m.name) return;
+    S.db.doc("meals/" + m.id).update({ name: next }).catch(function (e) { console.warn("rename failed", e); });
+  }
+
+  function togglePlan(id) {
+    if (!S.admin || !S.connected) return;
+    var next = S.chosen.slice();
+    var i = next.indexOf(id);
+    if (i === -1) next.push(id); else next.splice(i, 1);
+    S.chosen = next;
+    render();
+    S.db.doc("weeks/" + WEEK_ID).set({ chosen: next, updatedAt: new Date().toISOString() })
+      .catch(function (e) { console.warn("plan write failed", e); });
+  }
+
+  function clearWeek() {
+    if (!S.admin || !S.connected) return;
+    if (!window.confirm("Clear everyone's picks for the week of " + MONTHS[WEEK_START.getMonth()] + " " + WEEK_START.getDate() + "?")) return;
+    S.votes.forEach(function (v) {
+      S.db.doc("votes/" + v.id).delete().catch(function () {});
+    });
+    S.db.doc("weeks/" + WEEK_ID).set({ chosen: [], updatedAt: new Date().toISOString() }).catch(function () {});
+  }
+
+  function addPerson(rawName) {
+    var name = String(rawName || "").trim().replace(/\s+/g, " ");
+    if (!name) return null;
+    var id = slug(name) + "-" + rid();
+    if (S.connected) {
+      S.db.doc("people/" + id).set({ name: name, createdAt: new Date().toISOString() })
+        .catch(function (e) { console.warn("person write failed", e); });
+    }
+    S.people = S.people.concat([{ id: id, name: name }]).sort(byName);
+    cacheWrite("people", S.people);
+    return id;
+  }
+
+  function removePerson(p) {
+    if (!S.connected) return;
+    S.db.doc("people/" + p.id).delete().catch(function (e) { console.warn("person delete failed", e); });
+  }
+
+  function setMe(id) {
+    S.meId = id;
+    LS.set("personId", id);
+    render();
+  }
+
+  /* ---------------- rendering ---------------- */
+
+  function renderHeader() {
+    $("weekLine").textContent = WEEK_LABEL;
+    var person = me();
+    $("whoName").textContent = person ? person.name : "Choose…";
+  }
+
+  function renderBanner() {
+    var el = $("banner");
+    if (!S.ready) {
+      el.innerHTML = "";
+    } else if (!S.connected) {
+      el.innerHTML = '<div class="notice">Not connected to the family list, so picks are saved on this device only.</div>';
+    } else if (!S.meId) {
+      el.innerHTML = '<div class="notice">Tap <strong>Choose</strong> at the top right to say who you are, then start picking.</div>';
+    } else {
+      el.innerHTML = "";
+    }
+  }
+
+  function renderPick() {
+    var grid = $("mealGrid");
+    var items = pickable();
+
+    if (!S.ready && !items.length) {
+      grid.innerHTML = "<div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div>";
+      $("addRow").hidden = true;
+      return;
+    }
+
+    $("addRow").hidden = false;
+
+    if (!items.length) {
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No meals yet. Add the first one below and it stays on the list for every week after this.</div>';
+      $("barCount").innerHTML = "<strong>0</strong> picked";
+      return;
+    }
+
+    var mine = myPicks();
+    var counts = voteCounts();
+
+    grid.innerHTML = items.map(function (m) {
+      var on = mine.indexOf(m.id) !== -1;
+      var c = counts[m.id] || 0;
+      var votes = c === 0 ? "" : c + (c === 1 ? " vote" : " votes");
+      return '<button class="tile' + (m.isNew ? " is-new" : "") + '" type="button" data-meal="' + esc(m.id) + '" aria-pressed="' + on + '">' +
+        '<span class="tile-icon" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" +
+        '<span class="tile-name">' + esc(m.name) + "</span>" +
+        '<span class="tile-foot"><span class="tile-votes">' + votes + '</span><span class="tile-mark"></span></span>' +
+        "</button>";
+    }).join("");
+
+    $("barCount").innerHTML = "<strong>" + mine.length + "</strong> picked";
+  }
+
+  function renderShop() {
+    var rows = tallyRows();
+    var names = {};
+    pickable().forEach(function (m) { names[m.id] = m.name; });
+
+    var planBox = $("planBox");
+    var chosen = S.chosen.filter(function (id) { return names[id]; });
+
+    if (chosen.length) {
+      planBox.innerHTML = '<ol class="plan-list">' + chosen.map(function (id, i) {
+        return '<li><span class="n">' + (i + 1) + "</span>" + esc(names[id]) + "</li>";
+      }).join("") + "</ol>";
+    } else if (S.admin) {
+      planBox.innerHTML = '<p class="plan-empty">Nothing locked in yet. Tap <strong>Add</strong> beside any meal below to build the shopping week.</p>';
+    } else {
+      planBox.innerHTML = '<p class="plan-empty">The week hasn’t been locked in yet.</p>';
+    }
+
+    var voted = {};
+    S.votes.forEach(function (v) { if ((v.mealIds || []).length) voted[v.personId] = true; });
+    var waiting = S.people.filter(function (p) { return !voted[p.id]; }).map(function (p) { return p.name; });
+    var waitEl = $("waitingLine");
+
+    if (!S.people.length) {
+      waitEl.textContent = "";
+    } else if (waiting.length) {
+      waitEl.innerHTML = "Still waiting on <strong>" + waiting.map(esc).join("</strong>, <strong>") + "</strong>.";
+    } else {
+      waitEl.textContent = "Everyone has voted.";
+    }
+
+    var tally = $("tally");
+    if (!rows.length) {
+      tally.innerHTML = '<div class="empty">No votes yet this week.</div>';
+      $("tallyHint").textContent = "Ranked by how many people picked it.";
+    } else {
+      $("tallyHint").textContent = S.admin
+        ? "Ranked by votes. Tap Add to put one in this week’s plan."
+        : "Ranked by how many people picked it.";
+      tally.innerHTML = rows.map(function (r) {
+        var planned = S.chosen.indexOf(r.id) !== -1;
+        var btn = S.admin
+          ? '<button class="tally-pick" type="button" data-plan="' + esc(r.id) + '">' + (planned ? "In plan" : "Add") + "</button>"
+          : "";
+        return '<div class="tally-row' + (planned ? " is-planned" : "") + '">' +
+          '<div class="tally-count">' + r.count + "</div>" +
+          '<div><div class="tally-name">' + esc(r.name) + "</div>" +
+          '<div class="tally-who">' + esc(r.voters.join(", ")) + "</div></div>" +
+          btn + "</div>";
+      }).join("");
+    }
+
+    $("shopCount").textContent = rows.length ? String(rows.length) : "";
+  }
+
+  function renderManage() {
+    if (!S.admin) return;
+
+    var sr = $("suggestionRows");
+    if (!S.suggestions.length) {
+      sr.innerHTML = '<div class="empty">Nothing new has been suggested.</div>';
+    } else {
+      sr.innerHTML = S.suggestions.slice().sort(byName).map(function (s) {
+        return '<div class="row"><div class="row-name">' + esc(s.name) +
+          (s.addedBy ? ' <span class="row-sub">from ' + esc(s.addedBy) + "</span>" : "") +
+          '</div><div class="row-actions">' +
+          '<button class="btn btn-quiet btn-tiny" type="button" data-keep="' + esc(s.id) + '">Keep</button>' +
+          '<button class="btn btn-quiet btn-tiny" type="button" data-dismiss="' + esc(s.id) + '">Dismiss</button>' +
+          "</div></div>";
+      }).join("");
+    }
+
+    var mr = $("mealRows");
+    if (!S.meals.length) {
+      mr.innerHTML = '<div class="empty">The meal list is empty.</div>';
+    } else {
+      mr.innerHTML = S.meals.slice().sort(byName).map(function (m) {
+        return '<div class="row"><div class="row-name"><span class="tile-icon" style="font-size:19px;margin-right:9px;vertical-align:-3px" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" + esc(m.name) + "</div>" +
+          '<div class="row-actions">' +
+
+          '<button class="btn btn-quiet btn-tiny" type="button" data-seticon="' + esc(m.id) + '">Icon</button>' +
+
+
+          '<button class="btn btn-quiet btn-tiny" type="button" data-rename="' + esc(m.id) + '">Rename</button>' +
+          '<button class="btn btn-quiet btn-tiny" type="button" data-remove="' + esc(m.id) + '">Remove</button>' +
+          "</div></div>";
+      }).join("");
+    }
+
+    var pr = $("peopleRows");
+    if (!S.people.length) {
+      pr.innerHTML = '<div class="empty">Nobody added yet.</div>';
+    } else {
+      pr.innerHTML = S.people.map(function (p) {
+        return '<div class="row"><div class="row-name">' + esc(p.name) + "</div>" +
+          '<div class="row-actions"><button class="btn btn-quiet btn-tiny" type="button" data-rmperson="' + esc(p.id) + '">Remove</button></div></div>';
+      }).join("");
+    }
+
+    $("manageCount").textContent = S.suggestions.length ? String(S.suggestions.length) : "";
+  }
+
+  function render() {
+    renderHeader();
+    renderBanner();
+    renderPick();
+    renderShop();
+    renderManage();
+    $("tab-manage").hidden = !S.admin;
+  }
+
+  /* ---------------- who is picking ---------------- */
+
+  // A small menu under the chip. The name field is only mounted once someone
+  // asks for it, so simply opening the menu never raises a keyboard.
+  function openSheet(showAdd) {
+    S.sheetOpen = true;
+
+    var rows = S.people.map(function (p) {
+      return '<button class="menu-item" type="button" data-person="' + esc(p.id) + '" aria-current="' + (p.id === S.meId) + '">' + esc(p.name) + "</button>";
+    }).join("");
+
+    var tail = showAdd
+      ? '<div class="menu-form"><input type="text" id="personInput" placeholder="Name" autocomplete="off" maxlength="24">' +
+        '<button class="btn btn-primary" id="personAdd" type="button">Add</button></div>'
+      : '<button class="menu-item menu-add" type="button" id="showAddName">+ Add a name</button>';
+
+    $("sheetHost").innerHTML =
+      '<div class="menu-backdrop" id="sheetBackdrop"></div>' +
+      '<div class="menu" id="whoMenu" role="menu" aria-label="Who is picking">' +
+      '<div class="menu-head">Who is picking</div>' +
+      rows + (rows ? '<div class="menu-sep"></div>' : "") + tail +
+      "</div>";
+
+    var anchor = $("whoBtn").getBoundingClientRect();
+    var menu = $("whoMenu");
+    menu.style.top = (anchor.bottom + 8) + "px";
+    menu.style.right = Math.max(10, window.innerWidth - anchor.right) + "px";
+
+    if (showAdd) $("personInput").focus();
+  }
+
+  function selectTab(which) {
+    ["pick", "shop", "manage"].forEach(function (k) {
+      $("tab-" + k).setAttribute("aria-selected", String(k === which));
+      $("panel-" + k).hidden = k !== which;
+    });
+  }
+
+  function promptManager() {
+    var pin = window.prompt("Enter the manage code");
+    if (pin === null) return;
+    if (pin.trim().toLowerCase() !== MANAGE_PIN) {
+      window.alert("That code is not right.");
+      return;
+    }
+    S.admin = true;
+    LS.set("manager", "1");
+    render();
+  }
+
+  function stopManaging() {
+    S.admin = false;
+    LS.set("manager", "0");
+    selectTab("pick");
+    render();
+  }
+
+  function closeSheet() {
+    S.sheetOpen = false;
+    $("sheetHost").innerHTML = "";
+  }
+
+  function submitPerson(value) {
+    var newId = addPerson(value);
+    if (newId) { setMe(newId); closeSheet(); }
+  }
+
+  /* ---------------- events ---------------- */
+
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest
+      ? ev.target.closest("[data-meal],[data-plan],[data-keep],[data-dismiss],[data-rename],[data-seticon],[data-remove],[data-rmperson],[data-person]")
+      : null;
+
+    if (t) {
+      var d = t.dataset;
+      if (d.meal) return togglePick(d.meal);
+      if (d.plan) return togglePlan(d.plan);
+      if (d.person) { setMe(d.person); return closeSheet(); }
+      if (d.keep) {
+        var sk = S.suggestions.filter(function (x) { return x.id === d.keep; })[0];
+        return sk && keepSuggestion(sk);
+      }
+      if (d.dismiss) {
+        var sd = S.suggestions.filter(function (x) { return x.id === d.dismiss; })[0];
+        return sd && dismissSuggestion(sd);
+      }
+      if (d.seticon) {
+        var ms = S.meals.filter(function (x) { return x.id === d.seticon; })[0];
+        return ms && setIcon(ms);
+      }
+      if (d.rename) {
+        var mr = S.meals.filter(function (x) { return x.id === d.rename; })[0];
+        return mr && renameMeal(mr);
+      }
+      if (d.remove) {
+        var mx = S.meals.filter(function (x) { return x.id === d.remove; })[0];
+        return mx && removeMeal(mx);
+      }
+      if (d.rmperson) {
+        var px = S.people.filter(function (x) { return x.id === d.rmperson; })[0];
+        return px && removePerson(px);
+      }
+    }
+
+    // Clicks can land on a child span, so resolve the owning control.
+    var hit = ev.target.closest
+      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#managerBtn,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage")
+      : null;
+    var id = hit ? hit.id : ev.target.id;
+
+    if (id === "whoBtn") return openSheet();
+    if (id === "sheetBackdrop") return closeSheet();
+    if (id === "showAddName") return openSheet(true);
+    if (id === "personAdd") return submitPerson($("personInput").value);
+    if (id === "clearBtn") return clearWeek();
+    if (id === "managerBtn") return promptManager();
+    if (id === "stopManagingBtn") return stopManaging();
+
+    if (id === "addBtn") {
+      var ai = $("addInput");
+      addMeal(ai.value, false);
+      ai.value = "";
+      return;
+    }
+
+    if (id === "manageAddBtn") {
+      var mi = $("manageAddInput");
+      addMeal(mi.value, true);
+      mi.value = "";
+      return;
+    }
+
+    if (id === "tab-pick" || id === "tab-shop" || id === "tab-manage") {
+      selectTab(id.split("-")[1]);
+    }
+  });
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && S.sheetOpen) return closeSheet();
+    if (ev.key !== "Enter") return;
+    var id = ev.target.id;
+    if (id === "addInput") { addMeal(ev.target.value, false); ev.target.value = ""; }
+    if (id === "manageAddInput") { addMeal(ev.target.value, true); ev.target.value = ""; }
+    if (id === "personInput") { submitPerson(ev.target.value); }
+  });
+
+  /* ---------------- boot ---------------- */
+
+  function hydrateFromCache() {
+    S.meals = cacheRead("meals") || [];
+    S.suggestions = cacheRead("suggestions") || [];
+    S.people = cacheRead("people") || [];
+    S.localPicks = cacheRead("localPicks." + WEEK_ID) || [];
+    S.meId = LS.get("personId");
+    S.admin = LS.get("manager") === "1";
+    render();
+  }
+
+  function listOf(snap, map) {
+    return snap.docs.map(function (doc) { return map(doc.id, doc.data() || {}); });
+  }
+
+  function connect(db) {
+    S.db = db;
+    S.connected = true;
+    S.ready = true;
+
+    db.collection("meals").onSnapshot(function (snap) {
+      S.meals = listOf(snap, function (id, d) { return { id: id, name: d.name || id, icon: d.icon || "" }; }).sort(byName);
+      cacheWrite("meals", S.meals);
+      render();
+    }, function (e) { console.warn("meals subscription ended", e); });
+
+    db.collection("suggestions").onSnapshot(function (snap) {
+      S.suggestions = listOf(snap, function (id, d) {
+        return { id: id, name: d.name || id, icon: d.icon || "", addedBy: d.addedBy || "" };
+      }).sort(byName);
+      cacheWrite("suggestions", S.suggestions);
+      render();
+    }, function (e) { console.warn("suggestions subscription ended", e); });
+
+    db.collection("people").onSnapshot(function (snap) {
+      S.people = listOf(snap, function (id, d) { return { id: id, name: d.name || id }; }).sort(byName);
+      cacheWrite("people", S.people);
+      render();
+    }, function (e) { console.warn("people subscription ended", e); });
+
+    var flushed = false;
+
+    db.collection("votes").where("weekId", "==", WEEK_ID).onSnapshot(function (snap) {
+      S.votes = listOf(snap, function (id, d) {
+        return { id: id, personId: d.personId || "", name: d.name || "", mealIds: d.mealIds || [] };
+      });
+
+      // Picks taken while the store was unreachable only live on this device.
+      // Send them up once, unless this person already voted somewhere else.
+      if (!flushed && me() && S.localPicks.length) {
+        var mine = S.votes.filter(function (v) { return v.personId === S.meId; })[0];
+        if (!mine || !(mine.mealIds || []).length) savePicks(S.localPicks);
+        flushed = true;
+        S.localPicks = [];
+        cacheWrite("localPicks." + WEEK_ID, []);
+      }
+
+      render();
+    }, function (e) { console.warn("votes subscription ended", e); });
+
+    db.doc("weeks/" + WEEK_ID).onSnapshot(function (snap) {
+      var d = snap.exists ? (snap.data() || {}) : {};
+      S.chosen = Array.isArray(d.chosen) ? d.chosen : [];
+      render();
+    }, function (e) { console.warn("week subscription ended", e); });
+
+    status("Connected", true);
+    render();
+  }
+
+  hydrateFromCache();
+  status("Connecting");
+
+  // The apiKey is not a secret - it names the project. What protects the
+  // data is the Firestore security rules, not hiding this block.
+  var FIREBASE_CONFIG = {
+    apiKey: "PASTE_ME",
+    authDomain: "PASTE_ME",
+    projectId: "PASTE_ME",
+    storageBucket: "PASTE_ME",
+    messagingSenderId: "PASTE_ME",
+    appId: "PASTE_ME"
+  };
+
+  function offline(why) {
+    if (why) console.warn("running without the shared list:", why);
+    S.ready = true;
+    status("On this device");
+    render();
+  }
+
+  if (window.firebase && FIREBASE_CONFIG.apiKey !== "PASTE_ME") {
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      var store = firebase.firestore();
+
+      // Firestore keeps its own offline queue; the localStorage cache above
+      // still drives the instant first paint.
+      store.enablePersistence({ synchronizeTabs: true }).catch(function () {});
+
+      var started = false;
+      firebase.auth().onAuthStateChanged(function (user) {
+        if (!user || started) return;
+        started = true;
+        connect(store);
+      });
+
+      firebase.auth().signInAnonymously().catch(function (e) { offline(e); });
+    } catch (e) {
+      offline(e);
+    }
+  } else {
+    offline("firebase is not configured yet");
+  }
+})();
+</script>
+
+</body>
+</html>
