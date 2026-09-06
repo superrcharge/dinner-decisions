@@ -18,6 +18,32 @@ The week rolls over on its own every Sunday.
 Single static file, `index.html`. No build step, no dependencies to install.
 Data lives in Firestore, reached with anonymous auth from the browser.
 
+## How it's put together
+
+Two moving parts that never talk to each other: GitHub serves the code, Firestore holds the data, and the page in the browser is the only thing that touches both.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./diagrams/runtime-dark.svg">
+  <img src="./diagrams/runtime-light.svg" alt="Signal flow: GitHub Pages serves index.html to the browser, which fetches the Firebase SDK and fonts from gstatic, signs in anonymously with Firebase Auth, and reads and writes Firestore through the security rules. localStorage holds per-device identity and cache. Other phones hold their own live connections to the same Firestore." width="100%">
+</picture>
+
+Deploying a change is a push. The only thing worth remembering is the ten-minute edge cache.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./diagrams/hosting-dark.svg">
+  <img src="./diagrams/hosting-light.svg" alt="Deploy path: this machine pushes to the GitHub repo, which triggers a Pages build, which publishes to the Fastly edge, which serves the file to a family phone." width="100%">
+</picture>
+
+### Regenerating the diagrams
+
+Sources are Typst under `diagrams/`, with the design layer (Primer palette, tokens) in `diagrams/design/`.
+
+```bash
+mise run render
+```
+
+Needs `typst` and the **CaskaydiaMono NFP** font installed. Each source compiles twice, once per theme, and the fixed pt dimensions are stripped so the SVGs scale to the README's width. The first `mise` run in a fresh clone needs `mise trust`.
+
 ## Configuration
 
 Two things in `index.html`:
