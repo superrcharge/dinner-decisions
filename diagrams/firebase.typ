@@ -93,7 +93,8 @@
 
   coll((1, 0), "meals", "id: slug of the name",
     "The curated master list. An optional icon field overrides the emoji the "
-    + "app would otherwise pick from the name.", <meals>),
+    + "app would otherwise pick from the name, and an optional ingredients "
+    + "array feeds the week's grocery list.", <meals>),
 
   coll((2, 0), "suggestions", "id: the slug its meal will take",
     "Typed in by anyone, waiting to be kept or dismissed. Sharing the id means "

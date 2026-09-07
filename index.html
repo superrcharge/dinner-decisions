@@ -607,14 +607,129 @@
     align-items: center;
     gap: 10px;
     padding: 10px 2px;
-    border-bottom: 1px solid var(--line);
   }
 
-  .row:first-child { border-top: 1px solid var(--line); }
+  /* The border sits on whichever element is the direct child of .rows - a bare
+     .row for people and suggestions, a .row-group for meals. Putting it on the
+     group is what keeps an expanded ingredient panel inside its meal's band
+     rather than orphaned below the divider. */
+  .rows > .row,
+  .rows > .row-group { border-bottom: 1px solid var(--line); }
+
+  .rows > .row:first-child,
+  .rows > .row-group:first-child { border-top: 1px solid var(--line); }
+
   .row-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
   .row-sub { font-size: 12px; color: var(--ink-faint); font-family: var(--mono); }
 
   .row-actions { display: flex; gap: 6px; flex: none; }
+
+  /* ---------- ingredients ---------- */
+
+  .section-count {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--ink-faint);
+    margin-left: 6px;
+  }
+
+  /* Tapping the name is what expands, so it needs to read as pressable
+     without becoming another button in a row that already has three. */
+  .row-tap {
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+
+  .row-tap:hover { color: var(--accent); }
+
+  /* Accent outline on purpose: .btn-quiet is what Icon/Rename/Remove use, and
+     a fourth one of those would read as another row action rather than an add. */
+  .pill-add {
+    font: inherit;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: var(--r-pill);
+    padding: 2px 10px;
+    margin-left: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .pill-add:hover { background: var(--accent); color: var(--accent-ink); }
+
+  .row-expand {
+    padding: 2px 2px 12px 30px;
+  }
+
+  .ing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 14px;
+  }
+
+  .ing-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+  .ing-x {
+    font: inherit;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--ink-faint);
+    background: none;
+    border: 0;
+    padding: 2px 6px;
+    cursor: pointer;
+    flex: none;
+  }
+
+  .ing-x:hover { color: var(--warm); }
+
+  .ing-form { display: flex; gap: 6px; padding-top: 6px; }
+
+  .ing-empty { font-size: 13px; color: var(--ink-faint); padding: 2px 0 4px; }
+
+  /* ---------- grocery list ---------- */
+
+  .buy { display: flex; flex-direction: column; }
+
+  .buy-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+
+  .buy-item:first-child { border-top: 1px solid var(--line); }
+  .buy-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+  .buy-for {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--ink-faint);
+    text-align: right;
+    flex: none;
+    max-width: 45%;
+    overflow-wrap: anywhere;
+  }
+
+  .buy-gap {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin: 12px 0 0;
+  }
 
   /* ---------- who-is-picking menu ---------- */
 
@@ -852,6 +967,7 @@
   <section id="panel-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
     <h2 class="section">This week&rsquo;s plan</h2>
     <div class="plan" id="planBox"></div>
+    <div id="buyBox"></div>
     <p class="waiting" id="waitingLine"></p>
     <h2 class="section">Everything voted for</h2>
     <p class="hint" id="tallyHint">Ranked by how many people picked it.</p>
@@ -863,7 +979,7 @@
     <p class="hint">Keep one and it joins the meal list for good. Dismiss and it disappears after this week.</p>
     <div class="rows" id="suggestionRows"></div>
 
-    <h2 class="section">Meal list</h2>
+    <h2 class="section">Meal List <span class="section-count" id="mealCount"></span></h2>
     <div class="addrow">
       <input type="text" id="manageAddInput" placeholder="Add a meal&hellip;" autocomplete="off" maxlength="60">
       <button class="btn btn-primary" id="manageAddBtn" type="button">Add</button>
@@ -928,6 +1044,7 @@
     meId: null,
     localPicks: [],
     saveTimer: null,
+    openMeals: {},      // meal ids whose ingredient panel is expanded, in Manage
     sheetOpen: false
   };
 
@@ -982,7 +1099,7 @@
 
   // Every document the app touches hangs off the current household, so this
   // is the only place the nesting is spelled out.
-  function ref(path) { return ref("households/" + S.hid + "/" + path); }
+  function ref(path) { return S.db.doc("households/" + S.hid + "/" + path); }
 
   function cacheWrite(key, arr) { LS.set(key, JSON.stringify(arr)); }
 
@@ -1352,6 +1469,65 @@
     }
   }
 
+  // One list you can stand in a shop holding, rather than the same onion
+  // written three times. Dedup is exact match on lowercased text: "onion" and
+  // "onions" are different strings and will not merge. That is the honest
+  // cost of free-text ingredients.
+  function buyList() {
+    var seen = {};
+    var order = [];
+
+    S.chosen.forEach(function (id) {
+      var m = mealById(id);
+      if (!m) return;
+      (m.ingredients || []).forEach(function (name) {
+        var key = name.trim().toLowerCase();
+        if (!key) return;
+        if (!seen[key]) {
+          seen[key] = { name: name.trim(), meals: [] };
+          order.push(key);
+        }
+        if (seen[key].meals.indexOf(m.name) === -1) seen[key].meals.push(m.name);
+      });
+    });
+
+    return order.map(function (k) { return seen[k]; });
+  }
+
+  function renderBuy() {
+    var box = $("buyBox");
+
+    // Admins only, and only once something is actually planned. Nothing here
+    // at rest - no empty state, no heading, no chrome.
+    if (!S.admin || !S.chosen.length) { box.innerHTML = ""; return; }
+
+    var items = buyList();
+    var bare = S.chosen.map(mealById).filter(function (m) {
+      return m && !(m.ingredients || []).length;
+    });
+
+    if (!items.length && !bare.length) { box.innerHTML = ""; return; }
+
+    var list = items.length
+      ? '<div class="buy">' + items.map(function (it) {
+          return '<div class="buy-item"><span class="buy-name">' + esc(it.name) + "</span>" +
+            // Only worth naming when more than one meal wants it; otherwise
+            // it is noise beside every single line.
+            (it.meals.length > 1 ? '<span class="buy-for">' + esc(it.meals.join(", ")) + "</span>" : "") +
+            "</div>";
+        }).join("") + "</div>"
+      : "";
+
+    // A short list should explain itself rather than look broken.
+    var gap = bare.length
+      ? '<p class="buy-gap">No ingredients listed yet for <strong>' +
+        bare.map(function (m) { return esc(m.name); }).join("</strong>, <strong>") +
+        "</strong>. Add them under Manage.</p>"
+      : "";
+
+    box.innerHTML = '<p class="eyebrow">To buy</p>' + list + gap;
+  }
+
   function renderShop() {
     var rows = tallyRows();
     var names = {};
@@ -1405,6 +1581,73 @@
     }
 
     $("shopCount").textContent = rows.length ? String(rows.length) : "";
+    renderBuy();
+  }
+
+  function ingredientPanel(m, ing) {
+    var lines = ing.length
+      ? ing.map(function (name, i) {
+          return '<div class="ing"><span class="ing-name">' + esc(name) + "</span>" +
+            '<button class="ing-x" type="button" title="Remove" aria-label="Remove ' + esc(name) + '" ' +
+            'data-rmingr="' + esc(m.id) + '" data-i="' + i + '">&times;</button></div>';
+        }).join("")
+      : '<div class="ing-empty">Nothing listed yet.</div>';
+
+    return '<div class="row-expand">' + lines +
+      '<div class="ing-form">' +
+      '<input type="text" id="ingInput-' + esc(m.id) + '" placeholder="Add an ingredient&hellip;" autocomplete="off" maxlength="60" data-ingfor="' + esc(m.id) + '">' +
+      '<button class="btn btn-quiet btn-tiny" type="button" data-addingrgo="' + esc(m.id) + '">Add</button>' +
+      "</div></div>";
+  }
+
+  function mealById(id) {
+    return S.meals.filter(function (m) { return m.id === id; })[0];
+  }
+
+  function writeIngredients(m, next) {
+    if (!S.connected) return;
+    ref("meals/" + m.id).update({ ingredients: next })
+      .catch(function (e) { console.warn("ingredient write failed", e); });
+  }
+
+  function addIngredient(id, raw) {
+    var m = mealById(id);
+    if (!m) return;
+    var name = String(raw || "").trim().replace(/\s+/g, " ");
+    if (!name) return;
+
+    var ing = (m.ingredients || []).slice();
+    // Same-meal duplicates help nobody; the shopping list dedups across meals.
+    var already = ing.some(function (x) { return x.toLowerCase() === name.toLowerCase(); });
+    if (!already) ing.push(name);
+    if (ing.length > 60) return status("That is enough ingredients");
+
+    m.ingredients = ing;
+    writeIngredients(m, ing);
+    render();
+    var el = $("ingInput-" + id);
+    if (el) { el.value = ""; el.focus(); }
+  }
+
+  function removeIngredient(id, index) {
+    var m = mealById(id);
+    if (!m) return;
+    var ing = (m.ingredients || []).slice();
+    if (index < 0 || index >= ing.length) return;
+    ing.splice(index, 1);
+    m.ingredients = ing;
+    writeIngredients(m, ing);
+    render();
+  }
+
+  function toggleMeal(id, forceOpen) {
+    if (forceOpen || !S.openMeals[id]) S.openMeals[id] = true;
+    else delete S.openMeals[id];
+    render();
+    if (S.openMeals[id] && forceOpen) {
+      var el = $("ingInput-" + id);
+      if (el) el.focus();
+    }
   }
 
   function renderManage() {
@@ -1429,17 +1672,26 @@
       mr.innerHTML = '<div class="empty">The meal list is empty.</div>';
     } else {
       mr.innerHTML = S.meals.slice().sort(byName).map(function (m) {
-        return '<div class="row"><div class="row-name"><span class="tile-icon" style="font-size:19px;margin-right:9px;vertical-align:-3px" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" + esc(m.name) + "</div>" +
+        var ing = m.ingredients || [];
+        var open = !!S.openMeals[m.id];
+
+        return '<div class="row-group"><div class="row"><div class="row-name">' +
+          '<span class="tile-icon" style="font-size:19px;margin-right:9px;vertical-align:-3px" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" +
+          '<button class="row-tap" type="button" data-expand="' + esc(m.id) + '" aria-expanded="' + open + '">' + esc(m.name) + "</button>" +
+          (ing.length ? ' <span class="row-sub">' + ing.length + "</span>" : "") +
+          '<button class="pill-add" type="button" data-addingr="' + esc(m.id) + '">+ Ingredient</button>' +
+          "</div>" +
           '<div class="row-actions">' +
-
           '<button class="btn btn-quiet btn-tiny" type="button" data-seticon="' + esc(m.id) + '">Icon</button>' +
-
-
           '<button class="btn btn-quiet btn-tiny" type="button" data-rename="' + esc(m.id) + '">Rename</button>' +
           '<button class="btn btn-quiet btn-tiny" type="button" data-remove="' + esc(m.id) + '">Remove</button>' +
-          "</div></div>";
+          "</div></div>" +
+          (open ? ingredientPanel(m, ing) : "") +
+          "</div>";
       }).join("");
     }
+
+    $("mealCount").textContent = S.meals.length ? String(S.meals.length) : "";
 
     var pr = $("peopleRows");
     if (!S.people.length) {
@@ -1669,7 +1921,7 @@
 
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest
-      ? ev.target.closest("[data-meal],[data-unpick],[data-plan],[data-keep],[data-dismiss],[data-rename],[data-seticon],[data-remove],[data-rmperson],[data-person]")
+      ? ev.target.closest("[data-meal],[data-unpick],[data-plan],[data-keep],[data-dismiss],[data-rename],[data-seticon],[data-remove],[data-rmperson],[data-person],[data-expand],[data-addingr],[data-addingrgo],[data-rmingr]")
       : null;
 
     if (t) {
@@ -1702,6 +1954,12 @@
         var px = S.people.filter(function (x) { return x.id === d.rmperson; })[0];
         return px && removePerson(px);
       }
+      // Tapping the name toggles; tapping the pill opens and puts the cursor
+      // in the input, so adding one is a single tap rather than two.
+      if (d.expand) return toggleMeal(d.expand, false);
+      if (d.addingr) return toggleMeal(d.addingr, true);
+      if (d.addingrgo) return addIngredient(d.addingrgo, ($("ingInput-" + d.addingrgo) || {}).value);
+      if (d.rmingr) return removeIngredient(d.rmingr, parseInt(d.i, 10));
     }
 
     // Clicks can land on a child span, so resolve the owning control.
@@ -1749,6 +2007,11 @@
     if (id === "addInput") { addMeal(ev.target.value, false); ev.target.value = ""; }
     if (id === "manageAddInput") { addMeal(ev.target.value, true); ev.target.value = ""; }
     if (id === "personInput") { submitPerson(ev.target.value); }
+    // The ingredient inputs are one per open meal, so they are matched by
+    // attribute rather than by a fixed id.
+    if (ev.target.dataset && ev.target.dataset.ingfor) {
+      return addIngredient(ev.target.dataset.ingfor, ev.target.value);
+    }
     if (id === "joinFamily") { $("joinCode").focus(); }
     if (id === "joinCode") { submitJoin(); }
     if (id === "managePin") { submitManagePin(); }
@@ -1803,7 +2066,9 @@
     var root = db.collection("households").doc(S.hid);
 
     S.subs.push(root.collection("meals").onSnapshot(function (snap) {
-      S.meals = listOf(snap, function (id, d) { return { id: id, name: d.name || id, icon: d.icon || "" }; }).sort(byName);
+      S.meals = listOf(snap, function (id, d) {
+        return { id: id, name: d.name || id, icon: d.icon || "", ingredients: d.ingredients || [] };
+      }).sort(byName);
       cacheWrite(hkey("meals"), S.meals);
       render();
     }, function (e) { console.warn("meals subscription ended", e); }));

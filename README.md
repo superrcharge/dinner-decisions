@@ -15,7 +15,7 @@ Anyone who finds the URL without both gets a page that will not load anything.
 
 - **Pick meals** - tap tiles to vote. Everything you've chosen is gathered into a **Your picks** strip at the top, so you can read your own selections back without hunting for green tiles. Type anything that isn't on the list and it joins that week's options straight away.
 - **Shopping** - meals ranked by votes, with who picked each one and who hasn't voted yet. Build the week's plan by tapping *Add*.
-- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the kids suggested, set a meal's icon, clear the week.
+- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the kids suggested, set a meal's icon, list what a meal needs, clear the week.
 
 The tab strip sticks to the top of the screen, so the three views stay reachable however far down the list you've scrolled.
 
@@ -24,6 +24,22 @@ The week rolls over on its own every Sunday. Nobody has to reset anything.
 **First time on a phone:** tap **Choose** in the top right, enter the family name and code, then pick your name from the list that appears. All of it is remembered on that device, so it is a one-time step.
 
 The same menu shows the current family afterwards, with a **Change** link if a phone ever needs to move to a different one.
+
+## Grocery list
+
+Meals can carry a list of ingredients, and the week's plan turns them into one list to shop from.
+
+**Adding them** - in **Manage**, tap a meal's name to expand it, or tap **+ Ingredient** to expand it with the cursor already in the box. The number beside a meal's name is how many it has. Nothing shows until you tap, so the tab looks exactly as it did before.
+
+**Shopping from it** - the **Shopping** tab shows a **To buy** list under the week's plan, built from whatever is locked in. It only appears for someone who has entered the Manage code, because they are the one doing the shopping. Everyone else sees the plan exactly as before.
+
+Ingredients needed by more than one meal are merged and the list says which meals they are for. Items only one meal needs are left unannotated, so the list stays short.
+
+**What the merge does and does not do.** Two ingredients merge when their text matches exactly, ignoring case and surrounding spaces - so `Onion` and `onion` become one line. It is plain text matching, so `onion` and `onions` stay separate, and so do `chicken` and `2 lbs chicken`. Being consistent in how you type them is what keeps the list tidy; the app will not guess.
+
+Planned meals with nothing listed yet are named beneath the list, so a short list explains itself.
+
+**Not built: ticking things off as you shop.** Deliberately left out for now rather than overlooked. It needs somewhere to keep per-week checked state that every phone can see, which means new Firestore documents and a rules change - worth doing only once the list has been shopped with a few times and it is clear what is actually wanted.
 
 ## Installing it on a phone
 
@@ -176,7 +192,7 @@ Everything hangs off a household, so the app touches no top-level collection but
 | `households` | slug of the surname | `name`. `get` is allowed so the app can say "no family by that name"; **`list` is denied**, so the ids cannot be enumerated |
 | `households/<hid>/private` | `join` | one field, `code`. Denied to every client in both directions; only a rule's own `get()` reads it |
 | `households/<hid>/members` | anonymous uid | one per admitted device. Delete one to revoke that phone |
-| `households/<hid>/meals` | slug of the name | the master list. Optional `icon` field overrides the matched emoji |
+| `households/<hid>/meals` | slug of the name | the master list. Optional `icon` field overrides the matched emoji; optional `ingredients` array of strings feeds the grocery list |
 | `households/<hid>/suggestions` | slug of the name | typed-in meals awaiting keep or dismiss |
 | `households/<hid>/people` | slug plus a random suffix | the household roster |
 | `households/<hid>/votes` | `<weekId>__<personId>` | one document per person per week, holding an array of meal ids |

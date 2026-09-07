@@ -68,10 +68,16 @@ service cloud.firestore {
 
       match /meals/{id} {
         allow read: if member();
+
+        // ingredients is optional and validated only when present - every
+        // meal predating the grocery list is written without it.
         allow create, update: if member()
                               && request.resource.data.name is string
                               && request.resource.data.name.size() > 0
-                              && request.resource.data.name.size() <= 60;
+                              && request.resource.data.name.size() <= 60
+                              && (!request.resource.data.keys().hasAny(['ingredients'])
+                                  || (request.resource.data.ingredients is list
+                                      && request.resource.data.ingredients.size() <= 60));
         allow delete: if member();
       }
 
