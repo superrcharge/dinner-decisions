@@ -621,6 +621,19 @@
   .rows > .row-group:first-child { border-top: 1px solid var(--line); }
 
   .row-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+
+  /* Fixed box: emoji glyphs differ in width, so without this every meal name
+     starts at a slightly different x - and the ingredient list below has no
+     stable number to line up with. 2px row padding + 26 + 9 = 37px. */
+  .row-icon {
+    display: inline-block;
+    width: 26px;
+    margin-right: 9px;
+    font-size: 19px;
+    line-height: 1;
+    text-align: center;
+    vertical-align: -3px;
+  }
   .row-sub { font-size: 12px; color: var(--ink-faint); font-family: var(--mono); }
 
   .row-actions { display: flex; gap: 6px; flex: none; }
@@ -673,8 +686,10 @@
 
   .pill-add:hover { background: var(--accent); color: var(--accent-ink); }
 
+  /* Left padding matches where the meal name starts, so an ingredient reads
+     as belonging to the meal above it rather than floating out to the margin. */
   .row-expand {
-    padding: 2px 2px 12px 30px;
+    padding: 2px 2px 12px 37px;
   }
 
   .ing {
@@ -1688,7 +1703,7 @@
         var open = !!S.openMeals[m.id];
 
         return '<div class="row-group"><div class="row row-open" data-expand="' + esc(m.id) + '"><div class="row-name">' +
-          '<span class="tile-icon" style="font-size:19px;margin-right:9px;vertical-align:-3px" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" +
+          '<span class="row-icon" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" +
           '<button class="row-tap" type="button" data-expand="' + esc(m.id) + '" aria-expanded="' + open + '">' + esc(m.name) + "</button>" +
           (ing.length ? ' <span class="row-sub">' + ing.length + "</span>" : "") +
           '<button class="pill-add" type="button" data-addingr="' + esc(m.id) + '">+ Ingredient</button>' +
