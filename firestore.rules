@@ -77,7 +77,7 @@ service cloud.firestore {
                               && request.resource.data.name.size() <= 60
                               && (!request.resource.data.keys().hasAny(['ingredients'])
                                   || (request.resource.data.ingredients is list
-                                      && request.resource.data.ingredients.size() <= 60));
+                                      && request.resource.data.ingredients.size() <= 20));
         allow delete: if member();
       }
 

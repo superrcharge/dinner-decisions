@@ -1659,7 +1659,7 @@
     // Same-meal duplicates help nobody; the shopping list dedups across meals.
     var already = ing.some(function (x) { return x.toLowerCase() === name.toLowerCase(); });
     if (!already) ing.push(name);
-    if (ing.length > 60) return status("That is enough ingredients");
+    if (ing.length > 20) return status("That is enough ingredients");
 
     m.ingredients = ing;
     writeIngredients(m, ing);
