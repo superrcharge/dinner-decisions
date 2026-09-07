@@ -5,7 +5,7 @@ Everyone opens the same link on their own phone, taps the meals they'd be happy 
 
 **→ [superrcharge.github.io/dinner-decisions](https://superrcharge.github.io/dinner-decisions/)**
 
-No accounts, no passwords, no app to install. Any phone, any browser.
+No accounts to create, nothing to install. Any phone, any browser.
 
 The link is public, so the first time the app runs on a phone it asks for two things: the family surname and a code.
 That is once per device, not once per visit - enter them and that phone is remembered for good.
@@ -15,7 +15,7 @@ Anyone who finds the URL without both gets a page that will not load anything.
 
 - **Pick meals** - tap tiles to vote. Everything you've chosen is gathered into a **Your picks** strip at the top, so you can read your own selections back without hunting for green tiles. Type anything that isn't on the list and it joins that week's options straight away.
 - **Shopping** - meals ranked by votes, with who picked each one and who hasn't voted yet. Build the week's plan by tapping *Add*.
-- **Manage** - hidden behind a code. Edit the master meal list, keep or dismiss what the kids suggested, set a meal's icon, clear the week.
+- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the kids suggested, set a meal's icon, clear the week.
 
 The tab strip sticks to the top of the screen, so the three views stay reachable however far down the list you've scrolled.
 
@@ -53,7 +53,7 @@ Two moving parts that never talk to each other: GitHub serves the code, Firestor
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./diagrams/runtime-dark.svg">
-  <img src="./diagrams/runtime-light.svg" alt="Signal flow: GitHub Pages serves index.html to the browser and answers its periodic check for a newer build. The page fetches the Firebase SDK and fonts from gstatic, signs in anonymously with Firebase Auth, and reads and writes Firestore through the security rules. localStorage holds per-device identity and cache. Other phones hold their own live connections to the same Firestore." width="100%">
+  <img src="./diagrams/runtime-light.svg" alt="Signal flow: GitHub Pages serves index.html to the browser and answers its periodic check for a newer build. The page fetches the Firebase SDK and fonts from gstatic and signs in anonymously with Firebase Auth, but signing in is not enough - the security rules reject any device not admitted to the household it is asking about. Everything in Firestore sits under households/&lt;hid&gt;/. localStorage holds which household this phone joined, who it is picking as, and a cached copy of that household&apos;s lists. Other phones hold their own live connections to the same Firestore." width="100%">
 </picture>
 
 Deploying a change is a push.
@@ -111,13 +111,38 @@ Every data collection is gated on that member document existing, not on the code
 
 The uid lives in the browser's IndexedDB, so clearing site data means entering both values once more.
 
-Neither value is in `index.html`. `MANAGE_PIN` still is, and is still only a UI gate - it hides the Manage tab from the kids, it does not defend anything. That is a reasonable place to leave it, because everyone who can reach Manage at all already had the code.
+Neither value is in `index.html`. `MANAGE_PIN` still is, and is still only a UI gate - it hides the Manage tab from the kids, it does not defend anything. That is a reasonable place to leave it, because everyone who can reach Manage at all already had the family code.
 
 ### Adding another family
 
-Households are created by hand, never by the app. That is what makes *"No family by that name"* possible, and it stops anyone filling the project with junk households.
+One deployment serves any number of households. Adding one is two documents and no code change.
 
-Two documents in the console: `households/<slug>` with a `name` field, and `households/<slug>/private/join` with a `code` field. Nothing else is needed - the collections appear as that family uses the app, and their list is invisible to yours.
+**It can only be done from the Firebase console.** The rules carry `allow write: if false` on `households`, so no client may create one - not the app, not a snippet in dev tools on the live site. The console's Data tab writes with admin credentials and bypasses security rules entirely, which is why it is the one place this works. A `permission-denied` from anywhere else is the rule doing its job, not a bug.
+
+That restriction is also what makes *"No family by that name"* possible: because households only ever exist deliberately, a surname that does not resolve is a real error rather than an invitation to create one.
+
+**Firestore → Data:**
+
+1. Click `households` → **Add document**. Document ID is the slug of their surname. Add one field, `name`, type string, holding the display name. **Save**.
+2. Click the document you just made → **Start collection**. Collection ID `private`, Document ID `join`. Add one field, `code`, type string, holding their code, lowercase. **Save**.
+
+That is all. The five data collections appear on their own as that family uses the app.
+
+Tell them their surname and code. They open the same URL, tap **Choose**, enter both, and start with an empty list they build themselves. Their data is invisible to yours and yours to theirs.
+
+**Getting the slug right.** The app lowercases the typed surname and turns every run of non-alphanumerics into a single hyphen, so `O'Brien` resolves to `o-brien` and `Van Dyke` to `van-dyke`. The document ID has to match what that produces, or their surname will not resolve.
+
+**Why there is no script for this.** Automation would have to come in above the rules, which means admin credentials. The Admin SDK route puts a long-lived, full-power service account key on a laptop to save six clicks; the REST route avoids the stored key only by requiring the gcloud CLI, which is more tooling than the thing it replaces. Both are a bad trade for a task done roughly never. If it ever became frequent the answer would not be a script but letting families create their own household - a rules and UI change that costs the clean "no such family" error above.
+
+### Leftovers from the migration
+
+> **One-time. Delete this section once it is done.**
+
+Before the household gate, everything lived in top-level `meals`, `suggestions`, `people`, `votes` and `weeks` collections. The migration copied all 62 documents into `households/charge/` and left the originals in place deliberately, as a fallback while phones were still joining. Nothing reads them now.
+
+Once every phone has joined and is working, remove them: **Firestore → Data**, then for each of those five collections, open it and use **Delete collection**.
+
+Leave `households` alone - that is the live data.
 
 ### Deploying the rules
 
@@ -138,13 +163,13 @@ They do not distinguish between members. Anyone holding the code can edit that h
 2. **Firestore Database → Create database**, production mode, any US region.
 3. **Authentication → Sign-in method → Anonymous → Enable.**
 4. **Project settings → Your apps → `</>`** and copy the config into `FIREBASE_CONFIG` in `index.html`.
-5. Create the household by hand: `households/<slug>` with a `name` field, and `households/<slug>/private/join` with a lowercase `code` field. Do this *before* publishing the rules - without it every join fails.
+5. Create the first household as described in [Adding another family](#adding-another-family). Do this *before* publishing the rules - without it every join fails.
 6. Paste `firestore.rules` into the console and publish.
 7. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**, application restrictions → Websites → the Pages origin.
 
 ## Firestore data model
 
-Everything hangs off a household, so there are no top-level collections but one:
+Everything hangs off a household, so the app touches no top-level collection but one:
 
 | Path | Document id | Holds |
 |---|---|---|

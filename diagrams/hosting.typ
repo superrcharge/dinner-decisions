@@ -67,7 +67,8 @@
     palette.orange, <edge>),
 
   stage((4, 0), "\u{F10B}", "Family phone", "browser",
-    "Any phone, any browser. No sign-in, no app install.",
+    "Any phone, any browser. No account and no app install - just the family "
+    + "name and code, once.",
     palette.green, <phone>),
 
   flow(<dev>, <repo>, "git push"),

@@ -75,19 +75,22 @@
     palette.blue, <page>, w: 176pt, weight: tokens.stroke-emphasis),
 
   box-node((2, 1), "\u{F023}", "Security rules", "gate",
-    "Checked on every read and write. Rejects anyone not signed in and any "
-    + "collection outside the five below.",
+    "Checked on every read and write. Signing in is not enough: they reject "
+    + "any device that has not been admitted to the household it is asking "
+    + "about.",
     palette.red, <rules>),
 
   box-node((3, 1), "\u{F1C0}", "Cloud Firestore", "shared data",
-    "meals \u{2022} suggestions \u{2022} people \u{2022} votes \u{2022} weeks\n\n"
+    "Everything sits under households/<hid>/ - meals, suggestions, people, "
+    + "votes, weeks, plus members and private, which decide who gets in.\n\n"
     + "Doc ids are meaningful: a vote is <week>__<person>, a meal is its own slug.",
     palette.green, <store>),
 
   // ---- per device ----
   box-node((0, 2), "\u{F0A0}", "localStorage", "this device only",
-    "Who this phone is picking as, whether it has the manage code, and a cached "
-    + "copy of the lists for an instant first paint.",
+    "Which household this phone joined, who it is picking as, whether it has "
+    + "the manage code, and a cached copy of that household's lists for an "
+    + "instant first paint. The household is what scopes the rest.",
     palette.pink, <local>),
 
   box-node((3, 2), "\u{F10B}", "The other phones", "same page, same data",
