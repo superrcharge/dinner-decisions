@@ -433,6 +433,7 @@
     display: flex;
     gap: 8px;
     margin-top: 12px;
+    margin-bottom: 14px;
   }
 
   input[type="text"],
@@ -634,8 +635,13 @@
     margin-left: 6px;
   }
 
-  /* Tapping the name is what expands, so it needs to read as pressable
-     without becoming another button in a row that already has three. */
+  /* The whole row expands, the way a phone list is expected to behave. The
+     action buttons and the pill sit inside it and win the click, because
+     closest() resolves to the nearest match rather than the row. */
+  .row-open { cursor: pointer; }
+
+  /* The name stays a real button so the row is reachable and operable by
+     keyboard, not only by tapping. */
   .row-tap {
     font: inherit;
     text-align: left;
@@ -1640,11 +1646,17 @@
     render();
   }
 
-  function toggleMeal(id, forceOpen) {
-    if (forceOpen || !S.openMeals[id]) S.openMeals[id] = true;
-    else delete S.openMeals[id];
+  // Everything that opens a meal also closes it - tapping the row, and
+  // tapping the pill. An affordance you cannot reverse is a trap when the tap
+  // was an accident. The pill differs only in putting the cursor in the box
+  // on the way open.
+  function toggleMeal(id, focusInput) {
+    var wasOpen = !!S.openMeals[id];
+    if (wasOpen) delete S.openMeals[id];
+    else S.openMeals[id] = true;
     render();
-    if (S.openMeals[id] && forceOpen) {
+
+    if (!wasOpen && focusInput) {
       var el = $("ingInput-" + id);
       if (el) el.focus();
     }
@@ -1675,7 +1687,7 @@
         var ing = m.ingredients || [];
         var open = !!S.openMeals[m.id];
 
-        return '<div class="row-group"><div class="row"><div class="row-name">' +
+        return '<div class="row-group"><div class="row row-open" data-expand="' + esc(m.id) + '"><div class="row-name">' +
           '<span class="tile-icon" style="font-size:19px;margin-right:9px;vertical-align:-3px" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" +
           '<button class="row-tap" type="button" data-expand="' + esc(m.id) + '" aria-expanded="' + open + '">' + esc(m.name) + "</button>" +
           (ing.length ? ' <span class="row-sub">' + ing.length + "</span>" : "") +
