@@ -29,7 +29,9 @@ The same menu shows the current family afterwards, with a **Change** link if a p
 
 Meals can carry a list of ingredients, and the week's plan turns them into one list to shop from.
 
-**Adding them** - in **Manage**, tap a meal's name to expand it, or tap **+ Ingredient** to expand it with the cursor already in the box. The number beside a meal's name is how many it has. Nothing shows until you tap, so the tab looks exactly as it did before.
+**Adding them** - in **Manage**, tap anywhere on a meal's row to open it, and tap again to close. **+ Ingredient** does the same but puts the cursor straight in the box. The small number beside a meal's name is how many it already has, so you can read the list without opening anything. Nothing is shown until you tap, so the tab stays as quiet as it was before.
+
+A meal holds up to 20 ingredients. That is roughly double a long recipe - it is a guardrail, not a target.
 
 **Shopping from it** - the **Shopping** tab shows a **To buy** list under the week's plan, built from whatever is locked in. It only appears for someone who has entered the Manage code, because they are the one doing the shopping. Everyone else sees the plan exactly as before.
 
@@ -192,7 +194,7 @@ Everything hangs off a household, so the app touches no top-level collection but
 | `households` | slug of the surname | `name`. `get` is allowed so the app can say "no family by that name"; **`list` is denied**, so the ids cannot be enumerated |
 | `households/<hid>/private` | `join` | one field, `code`. Denied to every client in both directions; only a rule's own `get()` reads it |
 | `households/<hid>/members` | anonymous uid | one per admitted device. Delete one to revoke that phone |
-| `households/<hid>/meals` | slug of the name | the master list. Optional `icon` field overrides the matched emoji; optional `ingredients` array of strings feeds the grocery list |
+| `households/<hid>/meals` | slug of the name | the master list. Optional `icon` field overrides the matched emoji; optional `ingredients` array of up to 20 strings feeds the grocery list |
 | `households/<hid>/suggestions` | slug of the name | typed-in meals awaiting keep or dismiss |
 | `households/<hid>/people` | slug plus a random suffix | the household roster |
 | `households/<hid>/votes` | `<weekId>__<personId>` | one document per person per week, holding an array of meal ids |
