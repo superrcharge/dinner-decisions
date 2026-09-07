@@ -35,7 +35,7 @@
 
 // A collection inside the store. The document-id shape is the second line
 // because that is where the meaning sits in this data model.
-#let coll(pos, name-str, docid, desc, name) = node(
+#let coll(pos, name-str, docid, desc, name, hue: palette.green) = node(
   pos,
   block(
     width: 186pt,
@@ -44,20 +44,20 @@
       spacing: tokens.gap-structured-text,
       block(width: 100%, align(center, text(
         size: tokens.size-body, weight: tokens.weight-bold,
-        fill: palette.green.ink, name-str,
+        fill: hue.ink, name-str,
       ))),
       block(width: 100%, align(center, text(
-        size: tokens.size-label, fill: palette.green.ink.lighten(18%), docid,
+        size: tokens.size-label, fill: hue.ink.lighten(18%), docid,
       ))),
-      line(length: 100%, stroke: 0.6pt + palette.green.divider),
+      line(length: 100%, stroke: 0.6pt + hue.divider),
       block(width: 100%, align(left, text(
-        size: tokens.size-caption, fill: palette.green.ink, desc,
+        size: tokens.size-caption, fill: hue.ink, desc,
       ))),
     ),
   ),
   shape: fletcher.shapes.rect,
   fill: palette.surface,
-  stroke: tokens.stroke-thin + palette.green.stroke,
+  stroke: tokens.stroke-thin + hue.stroke,
   corner-radius: tokens.radius-shape,
   inset: tokens.pad-inside-shape,
   name: name,
@@ -77,15 +77,15 @@
     palette.yellow, <auth>),
 
   box-node((0, 1), "\u{F023}", "Security rules", "gate",
-    "Every read and write passes through. Rejects anyone unauthenticated, and "
-    + "any collection outside the five here.",
+    "Every read and write passes through. Rejects any device that has not "
+    + "been admitted to this household, and any path outside the seven here.",
     palette.red, <rules>, weight: tokens.stroke-emphasis),
 
   // Title for the enclosure. Fletcher errors on shape: none, so an invisible
   // rect carries the label and joins the enclose list.
   node((1.5, -1),
     text(size: tokens.size-title, weight: tokens.weight-bold, fill: palette.green.ink,
-      "\u{F1C0}  Cloud Firestore"),
+      "\u{F1C0}  households / <hid>"),
     shape: fletcher.shapes.rect,
     fill: none,
     stroke: none,
@@ -111,8 +111,21 @@
     "The meals locked into that week's plan. weekId is the Sunday, as "
     + "YYYY-MM-DD, so the week rolls over on its own.", <weeks>),
 
+  // The two gate collections carry the rules' hue rather than the store's:
+  // they hold no dinner data, and every rule above depends on them.
+  coll((2, 2), "members", "id: the anonymous uid",
+    "One per admitted device, written by the device itself once it presents "
+    + "the code. Delete one to revoke that phone.", <members>,
+    hue: palette.red),
+
+  coll((1, 3), "private", "id: join",
+    "One field, the household's code. No client may read it - only a rule "
+    + "can, and a rule's own get() is not subject to the rules.", <config>,
+    hue: palette.red),
+
   node(
-    enclose: (<storetitle>, <meals>, <sugg>, <people>, <votes>, <weeks>),
+    enclose: (<storetitle>, <meals>, <sugg>, <people>, <votes>, <weeks>,
+              <members>, <config>),
     inset: tokens.pad-inside-container,
     stroke: tokens.stroke-default + palette.green.stroke,
     fill: palette.green.fill,
@@ -128,6 +141,13 @@
     text(size: tokens.label-size, weight: tokens.weight-bold, fill: palette.ink, "token"),
   ),
 
+  edge(<rules>, <config>, "->", bend: -18deg,
+    stroke: tokens.stroke-default + palette.red.stroke,
+    label-fill: palette.surface,
+    label-sep: tokens.label-sep,
+    text(size: tokens.label-size, weight: tokens.weight-bold, fill: palette.red.ink, "get()"),
+  ),
+
   edge(<rules>, <store>, "->",
     stroke: tokens.stroke-emphasis + palette.green.stroke,
     label-fill: palette.surface,
@@ -141,6 +161,12 @@
 #align(center, block(width: 690pt, stack(
   dir: ttb,
   spacing: 7pt,
+  text(size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
+    "Everything above sits inside one household, keyed by a slug of the "
+    + "family's surname. The id is meant to be guessable - that is how a "
+    + "second phone finds the same list - and grants nothing on its own. The "
+    + "households collection denies list, so the ids cannot be enumerated, "
+    + "and the code in private/join is what actually admits a device."),
   text(size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
     "Firestore and Anonymous Authentication are the only Firebase products "
     + "switched on. GitHub Pages serves the app, so Firebase Hosting and "

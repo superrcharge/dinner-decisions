@@ -1,58 +1,110 @@
 rules_version = '2';
 
-// The site is public, so every visitor is an anonymous signed-in user.
-// These rules do two things: keep traffic that has not signed in out
-// entirely, and confine writes to the five collections the app uses so
-// nobody can dump arbitrary data into the project.
+// Everything lives under a household, and a device gets into one by
+// presenting a code it can never read back.
 //
-// create/update and delete are listed separately on purpose. A delete is a
-// write, but it carries no request.resource, so folding both into one
-// `allow write` with a shape check would block every delete: removing a
-// meal, dismissing a suggestion, clearing a week.
+// The household id is a slug of the family's surname, so it is short,
+// memorable, and guessable by anyone who knows them. That is deliberate and
+// harmless: the id alone grants nothing. What admits a device is the code,
+// which lives in a document denied to every client in both directions.
 //
-// These rules deliberately do NOT restrict who may edit the meal list. The
-// Manage tab's code is a UI gate only. Anyone with this URL can write here.
+// Anonymous Auth still signs everyone in, but an anonymous identity now buys
+// nothing on its own. A stranger who finds the URL signs in fine, cannot
+// enumerate households, cannot read the code, and cannot touch any data.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /meals/{id} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
-                            && request.resource.data.name is string
-                            && request.resource.data.name.size() > 0
-                            && request.resource.data.name.size() <= 60;
-      allow delete: if request.auth != null;
-    }
+    match /households/{hid} {
 
-    match /suggestions/{id} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
-                            && request.resource.data.name is string
-                            && request.resource.data.name.size() > 0
-                            && request.resource.data.name.size() <= 60;
-      allow delete: if request.auth != null;
-    }
+      function member() {
+        return request.auth != null
+               && exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+      }
 
-    match /people/{id} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
-                            && request.resource.data.name is string
-                            && request.resource.data.name.size() > 0
-                            && request.resource.data.name.size() <= 24;
-      allow delete: if request.auth != null;
-    }
+      // A device resolves a typed surname to a household here, so it can tell
+      // "no family by that name" from "wrong code". That is all this is for.
+      allow get: if request.auth != null;
 
-    match /votes/{id} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
-                            && request.resource.data.mealIds is list
-                            && request.resource.data.mealIds.size() <= 200;
-      allow delete: if request.auth != null;
-    }
+      // LOAD-BEARING. Without this a single query returns every household id
+      // in the project, and a guessable id becomes a harvestable list.
+      allow list: if false;
 
-    match /weeks/{id} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      // Households are provisioned by hand in the console. Nothing the app
+      // does creates one, so nobody can fill the project with junk.
+      allow write: if false;
+
+      // LOAD-BEARING. The whole model rests on the code being unreadable.
+      // A rule's own get() is not subject to these rules, which is the only
+      // way a static site served from a public repo can hold a secret at all.
+      match /private/{doc} {
+        allow read, write: if false;
+      }
+
+      // One document per admitted device, keyed by its anonymous uid. It
+      // stores the code it presented; only that device can read it back.
+      match /members/{uid} {
+        allow get: if request.auth != null && request.auth.uid == uid;
+        allow list: if false;
+
+        allow create: if request.auth != null
+                      && request.auth.uid == uid
+                      && request.resource.data.code
+                         == get(/databases/$(database)/documents/households/$(hid)/private/join).data.code;
+
+        // LOAD-BEARING. A device that could edit this record could grant
+        // itself anything; one that could delete it could undo a revocation.
+        // Revoking a phone is deleting its document from the console.
+        allow update, delete: if false;
+      }
+
+      // The data. create/update and delete stay separate clauses on purpose:
+      // a delete carries no request.resource, so folding them into one rule
+      // with a field check silently blocks every delete - removing a meal,
+      // dismissing a suggestion, clearing a week.
+      //
+      // These rules do not distinguish between members. Anyone holding the
+      // code may edit the meal list, which is the intended shape for a
+      // household. The Manage tab's PIN is a UI gate only.
+
+      match /meals/{id} {
+        allow read: if member();
+        allow create, update: if member()
+                              && request.resource.data.name is string
+                              && request.resource.data.name.size() > 0
+                              && request.resource.data.name.size() <= 60;
+        allow delete: if member();
+      }
+
+      match /suggestions/{id} {
+        allow read: if member();
+        allow create, update: if member()
+                              && request.resource.data.name is string
+                              && request.resource.data.name.size() > 0
+                              && request.resource.data.name.size() <= 60;
+        allow delete: if member();
+      }
+
+      match /people/{id} {
+        allow read: if member();
+        allow create, update: if member()
+                              && request.resource.data.name is string
+                              && request.resource.data.name.size() > 0
+                              && request.resource.data.name.size() <= 24;
+        allow delete: if member();
+      }
+
+      match /votes/{id} {
+        allow read: if member();
+        allow create, update: if member()
+                              && request.resource.data.mealIds is list
+                              && request.resource.data.mealIds.size() <= 200;
+        allow delete: if member();
+      }
+
+      match /weeks/{id} {
+        allow read: if member();
+        allow write: if member();
+      }
     }
   }
 }

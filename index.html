@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="description" content="What the family wants for dinner this week.">
-<title>What's For Dinner</title>
+<title>Dinner Decisions</title>
 
-<!-- Home screen. apple-mobile-web-app-title is what iOS pre-fills as the
-     bookmark name; without it iOS would use the <title> above. Android takes
+<!-- Home screen. iOS would fall back to the <title> above, which now matches,
+     but the tag stays because the two are free to diverge again. Android takes
      short_name from the manifest. -->
 <meta name="apple-mobile-web-app-title" content="Dinner Decisions">
 <meta name="application-name" content="Dinner Decisions">
@@ -435,7 +435,8 @@
     margin-top: 12px;
   }
 
-  input[type="text"] {
+  input[type="text"],
+  input[type="password"] {
     flex: 1;
     min-width: 0;
     font: inherit;
@@ -447,7 +448,8 @@
     padding: 10px 12px;
   }
 
-  input[type="text"]::placeholder { color: var(--ink-faint); }
+  input[type="text"]::placeholder,
+  input[type="password"]::placeholder { color: var(--ink-faint); }
 
   .btn {
     font: inherit;
@@ -678,6 +680,45 @@
     padding: 6px 6px 4px;
   }
 
+  /* The join stage stacks its fields rather than sitting them in a row: two
+     inputs and a button do not fit side by side on a phone. */
+  .menu-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 6px 6px 4px;
+  }
+
+  .menu-note {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--ink-muted);
+    padding: 0 12px 8px;
+  }
+
+  .menu-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 4px 12px 10px;
+  }
+
+  .menu-link {
+    font: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent);
+    background: none;
+    border: 0;
+    padding: 2px 0;
+    cursor: pointer;
+  }
+
+  .menu-link:hover { text-decoration: underline; }
+
   /* ---------- sticky bar ---------- */
 
   .bar {
@@ -777,7 +818,7 @@
 <div class="wrap">
   <header class="masthead">
     <div>
-      <h1 class="wordmark">What&rsquo;s for dinner</h1>
+      <h1 class="wordmark">Dinner Decisions</h1>
       <div class="week-line" id="weekLine">&nbsp;</div>
     </div>
     <div class="whoami">
@@ -870,6 +911,11 @@
 
   var S = {
     db: null,
+    uid: null,          // this device's anonymous Firebase identity
+    hid: null,          // household id - slug of the family's surname
+    hname: "",          // its display name, for the chip menu
+    subs: [],           // live snapshot unsubscribes, so a switch can detach
+    joinStage: false,   // chip menu showing the join form rather than the roster
     ready: false,
     connected: false,
     votesLoaded: false,
@@ -887,8 +933,14 @@
 
   var LS = {
     get: function (k) { try { return localStorage.getItem("dinner." + k); } catch (e) { return null; } },
-    set: function (k, v) { try { localStorage.setItem("dinner." + k, v); } catch (e) {} }
+    set: function (k, v) { try { localStorage.setItem("dinner." + k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem("dinner." + k); } catch (e) {} }
   };
+
+  // Cached lists and the chosen person both belong to one household. Without
+  // this prefix, switching families would show the previous one's meals and
+  // name a person who does not exist in the new roster.
+  function hkey(k) { return S.hid + "." + k; }
 
   /* ---------------- the week ---------------- */
 
@@ -927,6 +979,10 @@
   }
 
   function byName(a, b) { return a.name.localeCompare(b.name); }
+
+  // Every document the app touches hangs off the current household, so this
+  // is the only place the nesting is spelled out.
+  function ref(path) { return ref("households/" + S.hid + "/" + path); }
 
   function cacheWrite(key, arr) { LS.set(key, JSON.stringify(arr)); }
 
@@ -1044,7 +1100,7 @@
   function savePicks(ids) {
     if (!S.connected) {
       S.localPicks = ids;
-      cacheWrite("localPicks." + WEEK_ID, ids);
+      cacheWrite(hkey("localPicks." + WEEK_ID), ids);
       status("Saved here", true);
       return;
     }
@@ -1054,7 +1110,7 @@
     status("Saving");
     clearTimeout(S.saveTimer);
     S.saveTimer = setTimeout(function () {
-      S.db.doc("votes/" + WEEK_ID + "__" + person.id).set({
+      ref("votes/" + WEEK_ID + "__" + person.id).set({
         weekId: WEEK_ID,
         personId: person.id,
         name: person.name,
@@ -1122,16 +1178,16 @@
 
     if (!S.connected) {
       S.suggestions = S.suggestions.concat([{ id: id, name: name, addedBy: (me() || {}).name || "" }]);
-      cacheWrite("suggestions", S.suggestions);
+      cacheWrite(hkey("suggestions"), S.suggestions);
       if (myPicks().indexOf(id) === -1) togglePick(id); else render();
       return;
     }
 
     var write;
     if (asAdmin && S.admin) {
-      write = S.db.doc("meals/" + id).set({ name: name, active: true, createdAt: new Date().toISOString() });
+      write = ref("meals/" + id).set({ name: name, active: true, createdAt: new Date().toISOString() });
     } else {
-      write = S.db.doc("suggestions/" + id).set({
+      write = ref("suggestions/" + id).set({
         name: name,
         addedBy: (me() || {}).name || "",
         createdAt: new Date().toISOString()
@@ -1147,23 +1203,23 @@
   }
 
   function keepSuggestion(s) {
-    S.db.doc("meals/" + s.id).set({ name: s.name, active: true, createdAt: new Date().toISOString() })
-      .then(function () { return S.db.doc("suggestions/" + s.id).delete(); })
+    ref("meals/" + s.id).set({ name: s.name, active: true, createdAt: new Date().toISOString() })
+      .then(function () { return ref("suggestions/" + s.id).delete(); })
       .catch(function (e) { console.warn("keep failed", e); });
   }
 
   function dismissSuggestion(s) {
-    S.db.doc("suggestions/" + s.id).delete().catch(function (e) { console.warn("dismiss failed", e); });
+    ref("suggestions/" + s.id).delete().catch(function (e) { console.warn("dismiss failed", e); });
   }
 
   function removeMeal(m) {
-    S.db.doc("meals/" + m.id).delete().catch(function (e) { console.warn("remove failed", e); });
+    ref("meals/" + m.id).delete().catch(function (e) { console.warn("remove failed", e); });
   }
 
   function setIcon(m) {
     var next = window.prompt("Paste an emoji for " + m.name + ", or clear it to go back to the automatic one.", m.icon || "");
     if (next === null) return;
-    S.db.doc("meals/" + m.id).update({ icon: next.trim() }).catch(function (e) { console.warn("icon failed", e); });
+    ref("meals/" + m.id).update({ icon: next.trim() }).catch(function (e) { console.warn("icon failed", e); });
   }
 
   function renameMeal(m) {
@@ -1171,7 +1227,7 @@
     if (next === null) return;
     next = next.trim().replace(/\s+/g, " ");
     if (!next || next === m.name) return;
-    S.db.doc("meals/" + m.id).update({ name: next }).catch(function (e) { console.warn("rename failed", e); });
+    ref("meals/" + m.id).update({ name: next }).catch(function (e) { console.warn("rename failed", e); });
   }
 
   function togglePlan(id) {
@@ -1181,7 +1237,7 @@
     if (i === -1) next.push(id); else next.splice(i, 1);
     S.chosen = next;
     render();
-    S.db.doc("weeks/" + WEEK_ID).set({ chosen: next, updatedAt: new Date().toISOString() })
+    ref("weeks/" + WEEK_ID).set({ chosen: next, updatedAt: new Date().toISOString() })
       .catch(function (e) { console.warn("plan write failed", e); });
   }
 
@@ -1189,9 +1245,9 @@
     if (!S.admin || !S.connected) return;
     if (!window.confirm("Clear everyone's picks for the week of " + MONTHS[WEEK_START.getMonth()] + " " + WEEK_START.getDate() + "?")) return;
     S.votes.forEach(function (v) {
-      S.db.doc("votes/" + v.id).delete().catch(function () {});
+      ref("votes/" + v.id).delete().catch(function () {});
     });
-    S.db.doc("weeks/" + WEEK_ID).set({ chosen: [], updatedAt: new Date().toISOString() }).catch(function () {});
+    ref("weeks/" + WEEK_ID).set({ chosen: [], updatedAt: new Date().toISOString() }).catch(function () {});
   }
 
   function addPerson(rawName) {
@@ -1199,22 +1255,22 @@
     if (!name) return null;
     var id = slug(name) + "-" + rid();
     if (S.connected) {
-      S.db.doc("people/" + id).set({ name: name, createdAt: new Date().toISOString() })
+      ref("people/" + id).set({ name: name, createdAt: new Date().toISOString() })
         .catch(function (e) { console.warn("person write failed", e); });
     }
     S.people = S.people.concat([{ id: id, name: name }]).sort(byName);
-    cacheWrite("people", S.people);
+    cacheWrite(hkey("people"), S.people);
     return id;
   }
 
   function removePerson(p) {
     if (!S.connected) return;
-    S.db.doc("people/" + p.id).delete().catch(function (e) { console.warn("person delete failed", e); });
+    ref("people/" + p.id).delete().catch(function (e) { console.warn("person delete failed", e); });
   }
 
   function setMe(id) {
     S.meId = id;
-    LS.set("personId", id);
+    LS.set(hkey("personId"), id);
     render();
   }
 
@@ -1230,6 +1286,8 @@
     var el = $("banner");
     if (!S.ready) {
       el.innerHTML = "";
+    } else if (!S.hid) {
+      el.innerHTML = '<div class="notice">Tap <strong>Choose</strong> at the top right and enter your family name and code to get started.</div>';
     } else if (!S.connected) {
       el.innerHTML = '<div class="notice">Not connected to the family list, so picks are saved on this device only.</div>';
     } else if (!S.meId) {
@@ -1410,9 +1468,42 @@
 
   // A small menu under the chip. The name field is only mounted once someone
   // asks for it, so simply opening the menu never raises a keyboard.
+  // The one place a new phone gets set up: which family, then who is picking.
+  // Both stages live in this menu rather than a separate screen, because
+  // saying who you are was already the first thing a new phone had to do.
   function openSheet(showAdd) {
     S.sheetOpen = true;
 
+    var joining = S.joinStage || !S.hid;
+
+    $("sheetHost").innerHTML =
+      '<div class="menu-backdrop" id="sheetBackdrop"></div>' +
+      '<div class="menu" id="whoMenu" role="menu" aria-label="' +
+      (joining ? "Your family" : "Who is picking") + '">' +
+      (joining ? joinForm() : rosterMenu(showAdd)) +
+      "</div>";
+
+    var anchor = $("whoBtn").getBoundingClientRect();
+    var menu = $("whoMenu");
+    menu.style.top = (anchor.bottom + 8) + "px";
+    menu.style.right = Math.max(10, window.innerWidth - anchor.right) + "px";
+
+    if (joining) $("joinFamily").focus();
+    else if (showAdd) $("personInput").focus();
+  }
+
+  function joinForm() {
+    return '<div class="menu-head">Your family</div>' +
+      '<div class="menu-note">Enter these once. This phone will remember them.</div>' +
+      '<div class="menu-stack">' +
+      '<input type="text" id="joinFamily" placeholder="Last name" autocomplete="off" maxlength="40" value="' + esc(S.hname) + '">' +
+      '<input type="password" id="joinCode" placeholder="Code" autocomplete="off" maxlength="40">' +
+      '<button class="btn btn-primary" id="joinGo" type="button">Join</button>' +
+      "</div>" +
+      (S.hid ? '<button class="menu-item menu-add" type="button" id="joinCancel">Cancel</button>' : "");
+  }
+
+  function rosterMenu(showAdd) {
     var rows = S.people.map(function (p) {
       return '<button class="menu-item" type="button" data-person="' + esc(p.id) + '" aria-current="' + (p.id === S.meId) + '">' + esc(p.name) + "</button>";
     }).join("");
@@ -1422,19 +1513,93 @@
         '<button class="btn btn-primary" id="personAdd" type="button">Add</button></div>'
       : '<button class="menu-item menu-add" type="button" id="showAddName">+ Add a name</button>';
 
-    $("sheetHost").innerHTML =
-      '<div class="menu-backdrop" id="sheetBackdrop"></div>' +
-      '<div class="menu" id="whoMenu" role="menu" aria-label="Who is picking">' +
+    return '<div class="menu-head">Your family</div>' +
+      '<div class="menu-row"><span>' + esc(S.hname || S.hid) + '</span>' +
+      '<button class="menu-link" type="button" id="changeFamily">Change</button></div>' +
+      '<div class="menu-sep"></div>' +
       '<div class="menu-head">Who is picking</div>' +
-      rows + (rows ? '<div class="menu-sep"></div>' : "") + tail +
-      "</div>";
+      rows + (rows ? '<div class="menu-sep"></div>' : "") + tail;
+  }
 
-    var anchor = $("whoBtn").getBoundingClientRect();
-    var menu = $("whoMenu");
-    menu.style.top = (anchor.bottom + 8) + "px";
-    menu.style.right = Math.max(10, window.innerWidth - anchor.right) + "px";
+  // Two failure modes, two different messages. Telling them apart is why the
+  // household document is readable at all: the members write alone could not
+  // distinguish "no such family" from "wrong code".
+  function submitJoin() {
+    var nameEl = $("joinFamily");
+    var codeEl = $("joinCode");
+    var goEl = $("joinGo");
+    if (!nameEl || !codeEl || !goEl) return;
 
-    if (showAdd) $("personInput").focus();
+    // The chip is tappable as soon as the cached view paints, which is before
+    // anonymous sign-in has necessarily come back.
+    if (!S.db || !S.uid) {
+      codeEl.placeholder = "Still connecting";
+      return;
+    }
+
+    var typed = nameEl.value.trim().replace(/\s+/g, " ");
+    var code = codeEl.value.trim().toLowerCase();
+    if (!typed) return nameEl.focus();
+    if (!code) return codeEl.focus();
+
+    var hid = slug(typed);
+    if (!hid || hid === "meal") return nameEl.focus();
+
+    goEl.disabled = true;
+    var settled = false;
+
+    function fail(el, placeholder) {
+      if (settled) return;
+      settled = true;
+      goEl.disabled = false;
+      el.value = "";
+      el.placeholder = placeholder;
+      el.focus();
+    }
+
+    // Firestore's offline queue holds a write until the server acknowledges
+    // it and never rejects, so without this a join attempted with no signal
+    // would leave a permanently disabled button.
+    var giveUp = setTimeout(function () { fail(codeEl, "No connection"); }, 8000);
+
+    var house = S.db.collection("households").doc(hid);
+
+    house.get().then(function (snap) {
+      if (!snap.exists) {
+        clearTimeout(giveUp);
+        return fail(nameEl, "No family by that name");
+      }
+      var hname = (snap.data() || {}).name || typed;
+
+      // The code is never compared here. It goes up with the write, and the
+      // rules check it against a document no client is allowed to read.
+      return house.collection("members").doc(S.uid).set({
+        code: code,
+        joinedAt: new Date().toISOString()
+      }).then(function () {
+        if (settled) return;
+        settled = true;
+        clearTimeout(giveUp);
+        enterHousehold(hid, hname);
+      });
+    }).catch(function (e) {
+      clearTimeout(giveUp);
+      if (e && e.code === "permission-denied") return fail(codeEl, "Not that code");
+      fail(codeEl, "Try again");
+    });
+  }
+
+  function enterHousehold(hid, hname) {
+    disconnect();
+    S.hid = hid;
+    S.hname = hname;
+    S.joinStage = false;
+    LS.set("householdId", hid);
+    LS.set("householdName", hname);
+    hydrateHousehold();
+    closeSheet();
+    status("Connecting");
+    connect(S.db);
   }
 
   function selectTab(which) {
@@ -1491,6 +1656,7 @@
 
   function closeSheet() {
     S.sheetOpen = false;
+    S.joinStage = false;
     $("sheetHost").innerHTML = "";
   }
 
@@ -1540,13 +1706,16 @@
 
     // Clicks can land on a child span, so resolve the owning control.
     var hit = ev.target.closest
-      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage")
+      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#joinGo,#joinCancel,#changeFamily,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage")
       : null;
     var id = hit ? hit.id : ev.target.id;
 
     if (id === "whoBtn") return openSheet();
     if (id === "sheetBackdrop") return closeSheet();
     if (id === "showAddName") return openSheet(true);
+    if (id === "joinGo") return submitJoin();
+    if (id === "changeFamily") { S.joinStage = true; return openSheet(); }
+    if (id === "joinCancel") { S.joinStage = false; return openSheet(); }
     if (id === "personAdd") return submitPerson($("personInput").value);
     if (id === "clearBtn") return clearWeek();
     if (id === "refreshBtn" || id === "updateBtn") return location.reload();
@@ -1580,23 +1749,50 @@
     if (id === "addInput") { addMeal(ev.target.value, false); ev.target.value = ""; }
     if (id === "manageAddInput") { addMeal(ev.target.value, true); ev.target.value = ""; }
     if (id === "personInput") { submitPerson(ev.target.value); }
+    if (id === "joinFamily") { $("joinCode").focus(); }
+    if (id === "joinCode") { submitJoin(); }
     if (id === "managePin") { submitManagePin(); }
   });
 
   /* ---------------- boot ---------------- */
 
+  // Everything below hkey() needs S.hid, so the household is read first and
+  // the rest is skipped entirely when this phone has not joined one.
   function hydrateFromCache() {
-    S.meals = cacheRead("meals") || [];
-    S.suggestions = cacheRead("suggestions") || [];
-    S.people = cacheRead("people") || [];
-    S.localPicks = cacheRead("localPicks." + WEEK_ID) || [];
-    S.meId = LS.get("personId");
+    S.hid = LS.get("householdId");
+    S.hname = LS.get("householdName") || "";
     S.admin = LS.get("manager") === "1";
+    if (S.hid) hydrateHousehold();
     render();
+  }
+
+  function hydrateHousehold() {
+    S.meals = cacheRead(hkey("meals")) || [];
+    S.suggestions = cacheRead(hkey("suggestions")) || [];
+    S.people = cacheRead(hkey("people")) || [];
+    S.localPicks = cacheRead(hkey("localPicks." + WEEK_ID)) || [];
+    S.meId = LS.get(hkey("personId"));
   }
 
   function listOf(snap, map) {
     return snap.docs.map(function (doc) { return map(doc.id, doc.data() || {}); });
+  }
+
+  // Detach every live listener and forget the household's data. Without this
+  // a family switch would leave the old subscriptions running, and they would
+  // keep overwriting S.meals / S.people / S.votes with the previous list.
+  function disconnect() {
+    S.subs.forEach(function (off) { try { off(); } catch (e) {} });
+    S.subs = [];
+    S.connected = false;
+    S.votesLoaded = false;
+    S.meals = [];
+    S.suggestions = [];
+    S.people = [];
+    S.votes = [];
+    S.chosen = [];
+    S.localPicks = [];
+    S.meId = null;
   }
 
   function connect(db) {
@@ -1604,29 +1800,31 @@
     S.connected = true;
     S.ready = true;
 
-    db.collection("meals").onSnapshot(function (snap) {
-      S.meals = listOf(snap, function (id, d) { return { id: id, name: d.name || id, icon: d.icon || "" }; }).sort(byName);
-      cacheWrite("meals", S.meals);
-      render();
-    }, function (e) { console.warn("meals subscription ended", e); });
+    var root = db.collection("households").doc(S.hid);
 
-    db.collection("suggestions").onSnapshot(function (snap) {
+    S.subs.push(root.collection("meals").onSnapshot(function (snap) {
+      S.meals = listOf(snap, function (id, d) { return { id: id, name: d.name || id, icon: d.icon || "" }; }).sort(byName);
+      cacheWrite(hkey("meals"), S.meals);
+      render();
+    }, function (e) { console.warn("meals subscription ended", e); }));
+
+    S.subs.push(root.collection("suggestions").onSnapshot(function (snap) {
       S.suggestions = listOf(snap, function (id, d) {
         return { id: id, name: d.name || id, icon: d.icon || "", addedBy: d.addedBy || "" };
       }).sort(byName);
-      cacheWrite("suggestions", S.suggestions);
+      cacheWrite(hkey("suggestions"), S.suggestions);
       render();
-    }, function (e) { console.warn("suggestions subscription ended", e); });
+    }, function (e) { console.warn("suggestions subscription ended", e); }));
 
-    db.collection("people").onSnapshot(function (snap) {
+    S.subs.push(root.collection("people").onSnapshot(function (snap) {
       S.people = listOf(snap, function (id, d) { return { id: id, name: d.name || id }; }).sort(byName);
-      cacheWrite("people", S.people);
+      cacheWrite(hkey("people"), S.people);
       render();
-    }, function (e) { console.warn("people subscription ended", e); });
+    }, function (e) { console.warn("people subscription ended", e); }));
 
     var flushed = false;
 
-    db.collection("votes").where("weekId", "==", WEEK_ID).onSnapshot(function (snap) {
+    S.subs.push(root.collection("votes").where("weekId", "==", WEEK_ID).onSnapshot(function (snap) {
       S.votes = listOf(snap, function (id, d) {
         return { id: id, personId: d.personId || "", name: d.name || "", mealIds: d.mealIds || [] };
       });
@@ -1639,17 +1837,17 @@
         if (!mine || !(mine.mealIds || []).length) savePicks(S.localPicks);
         flushed = true;
         S.localPicks = [];
-        cacheWrite("localPicks." + WEEK_ID, []);
+        cacheWrite(hkey("localPicks." + WEEK_ID), []);
       }
 
       render();
-    }, function (e) { console.warn("votes subscription ended", e); });
+    }, function (e) { console.warn("votes subscription ended", e); }));
 
-    db.doc("weeks/" + WEEK_ID).onSnapshot(function (snap) {
+    S.subs.push(root.collection("weeks").doc(WEEK_ID).onSnapshot(function (snap) {
       var d = snap.exists ? (snap.data() || {}) : {};
       S.chosen = Array.isArray(d.chosen) ? d.chosen : [];
       render();
-    }, function (e) { console.warn("week subscription ended", e); });
+    }, function (e) { console.warn("week subscription ended", e); }));
 
     status("Connected", true);
     render();
@@ -1716,6 +1914,12 @@
       firebase.auth().onAuthStateChanged(function (user) {
         if (!user || started) return;
         started = true;
+        S.db = store;
+        S.uid = user.uid;
+
+        // A phone that has not joined a household has nothing to subscribe
+        // to. It sits ready with the chip prompting for a family and code.
+        if (!S.hid) { S.ready = true; status("Not joined"); return render(); }
         connect(store);
       });
 
