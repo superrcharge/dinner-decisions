@@ -1,4 +1,4 @@
-# What's For Dinner
+# Dinner Decisions
 
 A one-page dinner picker for the family.
 Everyone opens the same link on their own phone, taps the meals they'd be happy to eat this week, and whoever does the shopping sees a live tally.
