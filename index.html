@@ -622,17 +622,28 @@
 
   .row-name { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
 
-  /* Fixed box: emoji glyphs differ in width, so without this every meal name
-     starts at a slightly different x - and the ingredient list below has no
-     stable number to line up with. 2px row padding + 26 + 9 = 37px. */
+  /* Only meal rows carry an icon, so only they get the hanging indent -
+     suggestions and people use a bare .row-name and must not shift. */
+  .row-group .row-name {
+    position: relative;
+    padding-left: 35px;
+  }
+
+  /* Lifted out of the text flow so a wrapped meal name does not run back
+     under the emoji. Everything in the text column - the name, its wrapped
+     lines, and the pill - now starts at the same 37px. */
   .row-icon {
-    display: inline-block;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 26px;
-    margin-right: 9px;
-    font-size: 19px;
-    line-height: 1;
+    /* Bumped from 19px once the pill gave every row a second line: at 19 the
+       icon read as under-weighted against the taller row. It stays aligned to
+       the name's first line rather than centred on the row, because it labels
+       the meal name - centred, it drifts beside a wrapped line instead. */
+    font-size: 22px;
+    line-height: 22px;
     text-align: center;
-    vertical-align: -3px;
   }
   .row-sub { font-size: 12px; color: var(--ink-faint); font-family: var(--mono); }
 
@@ -670,7 +681,14 @@
 
   /* Accent outline on purpose: .btn-quiet is what Icon/Rename/Remove use, and
      a fourth one of those would read as another row action rather than an add. */
+  /* Always on its own line. Left inline it would sit beside a short name like
+     BLTs and drop below a long one, so the list never settled into a rhythm.
+     The 35px indent puts its left edge under the meal's first letter rather
+     than under the emoji - .row-name starts 2px in, and the icon box plus its
+     margin is 35, which is the same 37px the name and ingredients use. */
   .pill-add {
+    display: block;
+    width: fit-content;
     font: inherit;
     font-weight: 600;
     font-size: 12px;
@@ -679,7 +697,7 @@
     border: 1px solid var(--accent);
     border-radius: var(--r-pill);
     padding: 2px 10px;
-    margin-left: 8px;
+    margin: 7px 0 1px 0;
     cursor: pointer;
     white-space: nowrap;
   }
