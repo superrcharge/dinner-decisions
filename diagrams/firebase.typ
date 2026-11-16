@@ -77,9 +77,17 @@
     palette.yellow, <auth>),
 
   box-node((0, 1), "\u{F023}", "Security rules", "gate",
-    "Every read and write passes through. Rejects any device that has not "
-    + "been admitted to this household, and any path outside the seven here.",
+    "Every read and write passes through. Admits a device only with its "
+    + "family's code, keeps each family inside its own household, and bounds "
+    + "every field a write may carry.",
     palette.red, <rules>, weight: tokens.stroke-emphasis),
+
+  // Outside every household on purpose: a phone holding only a code has to
+  // find which household it opens before it can be admitted to one.
+  coll((0, 3.1), "invites", "id: the invite code",
+    "Maps a code to the household it opens, and nothing else. get only - list "
+    + "is denied, so codes cannot be harvested. Replaced whenever the code is.",
+    <invites>, hue: palette.red),
 
   // Title for the enclosure. Fletcher errors on shape: none, so an invisible
   // rect carries the label and joins the enclose list.
@@ -115,13 +123,13 @@
   // The two gate collections carry the rules' hue rather than the store's:
   // they hold no dinner data, and every rule above depends on them.
   coll((2, 2), "members", "id: the anonymous uid",
-    "One per admitted device, written by the device itself once it presents "
-    + "the code. Delete one to revoke that phone.", <members>,
-    hue: palette.red),
+    "One per admitted device, written by the device itself as it presents the "
+    + "code. Deleted to leave, or by another member to remove a phone.",
+    <members>, hue: palette.red),
 
   coll((1, 3), "private", "id: join",
-    "One field, the household's code. No client may read it - only a rule "
-    + "can, and a rule's own get() is not subject to the rules.", <config>,
+    "One field, the invite code. Members can read it to share it; nobody else "
+    + "can. A rule compares a joining device's code against it.", <config>,
     hue: palette.red),
 
   node(
@@ -149,6 +157,10 @@
     text(size: tokens.label-size, weight: tokens.weight-bold, fill: palette.red.ink, "get()"),
   ),
 
+  edge(<rules>, <invites>, "->",
+    stroke: tokens.stroke-default + palette.red.stroke,
+  ),
+
   edge(<rules>, <store>, "->",
     stroke: tokens.stroke-emphasis + palette.green.stroke,
     label-fill: palette.surface,
@@ -163,11 +175,11 @@
   dir: ttb,
   spacing: 7pt,
   text(size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
-    "Everything above sits inside one household, keyed by a slug of the "
-    + "family's surname. The id is meant to be guessable - that is how a "
-    + "second phone finds the same list - and grants nothing on its own. The "
-    + "households collection denies list, so the ids cannot be enumerated, "
-    + "and the code in private/join is what actually admits a device."),
+    "Everything in the green box sits inside one household, under a random "
+    + "20-character id. Anyone can start one, but the rules refuse it unless "
+    + "its code, its invite and its creator's membership arrive in the same "
+    + "batch. Neither households nor invites can be listed, so nobody finds a "
+    + "family without being given its code."),
   text(size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
     "Firestore and Anonymous Authentication are the only Firebase products "
     + "switched on. GitHub Pages serves the app, so Firebase Hosting and "
@@ -178,6 +190,6 @@
     "In the rules, create/update and delete are written as separate clauses on "
     + "purpose: a delete carries no request.resource, so a single combined rule "
     + "with a field check silently blocks every delete. The rules live in "
-    + "firestore.rules, but nothing deploys them - they take effect only when "
-    + "pasted into the Firebase console."),
+    + "firestore.rules, are tested against the emulator with mise run "
+    + "rules-test, and are published with mise run rules-deploy."),
 )))

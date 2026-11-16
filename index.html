@@ -351,9 +351,14 @@
   .tile:hover { border-color: var(--line-strong); }
   .tile:active { transform: scale(.985); }
 
+  /* Clipped to one line so an icon override that is not a single emoji can
+     never stretch the tile. */
   .tile-icon {
     font-size: 27px;
     line-height: 1;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   }
 
@@ -644,6 +649,8 @@
     font-size: 22px;
     line-height: 22px;
     text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
   }
   .row-sub { font-size: 12px; color: var(--ink-faint); font-family: var(--mono); }
 
@@ -957,6 +964,170 @@
     border: 1px solid var(--line);
   }
 
+  /* ---------- first run ---------- */
+
+  /* A phone in no family sees only the welcome card. The tabs, the chip and
+     the Manage button all act on a family, so showing them would offer things
+     that cannot work yet. */
+  body.no-family .whoami,
+  body.no-family .tabbar,
+  body.no-family [role="tabpanel"],
+  body.no-family .bar-count,
+  body.no-family #managerBtn { display: none !important; }
+
+  /* The tab strip normally supplies the gap under the masthead; without it
+     the banner has to, whether it opens with a notice or the card. */
+  body.no-family #banner { padding-top: 18px; }
+
+  .welcome {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-tile);
+    box-shadow: var(--shadow);
+    padding: 22px 20px 20px;
+    margin: 0 0 16px;
+  }
+
+  .welcome-title {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 23px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+
+  .welcome p {
+    color: var(--ink-muted);
+    font-size: 15px;
+    margin: 0 0 18px;
+  }
+
+  .welcome-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .welcome-actions .btn { flex: 1 1 140px; }
+
+  .welcome .welcome-foot {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 16px 0 0;
+  }
+
+  .starter {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* ---------- dialogs ---------- */
+
+  /* Start, join, invite and the confirmations share the menu's surface but sit
+     centred over a dimmed page, because they are a decision rather than a
+     pick from a list, and on a phone a menu pinned to a corner is too narrow
+     for a form. */
+  .menu-backdrop.dim { background: rgba(10, 14, 10, .32); }
+
+  /* A dark page needs a deeper dim before the dialog reads as in front. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .menu-backdrop.dim { background: rgba(0, 0, 0, .55); }
+  }
+  :root[data-theme="dark"] .menu-backdrop.dim { background: rgba(0, 0, 0, .55); }
+
+  .menu.dialog {
+    left: 50%;
+    top: max(56px, 11vh);
+    transform: translateX(-50%);
+    width: min(400px, calc(100vw - 32px));
+    max-width: none;
+    max-height: calc(100vh - max(56px, 11vh) - 24px);
+    padding: 10px 8px 8px;
+  }
+
+  .dialog-title {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 21px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 6px 12px 6px;
+    overflow-wrap: anywhere;
+  }
+
+  .dialog .menu-note { font-size: 14px; padding-bottom: 10px; }
+
+  .dialog .menu-stack { padding: 4px 12px 6px; gap: 9px; }
+
+  .menu-error {
+    color: var(--warm);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 2px 12px 6px;
+  }
+
+  .menu-error:empty { display: none; }
+
+  .code-input {
+    font-family: var(--mono) !important;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .code-input::placeholder { letter-spacing: .12em; }
+
+  .code-show {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 28px;
+    letter-spacing: .1em;
+    text-align: center;
+    color: var(--ink);
+    background: var(--surface-sunk);
+    border-radius: 10px;
+    padding: 14px 8px;
+    margin: 4px 12px 8px;
+    user-select: all;
+    -webkit-user-select: all;
+  }
+
+  .code-show.loading { color: var(--ink-faint); font-size: 15px; letter-spacing: .04em; padding: 21px 8px; }
+
+  .code-link {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    text-align: center;
+    padding: 0 12px 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  .btn[disabled] { opacity: .55; cursor: default; }
+
+  .btn-danger {
+    background: var(--surface);
+    color: var(--warm);
+    border-color: var(--warm);
+  }
+
+  .btn-danger:hover:not([disabled]) { background: var(--warm); color: var(--surface); }
+
+  .dialog .menu-add { text-align: center; font-size: 15px; }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
@@ -1028,11 +1199,30 @@
     <h2 class="section">Who&rsquo;s in the house</h2>
     <div class="rows" id="peopleRows"></div>
 
+    <h2 class="section">Your family</h2>
+    <div class="rows">
+      <div class="row">
+        <div class="row-name">Invite code <span class="row-sub">adds a phone</span></div>
+        <div class="row-actions">
+          <button class="btn btn-quiet btn-tiny" id="manageInvite" type="button">Share</button>
+          <button class="btn btn-quiet btn-tiny" id="manageNewCode" type="button">New code</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row-name">Manage code <span class="row-sub" id="manageCodeShow"></span></div>
+        <div class="row-actions"></div>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:10px">Type the Manage code on another phone to open this tab there.</p>
+
     <p class="eyebrow">Start over</p>
     <button class="btn btn-quiet" id="clearBtn" type="button">Clear this week&rsquo;s votes</button>
 
     <p class="eyebrow">This phone</p>
     <button class="btn btn-quiet" id="stopManagingBtn" type="button">Stop managing on this phone</button>
+
+    <p class="eyebrow">Delete</p>
+    <button class="btn btn-danger" id="deleteFamily" type="button">Delete this family</button>
   </section>
 </div>
 
@@ -1070,7 +1260,10 @@
     hid: null,          // household id - slug of the family's surname
     hname: "",          // its display name, for the chip menu
     subs: [],           // live snapshot unsubscribes, so a switch can detach
-    joinStage: false,   // chip menu showing the join form rather than the roster
+    sheet: null,        // what #sheetHost is showing: "who", "manage", or "dialog"
+    notice: "",         // one line explaining why this phone just left a family
+    invite: null,       // { hid, code } once read, so reopening Invite is instant
+    checking: false,    // a membership check is in flight after a denied read
     ready: false,
     connected: false,
     votesLoaded: false,
@@ -1128,6 +1321,62 @@
 
   function rid() { return Math.random().toString(36).slice(2, 8); }
 
+  function nowIso() { return new Date().toISOString(); }
+
+  function clean(v, max) {
+    return String(v || "").trim().replace(/\s+/g, " ").slice(0, max);
+  }
+
+  // Invite codes and household ids are what keep families apart, so they
+  // come from the browser's cryptographic generator, never Math.random.
+  // Rejection sampling keeps every character equally likely.
+  function randomFrom(alphabet, n) {
+    var out = "";
+    var limit = 256 - (256 % alphabet.length);
+    var buf = new Uint8Array(n * 2);
+    while (out.length < n) {
+      crypto.getRandomValues(buf);
+      for (var i = 0; i < buf.length && out.length < n; i++) {
+        if (buf[i] < limit) out += alphabet[buf[i] % alphabet.length];
+      }
+    }
+    return out;
+  }
+
+  // No 0, O, 1, I or L: a code read aloud or copied off a screen cannot be
+  // mistaken for another one. Must match strongCode() in firestore.rules.
+  var CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  var STRONG_CODE = /^[A-HJKMNP-Z2-9]{10}$/;
+  var ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  function newCode() { return randomFrom(CODE_ALPHABET, 10); }
+  function newHouseholdId() { return randomFrom(ID_ALPHABET, 20); }
+
+  // Accepts the code however it arrives: typed in lower case, with the
+  // dash or spaces, or as the whole invite link pasted in.
+  function parseCode(raw) {
+    var s = String(raw || "");
+    var m = s.match(/join=([A-Za-z0-9 -]+)/);
+    if (m) s = m[1];
+    return s.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 40);
+  }
+
+  function showCode(code) { return code.slice(0, 5) + "-" + code.slice(5); }
+
+  function inviteLink(code) {
+    return location.origin + location.pathname + location.search + "#join=" + code;
+  }
+
+  // Firestore holds a write in its offline queue until the server answers and
+  // never rejects it, so every write a person is waiting on gets a deadline.
+  function withTimeout(p, ms) {
+    return new Promise(function (resolve, reject) {
+      var t = setTimeout(function () { reject({ code: "timeout" }); }, ms || 10000);
+      p.then(function (v) { clearTimeout(t); resolve(v); },
+             function (e) { clearTimeout(t); reject(e); });
+    });
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -1181,8 +1430,12 @@
     ["broccoli", 0x1F966], ["veg", 0x1F966], ["potato", 0x1F954], ["corn", 0x1F33D]
   ];
 
+  // Every caller writes the result with innerHTML, so the override has to be
+  // escaped like any other stored text. It used to be returned as typed,
+  // which let anyone in a family run script on everyone else's phone by
+  // setting an icon to markup. The rules now refuse markup here too.
   function iconFor(name, override) {
-    if (override) return override;
+    if (override) return esc(override);
     var n = String(name).toLowerCase();
     for (var i = 0; i < ICONS.length; i++) {
       if (n.indexOf(ICONS[i][0]) !== -1) return String.fromCodePoint(ICONS[i][1]);
@@ -1375,7 +1628,11 @@
   function setIcon(m) {
     var next = window.prompt("Paste an emoji for " + m.name + ", or clear it to go back to the automatic one.", m.icon || "");
     if (next === null) return;
-    ref("meals/" + m.id).update({ icon: next.trim() }).catch(function (e) { console.warn("icon failed", e); });
+    // The rules refuse these characters and anything over 64, so drop them
+    // here rather than have the write fail with nothing on screen to say why.
+    // 32 is still room for the longest emoji sequences.
+    next = next.replace(/[<>&"]/g, "").trim().slice(0, 32);
+    ref("meals/" + m.id).update({ icon: next }).catch(function (e) { console.warn("icon failed", e); });
   }
 
   function renameMeal(m) {
@@ -1440,10 +1697,21 @@
 
   function renderBanner() {
     var el = $("banner");
-    if (!S.ready) {
+    var note = S.notice ? '<div class="notice">' + esc(S.notice) + "</div>" : "";
+    if (!S.hid) {
+      el.innerHTML = note +
+        '<div class="welcome">' +
+        '<h2 class="welcome-title">Dinner, decided together</h2>' +
+        "<p>Everyone in the house taps the meals they&rsquo;d happily eat this week. " +
+        "Whoever does the shopping sees what won, and the grocery list that goes with it.</p>" +
+        '<div class="welcome-actions">' +
+        '<button class="btn btn-primary" id="welcomeStart" type="button">Start a family</button>' +
+        '<button class="btn btn-quiet" id="welcomeJoin" type="button">I have a code</button>' +
+        "</div>" +
+        '<p class="welcome-foot">Free &middot; No accounts &middot; No email</p>' +
+        "</div>";
+    } else if (!S.ready) {
       el.innerHTML = "";
-    } else if (!S.hid) {
-      el.innerHTML = '<div class="notice">Tap <strong>Choose</strong> at the top right and enter your family name and code to get started.</div>';
     } else if (!S.connected) {
       el.innerHTML = '<div class="notice">Not connected to the family list, so picks are saved on this device only.</div>';
     } else if (!S.meId) {
@@ -1466,8 +1734,15 @@
     $("addRow").hidden = false;
 
     if (!items.length) {
-      grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No meals yet. Add the first one below and it stays on the list for every week after this.</div>';
+      // A brand new family would otherwise open to a blank page. The starter
+      // list is offered only while the list is genuinely empty and only once
+      // connected, so it can never be added on top of a family's own meals.
+      grid.innerHTML = '<div class="empty starter">' +
+        "<span>No meals yet. Add your own below, or start from a list of family favourites and trim it later.</span>" +
+        (S.connected ? '<button class="btn btn-quiet" id="starterBtn" type="button">Add starter meals</button>' : "") +
+        "</div>";
       $("barCount").innerHTML = "<strong>0</strong> picked";
+      $("myPicks").hidden = true;
       return;
     }
 
@@ -1737,6 +2012,7 @@
     }
 
     $("mealCount").textContent = S.meals.length ? String(S.meals.length) : "";
+    $("manageCodeShow").textContent = MANAGE_PIN;
 
     var pr = $("peopleRows");
     if (!S.people.length) {
@@ -1752,6 +2028,7 @@
   }
 
   function render() {
+    document.body.classList.toggle("no-family", !S.hid);
     renderHeader();
     renderBanner();
     renderPick();
@@ -1759,25 +2036,29 @@
     renderManage();
     $("tab-manage").hidden = !S.admin;
     $("managerBtn").hidden = S.admin;
+
+    // A phone that has just joined opens the name menu straight away, before
+    // the roster has arrived. Redraw it as names come in, unless someone is
+    // typing a new name into it.
+    if (S.sheet === "who" && !$("personInput")) {
+      var menu = $("whoMenu");
+      if (menu) menu.innerHTML = rosterMenu(false);
+    }
   }
 
   /* ---------------- who is picking ---------------- */
 
   // A small menu under the chip. The name field is only mounted once someone
   // asks for it, so simply opening the menu never raises a keyboard.
-  // The one place a new phone gets set up: which family, then who is picking.
-  // Both stages live in this menu rather than a separate screen, because
-  // saying who you are was already the first thing a new phone had to do.
   function openSheet(showAdd) {
+    if (!S.hid) return;
     S.sheetOpen = true;
-
-    var joining = S.joinStage || !S.hid;
+    S.sheet = "who";
 
     $("sheetHost").innerHTML =
       '<div class="menu-backdrop" id="sheetBackdrop"></div>' +
-      '<div class="menu" id="whoMenu" role="menu" aria-label="' +
-      (joining ? "Your family" : "Who is picking") + '">' +
-      (joining ? joinForm() : rosterMenu(showAdd)) +
+      '<div class="menu" id="whoMenu" role="menu" aria-label="Who is picking">' +
+      rosterMenu(showAdd) +
       "</div>";
 
     var anchor = $("whoBtn").getBoundingClientRect();
@@ -1785,19 +2066,7 @@
     menu.style.top = (anchor.bottom + 8) + "px";
     menu.style.right = Math.max(10, window.innerWidth - anchor.right) + "px";
 
-    if (joining) $("joinFamily").focus();
-    else if (showAdd) $("personInput").focus();
-  }
-
-  function joinForm() {
-    return '<div class="menu-head">Your family</div>' +
-      '<div class="menu-note">Enter these once. This phone will remember them.</div>' +
-      '<div class="menu-stack">' +
-      '<input type="text" id="joinFamily" placeholder="Last name" autocomplete="off" maxlength="40" value="' + esc(S.hname) + '">' +
-      '<input type="password" id="joinCode" placeholder="Code" autocomplete="off" maxlength="40">' +
-      '<button class="btn btn-primary" id="joinGo" type="button">Join</button>' +
-      "</div>" +
-      (S.hid ? '<button class="menu-item menu-add" type="button" id="joinCancel">Cancel</button>' : "");
+    if (showAdd) $("personInput").focus();
   }
 
   function rosterMenu(showAdd) {
@@ -1812,91 +2081,521 @@
 
     return '<div class="menu-head">Your family</div>' +
       '<div class="menu-row"><span>' + esc(S.hname || S.hid) + '</span>' +
-      '<button class="menu-link" type="button" id="changeFamily">Change</button></div>' +
+      '<button class="menu-link" type="button" id="leaveFamily">Leave</button></div>' +
+      '<button class="menu-item menu-add" type="button" id="inviteBtn">Invite someone</button>' +
       '<div class="menu-sep"></div>' +
       '<div class="menu-head">Who is picking</div>' +
       rows + (rows ? '<div class="menu-sep"></div>' : "") + tail;
-  }
-
-  // Two failure modes, two different messages. Telling them apart is why the
-  // household document is readable at all: the members write alone could not
-  // distinguish "no such family" from "wrong code".
-  function submitJoin() {
-    var nameEl = $("joinFamily");
-    var codeEl = $("joinCode");
-    var goEl = $("joinGo");
-    if (!nameEl || !codeEl || !goEl) return;
-
-    // The chip is tappable as soon as the cached view paints, which is before
-    // anonymous sign-in has necessarily come back.
-    if (!S.db || !S.uid) {
-      codeEl.placeholder = "Still connecting";
-      return;
-    }
-
-    var typed = nameEl.value.trim().replace(/\s+/g, " ");
-    var code = codeEl.value.trim().toLowerCase();
-    if (!typed) return nameEl.focus();
-    if (!code) return codeEl.focus();
-
-    var hid = slug(typed);
-    if (!hid || hid === "meal") return nameEl.focus();
-
-    goEl.disabled = true;
-    var settled = false;
-
-    function fail(el, placeholder) {
-      if (settled) return;
-      settled = true;
-      goEl.disabled = false;
-      el.value = "";
-      el.placeholder = placeholder;
-      el.focus();
-    }
-
-    // Firestore's offline queue holds a write until the server acknowledges
-    // it and never rejects, so without this a join attempted with no signal
-    // would leave a permanently disabled button.
-    var giveUp = setTimeout(function () { fail(codeEl, "No connection"); }, 8000);
-
-    var house = S.db.collection("households").doc(hid);
-
-    house.get().then(function (snap) {
-      if (!snap.exists) {
-        clearTimeout(giveUp);
-        return fail(nameEl, "No family by that name");
-      }
-      var hname = (snap.data() || {}).name || typed;
-
-      // The code is never compared here. It goes up with the write, and the
-      // rules check it against a document no client is allowed to read.
-      return house.collection("members").doc(S.uid).set({
-        code: code,
-        joinedAt: new Date().toISOString()
-      }).then(function () {
-        if (settled) return;
-        settled = true;
-        clearTimeout(giveUp);
-        enterHousehold(hid, hname);
-      });
-    }).catch(function (e) {
-      clearTimeout(giveUp);
-      if (e && e.code === "permission-denied") return fail(codeEl, "Not that code");
-      fail(codeEl, "Try again");
-    });
   }
 
   function enterHousehold(hid, hname) {
     disconnect();
     S.hid = hid;
     S.hname = hname;
-    S.joinStage = false;
+    S.notice = "";
     LS.set("householdId", hid);
     LS.set("householdName", hname);
     hydrateHousehold();
     closeSheet();
     status("Connecting");
     connect(S.db);
+  }
+
+  function forgetCache(hid) {
+    var prefix = "dinner." + hid + ".";
+    try {
+      Object.keys(localStorage).forEach(function (k) {
+        if (k.indexOf(prefix) === 0) localStorage.removeItem(k);
+      });
+    } catch (e) {}
+  }
+
+  // Back to the welcome card: on leaving, on deleting, and when this phone
+  // finds it is no longer allowed in. The notice says which.
+  function forgetHousehold(notice) {
+    var hid = S.hid;
+    disconnect();
+    if (hid) forgetCache(hid);
+    LS.del("householdId");
+    LS.del("householdName");
+    S.hid = null;
+    S.hname = "";
+    S.invite = null;
+    S.leaving = false;
+    S.admin = false;
+    LS.set("manager", "0");
+    S.notice = notice || "";
+    closeSheet();
+    selectTab("pick");
+    status("Not joined");
+    render();
+  }
+
+  /* ---------------- dialogs ---------------- */
+
+  function openDialog(label, html, focusId) {
+    S.sheetOpen = true;
+    S.sheet = "dialog";
+    $("sheetHost").innerHTML =
+      '<div class="menu-backdrop dim" id="sheetBackdrop"></div>' +
+      '<div class="menu dialog" id="dialog" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' +
+      html + "</div>";
+    var f = focusId && $(focusId);
+    if (f) f.focus();
+  }
+
+  function errorLine() {
+    return '<div class="menu-error" id="dlgError" role="alert"></div>';
+  }
+
+  function cancelRow(text) {
+    return '<button class="menu-item menu-add" type="button" id="dlgCancel">' + (text || "Cancel") + "</button>";
+  }
+
+  function dialogError(text) {
+    var el = $("dlgError");
+    if (el) el.textContent = text || "";
+  }
+
+  // Disables a button while the write behind it is in flight, so a second tap
+  // cannot start a second family, and puts its label back afterwards.
+  function busy(id, on, label) {
+    var b = $(id);
+    if (!b) return;
+    if (on) {
+      b.dataset.label = b.textContent;
+      b.textContent = label;
+      b.disabled = true;
+    } else {
+      if (b.dataset.label) b.textContent = b.dataset.label;
+      b.disabled = false;
+    }
+  }
+
+  // Every form is reachable as soon as the cached view paints, which is
+  // before anonymous sign-in has necessarily come back.
+  function notReady() {
+    if (S.db && S.uid) return false;
+    dialogError(S.ready
+      ? "Can’t reach Dinner Decisions right now. Check your connection and try again."
+      : "Still connecting. Try again in a moment.");
+    return true;
+  }
+
+  function failText(e) {
+    if (e && (e.code === "timeout" || e.code === "unavailable")) {
+      return "No connection. Try again when you’re back online.";
+    }
+    return "Something went wrong. Try again.";
+  }
+
+  /* ---------------- starting a family ---------------- */
+
+  function openStart() {
+    openDialog("Start a family",
+      '<h2 class="dialog-title">Start a family</h2>' +
+      '<div class="menu-note">You&rsquo;ll get a code to send to everyone else in the house.</div>' +
+      '<div class="menu-stack">' +
+      '<input type="text" id="startFamily" placeholder="Family name, like The Riveras" autocomplete="off" maxlength="40">' +
+      '<input type="text" id="startName" placeholder="Your first name" autocomplete="given-name" maxlength="24">' +
+      '<button class="btn btn-primary" id="startGo" type="button">Create</button>' +
+      "</div>" + errorLine() + cancelRow(), "startFamily");
+  }
+
+  // One batch, so a family can never exist half made: the household, its
+  // code, the invite that finds it, and this phone's own membership. The
+  // rules refuse the household unless all four arrive together.
+  function submitStart() {
+    var famEl = $("startFamily");
+    var nameEl = $("startName");
+    if (!famEl || !nameEl || $("startGo").disabled) return;
+    var fam = clean(famEl.value, 40);
+    var who = clean(nameEl.value, 24);
+    if (!fam) return famEl.focus();
+    if (!who) return nameEl.focus();
+    if (notReady()) return;
+
+    var hid = newHouseholdId();
+    var code = newCode();
+    var house = S.db.collection("households").doc(hid);
+    var batch = S.db.batch();
+    batch.set(house, { name: fam, createdBy: S.uid, createdAt: nowIso() });
+    batch.set(house.collection("private").doc("join"), { code: code });
+    batch.set(S.db.collection("invites").doc(code), { hid: hid, createdAt: nowIso() });
+    batch.set(house.collection("members").doc(S.uid), { code: code, joinedAt: nowIso() });
+
+    dialogError("");
+    busy("startGo", true, "Creating…");
+    withTimeout(batch.commit()).then(function () {
+      enterHousehold(hid, fam);
+      S.admin = true;
+      LS.set("manager", "1");
+      setMe(addPerson(who));
+      S.invite = { hid: hid, code: code };
+      openInvite(true);
+    }).catch(function (e) {
+      console.warn("start failed", e);
+      busy("startGo", false);
+      dialogError(failText(e));
+    });
+  }
+
+  /* ---------------- invites ---------------- */
+
+  // The current code, making one first if the family has none an invite can
+  // point at. Only the household that predates invites ever needs that: its
+  // code was short and had no invites document, so the first time one of its
+  // phones shares an invite it moves to a strong code. Phones already in are
+  // untouched, because membership is the document, not the code.
+  function loadInvite() {
+    var hid = S.hid;
+    if (S.invite && S.invite.hid === hid) return Promise.resolve(S.invite.code);
+    var join = S.db.collection("households").doc(hid).collection("private").doc("join");
+    return withTimeout(join.get({ source: "server" })).then(function (snap) {
+      var code = snap.exists ? String((snap.data() || {}).code || "") : "";
+      if (!STRONG_CODE.test(code)) return rotateCode(hid, null);
+      return withTimeout(S.db.collection("invites").doc(code).get({ source: "server" })).then(function (inv) {
+        if (inv.exists && (inv.data() || {}).hid === hid) return code;
+        return rotateCode(hid, null);
+      });
+    }).then(function (code) {
+      S.invite = { hid: hid, code: code };
+      return code;
+    });
+  }
+
+  // A new code and its invite in one batch, so the code is never without an
+  // invite that finds it. Dropping the old invite in the same batch is what
+  // makes the old code stop working.
+  function rotateCode(hid, oldCode) {
+    var code = newCode();
+    var batch = S.db.batch();
+    batch.set(S.db.collection("households").doc(hid).collection("private").doc("join"), { code: code });
+    batch.set(S.db.collection("invites").doc(code), { hid: hid, createdAt: nowIso() });
+    if (oldCode) batch.delete(S.db.collection("invites").doc(oldCode));
+    return withTimeout(batch.commit()).then(function () {
+      S.invite = { hid: hid, code: code };
+      return code;
+    });
+  }
+
+  function openInvite(fresh) {
+    if (!S.hid) return;
+    openDialog("Invite your family",
+      '<h2 class="dialog-title">' + (fresh ? "You&rsquo;re all set" : "Invite your family") + "</h2>" +
+      '<div class="menu-note">' +
+      (fresh ? "Now send this to everyone else in the house. " : "Anyone with this code can join " + esc(S.hname) + ". ") +
+      "They open the link, or tap <strong>I have a code</strong> and type it in.</div>" +
+      '<div class="code-show loading" id="codeShow">Getting your code&hellip;</div>' +
+      '<div class="code-link" id="codeLink"></div>' +
+      '<div class="menu-stack"><div class="btn-row">' +
+      '<button class="btn btn-primary" id="shareInvite" type="button" disabled>Share invite</button>' +
+      '<button class="btn btn-quiet" id="copyCode" type="button" disabled>Copy code</button>' +
+      "</div></div>" + errorLine() + cancelRow("Done"));
+
+    if (notReady()) return;
+    loadInvite().then(function (code) {
+      var show = $("codeShow");
+      if (!show) return;
+      show.className = "code-show";
+      show.textContent = showCode(code);
+      $("codeLink").textContent = inviteLink(code);
+      $("shareInvite").disabled = false;
+      $("copyCode").disabled = false;
+    }).catch(function (e) {
+      console.warn("invite failed", e);
+      var show = $("codeShow");
+      if (show) show.textContent = "No code yet";
+      dialogError(failText(e));
+    });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (resolve, reject) {
+      var t = document.createElement("textarea");
+      t.value = text;
+      t.setAttribute("readonly", "");
+      t.style.position = "fixed";
+      t.style.opacity = "0";
+      document.body.appendChild(t);
+      t.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(t);
+      if (ok) resolve(); else reject();
+    });
+  }
+
+  function flash(id, text) {
+    var b = $(id);
+    if (!b) return;
+    if (!b.dataset.idle) b.dataset.idle = b.textContent;
+    b.textContent = text;
+    setTimeout(function () { b.textContent = b.dataset.idle; }, 1800);
+  }
+
+  // The phone's own share sheet where there is one, so the invite goes out by
+  // text or whatever the family already uses. Otherwise it is copied.
+  function shareInvite() {
+    var code = S.invite && S.invite.code;
+    if (!code) return;
+    var link = inviteLink(code);
+    var text = "Join " + S.hname + " on Dinner Decisions to vote on this week’s dinners. Code: " + showCode(code);
+    if (navigator.share) {
+      navigator.share({ title: "Dinner Decisions", text: text, url: link }).catch(function () {});
+      return;
+    }
+    copyText(text + "\n" + link).then(
+      function () { flash("shareInvite", "Copied"); },
+      function () { flash("shareInvite", "Copy failed"); });
+  }
+
+  function copyCode() {
+    var code = S.invite && S.invite.code;
+    if (!code) return;
+    copyText(showCode(code)).then(
+      function () { flash("copyCode", "Copied"); },
+      function () { flash("copyCode", "Copy failed"); });
+  }
+
+  function openNewCode() {
+    openDialog("New invite code",
+      '<h2 class="dialog-title">Make a new code?</h2>' +
+      '<div class="menu-note">The current code stops working straight away. Phones already in ' +
+      esc(S.hname) + " stay in.</div>" +
+      '<div class="menu-stack"><button class="btn btn-primary" id="newCodeGo" type="button">Make a new code</button></div>' +
+      errorLine() + cancelRow());
+  }
+
+  function submitNewCode() {
+    if (!$("newCodeGo") || $("newCodeGo").disabled || notReady()) return;
+    busy("newCodeGo", true, "Making…");
+    var hid = S.hid;
+    var join = S.db.collection("households").doc(hid).collection("private").doc("join");
+    withTimeout(join.get({ source: "server" })).then(function (snap) {
+      var old = snap.exists ? String((snap.data() || {}).code || "") : "";
+      return rotateCode(hid, STRONG_CODE.test(old) ? old : null);
+    }).then(function () {
+      openInvite(false);
+    }).catch(function (e) {
+      console.warn("new code failed", e);
+      busy("newCodeGo", false);
+      dialogError(failText(e));
+    });
+  }
+
+  /* ---------------- joining ---------------- */
+
+  function openJoin(prefill) {
+    openDialog("Join a family",
+      '<h2 class="dialog-title">Join your family</h2>' +
+      '<div class="menu-note">' + (S.hid
+        ? "This phone is in " + esc(S.hname) + " now. Joining another family moves it there."
+        : "Type the code someone in your family sent you, or paste their link.") + "</div>" +
+      '<div class="menu-stack">' +
+      '<input type="text" id="joinCode" class="code-input" placeholder="ABCDE-23456" autocomplete="off" ' +
+      'autocapitalize="characters" spellcheck="false" maxlength="200" value="' + esc(prefill ? showCode(prefill) : "") + '">' +
+      '<button class="btn btn-primary" id="joinGo" type="button">Join</button>' +
+      "</div>" + errorLine() + cancelRow(), prefill ? "joinGo" : "joinCode");
+  }
+
+  // Each way a join can fail gets its own message: the code finds no family,
+  // it found one whose code has since changed, or there is no signal.
+  function submitJoin() {
+    var el = $("joinCode");
+    if (!el || $("joinGo").disabled) return;
+    var code = parseCode(el.value);
+    if (!code) return el.focus();
+    if (!STRONG_CODE.test(code)) {
+      return dialogError("Codes are 10 letters and numbers, like ABCDE-23456. Check for a missing or extra character.");
+    }
+    if (notReady()) return;
+
+    dialogError("");
+    busy("joinGo", true, "Joining…");
+    var prev = S.hid;
+    var hid, hname;
+
+    withTimeout(S.db.collection("invites").doc(code).get({ source: "server" })).then(function (inv) {
+      if (!inv.exists) throw { code: "no-family" };
+      hid = String((inv.data() || {}).hid || "");
+      if (hid === prev) throw { code: "already" };
+      var house = S.db.collection("households").doc(hid);
+      return withTimeout(house.get({ source: "server" })).then(function (snap) {
+        if (!snap.exists) throw { code: "no-family" };
+        hname = str((snap.data() || {}).name, "your family");
+        var mine = house.collection("members").doc(S.uid);
+        // A phone that was in this family before and moved away is still a
+        // member; it only needs to switch back.
+        return withTimeout(mine.get({ source: "server" })).then(function (m) {
+          if (m.exists) return;
+          // The code is compared by the rules, against a document this phone
+          // cannot read until the write has succeeded.
+          return withTimeout(mine.set({ code: code, joinedAt: nowIso() }));
+        });
+      });
+    }).then(function () {
+      if (prev) {
+        S.db.collection("households").doc(prev).collection("members").doc(S.uid).delete().catch(function () {});
+        forgetCache(prev);
+      }
+      enterHousehold(hid, hname);
+      openSheet();
+    }).catch(function (e) {
+      busy("joinGo", false);
+      var c = e && e.code;
+      if (c === "already") return closeSheet();
+      if (c === "no-family") return dialogError("No family uses that code. Check it, or ask for a new one.");
+      if (c === "permission-denied") return dialogError("That code has been replaced. Ask for the new one.");
+      console.warn("join failed", e);
+      dialogError(failText(e));
+    });
+  }
+
+  /* ---------------- leaving and deleting ---------------- */
+
+  function openLeave() {
+    openDialog("Leave family",
+      '<h2 class="dialog-title">Leave ' + esc(S.hname) + "?</h2>" +
+      '<div class="menu-note">This phone stops seeing the meals and votes. Everyone else keeps them. ' +
+      "To come back you&rsquo;ll need the invite code.</div>" +
+      '<div class="menu-stack"><button class="btn btn-danger" id="leaveGo" type="button">Leave on this phone</button></div>' +
+      errorLine() + cancelRow());
+  }
+
+  // Leaving does not wait on a signal. If the server cannot be reached the
+  // delete sits in Firestore's queue and lands when it can.
+  function submitLeave() {
+    if (!$("leaveGo") || $("leaveGo").disabled) return;
+    var name = S.hname;
+    busy("leaveGo", true, "Leaving…");
+    S.leaving = true;
+    var done = function () { forgetHousehold("You left " + name + " on this phone."); };
+    if (!S.db || !S.uid) return done();
+    withTimeout(S.db.collection("households").doc(S.hid).collection("members").doc(S.uid).delete(), 6000)
+      .then(done, done);
+  }
+
+  function openDelete() {
+    openDialog("Delete family",
+      '<h2 class="dialog-title">Delete ' + esc(S.hname) + "?</h2>" +
+      '<div class="menu-note">This deletes every meal, vote, name and ingredient for everyone, on every phone. ' +
+      "It cannot be undone.</div>" +
+      '<div class="menu-stack">' +
+      '<input type="text" id="deleteConfirm" placeholder="Type ' + esc(S.hname) + ' to confirm" autocomplete="off" maxlength="40">' +
+      '<button class="btn btn-danger" id="deleteGo" type="button" disabled>Delete for everyone</button>' +
+      "</div>" + errorLine() + cancelRow(), "deleteConfirm");
+  }
+
+  function deleteArmed() {
+    var el = $("deleteConfirm");
+    return !!el && !!el.value.trim() &&
+      clean(el.value, 40).toLowerCase() === clean(S.hname, 40).toLowerCase();
+  }
+
+  // Firestore has no "delete a folder", so the household is emptied document
+  // by document, in batches well under the 500-write limit, and the household
+  // itself goes last in one batch with its code, its invite and this phone's
+  // membership. Until that last batch lands the family still exists, so a
+  // delete cut short by a lost signal can simply be tried again.
+  function submitDelete() {
+    if (!deleteArmed() || $("deleteGo").disabled || notReady()) return;
+    busy("deleteGo", true, "Deleting…");
+    dialogError("");
+
+    var name = S.hname;
+    var db = S.db;
+    var uid = S.uid;
+    var root = db.collection("households").doc(S.hid);
+    var refs = [];
+    var code = "";
+
+    var reads = ["meals", "suggestions", "people", "votes", "weeks", "members"].map(function (c) {
+      return withTimeout(root.collection(c).get({ source: "server" })).then(function (snap) {
+        snap.docs.forEach(function (d) {
+          if (!(c === "members" && d.id === uid)) refs.push(d.ref);
+        });
+      });
+    });
+    reads.push(withTimeout(root.collection("private").doc("join").get({ source: "server" })).then(function (s) {
+      code = s.exists ? String((s.data() || {}).code || "") : "";
+    }));
+
+    Promise.all(reads).then(function () {
+      var chain = Promise.resolve();
+      for (var i = 0; i < refs.length; i += 400) {
+        (function (chunk) {
+          chain = chain.then(function () {
+            var b = db.batch();
+            chunk.forEach(function (r) { b.delete(r); });
+            return withTimeout(b.commit(), 20000);
+          });
+        })(refs.slice(i, i + 400));
+      }
+      return chain;
+    }).then(function () {
+      // This phone's own listeners are about to be refused. Without this
+      // they would report it as removed rather than as having deleted.
+      S.leaving = true;
+      var b = db.batch();
+      if (STRONG_CODE.test(code)) b.delete(db.collection("invites").doc(code));
+      b.delete(root.collection("private").doc("join"));
+      b.delete(root);
+      b.delete(root.collection("members").doc(uid));
+      return withTimeout(b.commit());
+    }).then(function () {
+      forgetHousehold(name + " was deleted.");
+    }).catch(function (e) {
+      console.warn("delete failed", e);
+      S.leaving = false;
+      busy("deleteGo", false);
+      dialogError(failText(e) + " The family is still here, so you can try again.");
+    });
+  }
+
+  // A listener refused by the rules means this phone may no longer be in the
+  // family: someone deleted it, or removed this phone. Ask the server once
+  // before acting, so a passing hiccup does not throw a family off a phone.
+  function lostAccess(e) {
+    if (!e || e.code !== "permission-denied" || S.checking || S.leaving || !S.hid || !S.uid) return;
+    var hid = S.hid;
+    var name = S.hname;
+    S.checking = true;
+    S.db.collection("households").doc(hid).collection("members").doc(S.uid).get({ source: "server" })
+      .then(function (snap) {
+        S.checking = false;
+        if (!snap.exists && S.hid === hid && !S.leaving) {
+          forgetHousehold("This phone is no longer part of " + (name || "that family") +
+            ". Ask for an invite code to join again.");
+        }
+      }, function () { S.checking = false; });
+  }
+
+  /* ---------------- starter meals ---------------- */
+
+  var STARTERS = [
+    "Tacos", "Spaghetti and Meatballs", "Pizza", "Chicken Alfredo", "Burgers",
+    "Grilled Cheese and Tomato Soup", "Chicken Stir Fry", "Sloppy Joes",
+    "Breakfast for Dinner", "Chili", "Baked Salmon", "BBQ Chicken",
+    "Mac and Cheese", "Chicken Caesar Salad", "Fajitas", "Pot Roast"
+  ];
+
+  // Written exactly as Manage writes a meal, with the same ids, so a starter
+  // is indistinguishable from one typed in by hand and can be renamed,
+  // removed or given ingredients the same way.
+  function addStarters() {
+    if (!S.connected || S.meals.length || S.suggestions.length) return;
+    busy("starterBtn", true, "Adding…");
+    var b = S.db.batch();
+    STARTERS.forEach(function (name) {
+      b.set(ref("meals/" + slug(name)), { name: name, active: true, createdAt: nowIso() });
+    });
+    b.commit().catch(function (e) {
+      console.warn("starters failed", e);
+      busy("starterBtn", false);
+      status("Could not add those");
+    });
   }
 
   function selectTab(which) {
@@ -1910,6 +2609,7 @@
   // matches the name menu and does not get suppressed on a phone.
   function openManageMenu() {
     S.sheetOpen = true;
+    S.sheet = "manage";
 
     $("sheetHost").innerHTML =
       '<div class="menu-backdrop" id="sheetBackdrop"></div>' +
@@ -1953,7 +2653,7 @@
 
   function closeSheet() {
     S.sheetOpen = false;
-    S.joinStage = false;
+    S.sheet = null;
     $("sheetHost").innerHTML = "";
   }
 
@@ -2009,17 +2709,30 @@
 
     // Clicks can land on a child span, so resolve the owning control.
     var hit = ev.target.closest
-      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#joinGo,#joinCancel,#changeFamily,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage")
+      ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage," +
+          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn")
       : null;
     var id = hit ? hit.id : ev.target.id;
 
     if (id === "whoBtn") return openSheet();
-    if (id === "sheetBackdrop") return closeSheet();
+    if (id === "sheetBackdrop" || id === "dlgCancel") return closeSheet();
     if (id === "showAddName") return openSheet(true);
-    if (id === "joinGo") return submitJoin();
-    if (id === "changeFamily") { S.joinStage = true; return openSheet(); }
-    if (id === "joinCancel") { S.joinStage = false; return openSheet(); }
     if (id === "personAdd") return submitPerson($("personInput").value);
+
+    if (id === "welcomeStart") return openStart();
+    if (id === "welcomeJoin") return openJoin();
+    if (id === "startGo") return submitStart();
+    if (id === "joinGo") return submitJoin();
+    if (id === "inviteBtn" || id === "manageInvite") return openInvite(false);
+    if (id === "shareInvite") return shareInvite();
+    if (id === "copyCode") return copyCode();
+    if (id === "manageNewCode") return openNewCode();
+    if (id === "newCodeGo") return submitNewCode();
+    if (id === "leaveFamily") return openLeave();
+    if (id === "leaveGo") return submitLeave();
+    if (id === "deleteFamily") return openDelete();
+    if (id === "deleteGo") return submitDelete();
+    if (id === "starterBtn") return addStarters();
     if (id === "clearBtn") return clearWeek();
     if (id === "refreshBtn" || id === "updateBtn") return location.reload();
     if (id === "managerBtn") return openManageMenu();
@@ -2057,9 +2770,17 @@
     if (ev.target.dataset && ev.target.dataset.ingfor) {
       return addIngredient(ev.target.dataset.ingfor, ev.target.value);
     }
-    if (id === "joinFamily") { $("joinCode").focus(); }
+    if (id === "startFamily") { $("startName").focus(); }
+    if (id === "startName") { submitStart(); }
     if (id === "joinCode") { submitJoin(); }
+    if (id === "deleteConfirm") { submitDelete(); }
     if (id === "managePin") { submitManagePin(); }
+  });
+
+  // The delete button arms only once the family's name has been typed.
+  document.addEventListener("input", function (ev) {
+    if (ev.target.id === "deleteConfirm") $("deleteGo").disabled = !deleteArmed();
+    if (ev.target.id === "joinCode" || ev.target.id === "startFamily" || ev.target.id === "startName") dialogError("");
   });
 
   /* ---------------- boot ---------------- */
@@ -2084,6 +2805,18 @@
 
   function listOf(snap, map) {
     return snap.docs.map(function (doc) { return map(doc.id, doc.data() || {}); });
+  }
+
+  // Stored data is shaped by the rules, but a document written before a rule
+  // existed can still hold anything. Rendering calls .trim() and
+  // .localeCompare() on these, so one stray number would blank the page for
+  // the whole family. Coerce on the way in instead.
+  function str(v, fallback) {
+    return typeof v === "string" && v ? v : String(fallback || "");
+  }
+
+  function strList(v) {
+    return Array.isArray(v) ? v.filter(function (x) { return typeof x === "string"; }) : [];
   }
 
   // Detach every live listener and forget the household's data. Without this
@@ -2112,31 +2845,31 @@
 
     S.subs.push(root.collection("meals").onSnapshot(function (snap) {
       S.meals = listOf(snap, function (id, d) {
-        return { id: id, name: d.name || id, icon: d.icon || "", ingredients: d.ingredients || [] };
+        return { id: id, name: str(d.name, id), icon: str(d.icon), ingredients: strList(d.ingredients) };
       }).sort(byName);
       cacheWrite(hkey("meals"), S.meals);
       render();
-    }, function (e) { console.warn("meals subscription ended", e); }));
+    }, function (e) { console.warn("meals subscription ended", e); lostAccess(e); }));
 
     S.subs.push(root.collection("suggestions").onSnapshot(function (snap) {
       S.suggestions = listOf(snap, function (id, d) {
-        return { id: id, name: d.name || id, icon: d.icon || "", addedBy: d.addedBy || "" };
+        return { id: id, name: str(d.name, id), icon: str(d.icon), addedBy: str(d.addedBy) };
       }).sort(byName);
       cacheWrite(hkey("suggestions"), S.suggestions);
       render();
-    }, function (e) { console.warn("suggestions subscription ended", e); }));
+    }, function (e) { console.warn("suggestions subscription ended", e); lostAccess(e); }));
 
     S.subs.push(root.collection("people").onSnapshot(function (snap) {
-      S.people = listOf(snap, function (id, d) { return { id: id, name: d.name || id }; }).sort(byName);
+      S.people = listOf(snap, function (id, d) { return { id: id, name: str(d.name, id) }; }).sort(byName);
       cacheWrite(hkey("people"), S.people);
       render();
-    }, function (e) { console.warn("people subscription ended", e); }));
+    }, function (e) { console.warn("people subscription ended", e); lostAccess(e); }));
 
     var flushed = false;
 
     S.subs.push(root.collection("votes").where("weekId", "==", WEEK_ID).onSnapshot(function (snap) {
       S.votes = listOf(snap, function (id, d) {
-        return { id: id, personId: d.personId || "", name: d.name || "", mealIds: d.mealIds || [] };
+        return { id: id, personId: str(d.personId), name: str(d.name), mealIds: strList(d.mealIds) };
       });
       S.votesLoaded = true;
 
@@ -2151,13 +2884,13 @@
       }
 
       render();
-    }, function (e) { console.warn("votes subscription ended", e); }));
+    }, function (e) { console.warn("votes subscription ended", e); lostAccess(e); }));
 
     S.subs.push(root.collection("weeks").doc(WEEK_ID).onSnapshot(function (snap) {
       var d = snap.exists ? (snap.data() || {}) : {};
-      S.chosen = Array.isArray(d.chosen) ? d.chosen : [];
+      S.chosen = strList(d.chosen);
       render();
-    }, function (e) { console.warn("week subscription ended", e); }));
+    }, function (e) { console.warn("week subscription ended", e); lostAccess(e); }));
 
     status("Connected", true);
     render();
@@ -2193,6 +2926,15 @@
   hydrateFromCache();
   status("Connecting");
 
+  // An invite link carries its code after the #, which never leaves the
+  // phone, so the code is not in any server's logs. Take it, then clear it
+  // from the address bar so a reload or a bookmark does not offer it again.
+  var LINK_CODE = /join=/.test(location.hash) ? parseCode(location.hash) : "";
+  if (/join=/.test(location.hash)) {
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  }
+  if (LINK_CODE) openJoin(LINK_CODE);
+
   // The apiKey is not a secret - it names the project. What protects the
   // data is the Firestore security rules, not hiding this block.
   var FIREBASE_CONFIG = {
@@ -2203,6 +2945,17 @@
     messagingSenderId: "43719856083",
     appId: "1:43719856083:web:364169a2206338ccc3a926"
   };
+
+  // Local testing only. On localhost with ?emu=1 the page talks to the
+  // Firebase emulators instead of the live project, so tests never create or
+  // touch a real family. The live site can never take this path: its host is
+  // github.io.
+  var EMULATED = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) &&
+    /(?:^|[?&])emu=1(?:&|$)/.test(location.search);
+
+  if (EMULATED) {
+    FIREBASE_CONFIG = { apiKey: "AIza-emulator", projectId: "demo-dinner-decisions", authDomain: "127.0.0.1" };
+  }
 
   function offline(why) {
     if (why) console.warn("running without the shared list:", why);
@@ -2216,6 +2969,12 @@
       firebase.initializeApp(FIREBASE_CONFIG);
       var store = firebase.firestore();
 
+      // Must come before anything else touches either service.
+      if (EMULATED) {
+        firebase.auth().useEmulator("http://127.0.0.1:9199", { disableWarnings: true });
+        store.useEmulator("127.0.0.1", 8181);
+      }
+
       // Firestore keeps its own offline queue; the localStorage cache above
       // still drives the instant first paint.
       store.enablePersistence({ synchronizeTabs: true }).catch(function () {});
@@ -2228,7 +2987,7 @@
         S.uid = user.uid;
 
         // A phone that has not joined a household has nothing to subscribe
-        // to. It sits ready with the chip prompting for a family and code.
+        // to. It sits on the welcome card until it starts or joins one.
         if (!S.hid) { S.ready = true; status("Not joined"); return render(); }
         connect(store);
       });

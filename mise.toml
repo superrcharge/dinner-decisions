@@ -1,3 +1,8 @@
+# The Firestore emulator is a Java program. Pinning it here keeps it local to
+# this project rather than asking for a system-wide install.
+[tools]
+java = "temurin-21"
+
 [tasks.render]
 description = "Compile the diagrams to dual-theme SVGs"
 run = "bash diagrams/render.sh"
@@ -9,3 +14,15 @@ run = "bash icons/render-icons.sh"
 [tasks.clean-diagrams]
 description = "Remove the rendered diagram SVGs"
 run = "find diagrams -type f -name '*.svg' -delete"
+
+[tasks.rules-test]
+description = "Run the security rules tests against the local emulator"
+run = "npm run test:rules"
+
+[tasks.e2e]
+description = "Run the browser tests against the local emulators"
+run = "npm run test:e2e"
+
+[tasks.rules-deploy]
+description = "Publish firestore.rules to the live project (needs `firebase login` once)"
+run = "npm run rules:deploy"

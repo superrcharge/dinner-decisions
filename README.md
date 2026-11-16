@@ -1,15 +1,16 @@
 # Dinner Decisions
 
-A one-page dinner picker for the family.
-Everyone opens the same link on their own phone, taps the meals they'd be happy to eat this week, and whoever does the shopping sees a live tally.
+A one-page dinner picker for families.
+Everyone in the house opens it on their own phone, taps the meals they'd be happy to eat this week, and whoever does the shopping sees a live tally.
 
 **→ [superrcharge.github.io/dinner-decisions](https://superrcharge.github.io/dinner-decisions/)**
 
-No accounts to create, nothing to install. Any phone, any browser.
+No accounts to create, nothing to install, no email. Any phone, any browser. Free.
 
-The link is public, so the first time the app runs on a phone it asks for two things: the family surname and a code.
-That is once per device, not once per visit - enter them and that phone is remembered for good.
-Anyone who finds the URL without both gets a page that will not load anything.
+Anyone can start a family from the welcome screen.
+Starting one hands back an invite code and link to send to the rest of the house.
+A phone joins once, by opening the link or typing the code, and is remembered from then on.
+A stranger who finds the URL can start a family of their own, and can see nothing of anyone else's.
 
 ## How it works
 
@@ -21,9 +22,35 @@ The tab strip sticks to the top of the screen, so the three views stay reachable
 
 The week rolls over on its own every Sunday. Nobody has to reset anything.
 
-**First time on a phone:** tap **Choose** in the top right, enter the family name and code, then pick your name from the list that appears. All of it is remembered on that device, so it is a one-time step.
+## Starting and joining
 
-The same menu shows the current family afterwards, with a **Change** link if a phone ever needs to move to a different one.
+**Starting a family:** tap **Start a family**, give the family a name and yourself a first name, and tap **Create**.
+The phone that starts a family has Manage unlocked, and is shown the invite straight away.
+A new family's meal list is empty, so the Pick tab offers **Add starter meals**: sixteen common dinners, written exactly as if they had been typed into Manage, to rename or remove at will.
+
+**Inviting:** the invite is a 10-character code such as `X3UHC-636A8`, and a link that carries it.
+**Share invite** opens the phone's own share sheet where there is one and copies the message otherwise.
+The invite is reachable afterwards from the name menu (**Invite someone**) and from **Manage → Your family**.
+Codes never use `0`, `O`, `1`, `I` or `L`, so one read aloud cannot be mistyped into another.
+
+**Joining:** open the link, or tap **I have a code** and type it.
+Case, spaces and the dash do not matter, and pasting the whole link into the box works too.
+The phone then asks who is picking, as it always has.
+
+On an iPhone, a link opened from a message lands in Safari, which keeps its storage apart from a copy installed on the home screen.
+A home-screen copy therefore needs the code typed into it once, which is why the code is shown in a form that is easy to type.
+
+**Changing the code:** **Manage → Your family → New code**.
+The old code stops working at once; phones already in the family stay in.
+
+**Leaving:** the name menu's **Leave** link takes this phone out of the family and clears what it had cached.
+Everyone else keeps everything, and coming back needs the invite code.
+
+**Deleting:** **Manage → Delete this family**, confirmed by typing the family's name.
+It removes every meal, vote, name, ingredient and invite for everyone.
+Other phones notice within a second or two and return to the welcome screen with a line saying why.
+
+A phone whose family has gone, or that has been removed from it, says so and returns to the welcome screen rather than sitting on an empty list.
 
 ## Grocery list
 
@@ -87,7 +114,7 @@ Project **`dinner-decisions-6af97`**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./diagrams/firebase-dark.svg">
-  <img src="./diagrams/firebase-light.svg" alt="Firebase: Anonymous Auth issues a token to the security rules, which gate every read and write into Cloud Firestore. Everything nests under a households collection whose ids cannot be listed. Inside one household sit five data collections - meals, suggestions, people, votes and weeks - plus two gate collections drawn in the rules' own colour: members, one document per admitted device, and private/join, holding the code that only a rule may read." width="100%">
+  <img src="./diagrams/firebase-light.svg" alt="Firebase: Anonymous Auth issues a token to the security rules, which gate every read and write into Cloud Firestore. Everything nests under a households collection whose ids cannot be listed, beside a top-level invites collection that maps a code to its household and cannot be listed either. Inside one household sit five data collections - meals, suggestions, people, votes and weeks - plus two gate collections drawn in the rules' own colour: members, one document per admitted device, and private/join, holding the invite code that only members may read." width="100%">
 </picture>
 
 Two products are switched on and the rest are deliberately off:
@@ -105,52 +132,50 @@ An anonymous identity on its own buys nothing, though. See below.
 
 ### Who gets in
 
-The site is public and always will be - GitHub Pages has no other setting, and making the repo private would only hide the source, not the URL. So the gate is in the data, not in the hosting.
+The site is public and always will be - GitHub Pages has no other setting, and making the repo private would only hide the source, not the URL.
+So the gate is in the data, not in the hosting.
 
-Two values do the work, and they cover different failures:
+Three things do the work:
 
-- The **household id** is a slug of the surname, so `Charge` becomes `charge`. It has to be guessable, because that determinism is the only way a second phone finds the same list. It grants nothing on its own.
-- The **code** is what admits a device. It lives in `households/<hid>/private/join`, a document the rules deny to every client in both directions.
+- The **household id** is 20 random characters, so it cannot be guessed and two families with the same surname never meet.
+- The **invite code** is what admits a device. It lives in `households/<hid>/private/join`, readable only by devices already in that family.
+- **`invites/<code>`** is a lookup from a code to the household it opens, and nothing more. It can be fetched by id but never listed, so holding a code is the whole of the permission.
 
-A rule's own `get()` is not subject to the rules, so the code can be compared against a value the browser can never fetch. That is the only way a static site served from a public repo can hold a secret at all.
-
-The sequence on a cold phone:
+The sequence on a cold phone joining:
 
 1. Firebase mints an anonymous uid.
-2. The typed surname is slugged, and the app reads `households/<hid>`. Missing means *"No family by that name"* - a real error rather than a silent empty list.
-3. The typed code goes up with a write to `households/<hid>/members/<uid>`. The page never checks it; the rules do. Rejected means *"Not that code"*.
+2. The typed code is normalised, and the app reads `invites/<code>`. Missing means *"No family uses that code"* - a real error rather than a silent empty list.
+3. The code goes up with a write to `households/<hid>/members/<uid>`. The page never checks it; the rules compare it against `private/join`, which the phone cannot read until that write has succeeded. Rejected means the code was replaced since the invite was found.
 4. It matches, the member document is created, and the app connects. It never asks again on that phone.
 
-Every data collection is gated on that member document existing, not on the code. Two consequences worth knowing:
+Every data collection is gated on that member document existing, not on the code.
+So a new code changes nothing for phones already in, because their membership is the document.
 
-**Changing the code** - edit `private/join` in the console. New devices need the new code; phones already in are untouched, because their membership is the document, not the code.
+Starting a family is one batched write of four documents: the household, `private/join`, the invite, and the creator's own membership.
+The rules refuse the household unless all four arrive together, so no family can exist half made, with nobody in it, or with no way to invite anyone.
+The code must be 10 characters from the code alphabet; the rules check that too, because they cannot count attempts and so the code has to be unguessable instead.
 
-**Revoking a phone** - delete its `members` document. Nothing it does afterwards is permitted. The rules deny `update` and `delete` there, so a device can neither edit its own record nor undo a revocation.
+The rules do not distinguish between members.
+Anyone in a family can edit its meals, change its code, remove a phone, or delete it - the intended shape for a household.
+`MANAGE_PIN` in `index.html` is still only a UI gate: it keeps the Manage tab off the kids' phones and defends nothing, and it is the same for every family.
 
-The uid lives in the browser's IndexedDB, so clearing site data means entering both values once more.
+The uid lives in the browser's IndexedDB, so clearing site data means joining with the code once more.
 
-Neither value is in `index.html`. `MANAGE_PIN` still is, and is still only a UI gate - it hides the Manage tab from the kids, it does not defend anything. That is a reasonable place to leave it, because everyone who can reach Manage at all already had the family code.
+### What a write may carry
 
-### Adding another family
+Strangers now hold valid tokens, so every data collection names the fields a document may have (`keys().hasOnly`) and bounds each one.
+Lists are checked to be lists of strings, bounded in count and in total length.
+That stops anyone padding a document to a megabyte under a field nobody reads, or storing a value that would break the page for the rest of their family.
 
-One deployment serves any number of households. Adding one is two documents and no code change.
+A meal's `icon` is the one field drawn as a glyph rather than as text, and it once went into the page unescaped, which let anyone in a family run script on everyone else's phone by setting an icon to markup.
+The page now escapes it like everything else, and the rules refuse `<`, `>`, `&` and `"` in it as a second lock.
 
-**It can only be done from the Firebase console.** The rules carry `allow write: if false` on `households`, so no client may create one - not the app, not a snippet in dev tools on the live site. The console's Data tab writes with admin credentials and bypasses security rules entirely, which is why it is the one place this works. A `permission-denied` from anywhere else is the rule doing its job, not a bug.
+### The family from before invites
 
-That restriction is also what makes *"No family by that name"* possible: because households only ever exist deliberately, a surname that does not resolve is a real error rather than an invitation to create one.
-
-**Firestore → Data:**
-
-1. Click `households` → **Add document**. Document ID is the slug of their surname. Add one field, `name`, type string, holding the display name. **Save**.
-2. Click the document you just made → **Start collection**. Collection ID `private`, Document ID `join`. Add one field, `code`, type string, holding their code, lowercase. **Save**.
-
-That is all. The five data collections appear on their own as that family uses the app.
-
-Tell them their surname and code. They open the same URL, tap **Choose**, enter both, and start with an empty list they build themselves. Their data is invisible to yours and yours to theirs.
-
-**Getting the slug right.** The app lowercases the typed surname and turns every run of non-alphanumerics into a single hyphen, so `O'Brien` resolves to `o-brien` and `Van Dyke` to `van-dyke`. The document ID has to match what that produces, or their surname will not resolve.
-
-**Why there is no script for this.** Automation would have to come in above the rules, which means admin credentials. The Admin SDK route puts a long-lived, full-power service account key on a laptop to save six clicks; the REST route avoids the stored key only by requiring the gcloud CLI, which is more tooling than the thing it replaces. Both are a bad trade for a task done roughly never. If it ever became frequent the answer would not be a script but letting families create their own household - a rules and UI change that costs the clean "no such family" error above.
+`charge` predates all of this: its id is a surname slug, and its code was short with no `invites` document.
+Nothing treats it specially.
+Its phones are members like any other, and the first time one of them opens an invite, the app replaces the short code with a strong one and creates its invite.
+Until that happens, a new phone has no code it can join `charge` with.
 
 ### Leftovers from the migration
 
@@ -164,16 +189,26 @@ Leave `households` alone - that is the live data.
 
 ### Deploying the rules
 
-> **`firestore.rules` is not deployed by anything.**
-> The file in this repo is the source of truth for humans, but pushing it changes nothing. The rules only take effect when pasted into **Firebase console → Firestore → Rules → Publish**. Edit the file and the console together, or they will drift.
+```bash
+mise run rules-test     # every rule, against the local emulator
+mise run rules-deploy   # publish firestore.rules to the live project
+```
 
-The rules require an admitted device - not merely an authenticated one - and confine writes to the five data collections inside one household. `create`/`update` and `delete` are written as separate clauses on purpose: a delete carries no `request.resource`, so a single combined rule with a field check silently blocks every delete - removing a meal, dismissing a suggestion, clearing a week.
+Pushing to GitHub does not change the rules; `rules-deploy` does.
+It needs `firebase login` once on the machine, and nothing else - no service account key is stored anywhere.
+Publish rules before the page that depends on them; the rules here are written to stay compatible with the page that is live while they go out.
 
-They do not distinguish between members. Anyone holding the code can edit that household's meal list, which is the intended shape for a family.
+`create`/`update` and `delete` are written as separate clauses on purpose: a delete carries no `request.resource`, so a single combined rule with a field check silently blocks every delete - removing a meal, dismissing a suggestion, clearing a week.
 
 ### Free tier
 
-1 GiB of storage, 50,000 reads and 20,000 writes per day, and anonymous sign-in at no cost. A family of five voting weekly is nowhere near any of those.
+1 GiB of storage, 50,000 reads and 20,000 writes per day, and anonymous sign-in at no cost.
+A family of five voting weekly is nowhere near any of those.
+
+The daily limits are shared by every family on the project.
+Opening the app costs roughly one read per meal, person and vote, so on the order of a hundred, and the reads run out at around 500 opens a day.
+Past that the app keeps working from its cached copy until the daily reset; nothing is billed, because the free plan has no card on it.
+Moving to the pay-as-you-go plan is the fix if it ever comes to that.
 
 ### Recreating it from scratch
 
@@ -181,26 +216,29 @@ They do not distinguish between members. Anyone holding the code can edit that h
 2. **Firestore Database → Create database**, production mode, any US region.
 3. **Authentication → Sign-in method → Anonymous → Enable.**
 4. **Project settings → Your apps → `</>`** and copy the config into `FIREBASE_CONFIG` in `index.html`.
-5. Create the first household as described in [Adding another family](#adding-another-family). Do this *before* publishing the rules - without it every join fails.
-6. Paste `firestore.rules` into the console and publish.
-7. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**, application restrictions → Websites → the Pages origin.
+5. Put the project id in `.firebaserc`, then `firebase login` and `mise run rules-deploy`.
+6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → the Pages origin. API restrictions → only Identity Toolkit, Token Service, Cloud Firestore and Firebase Installations.
+
+No household needs creating by hand; the first one is started from the app.
 
 ## Firestore data model
 
-Everything hangs off a household, so the app touches no top-level collection but one:
+Everything hangs off a household, so the app touches only two top-level collections:
 
 | Path | Document id | Holds |
 |---|---|---|
-| `households` | slug of the surname | `name`. `get` is allowed so the app can say "no family by that name"; **`list` is denied**, so the ids cannot be enumerated |
-| `households/<hid>/private` | `join` | one field, `code`. Denied to every client in both directions; only a rule's own `get()` reads it |
-| `households/<hid>/members` | anonymous uid | one per admitted device. Delete one to revoke that phone |
+| `invites` | the invite code | `hid`, `createdAt`. `get` for any signed-in device; **`list` is denied**. Created only alongside the household's real code, and replaced whenever the code is |
+| `households` | 20 random characters (`charge` is a surname slug from before) | `name`, `createdBy`, `createdAt`. `get` is allowed so a joining phone can show the family's name; **`list` is denied**, so the ids cannot be enumerated |
+| `households/<hid>/private` | `join` | one field, `code`. Readable by members only; written only with its invite. Any other document under `private/` is closed to every client |
+| `households/<hid>/members` | anonymous uid | `code`, `joinedAt`. One per admitted device; never editable. Deleted to leave, or by another member to remove a phone |
 | `households/<hid>/meals` | slug of the name | the master list. Optional `icon` field overrides the matched emoji; optional `ingredients` array of up to 20 strings feeds the grocery list |
 | `households/<hid>/suggestions` | slug of the name | typed-in meals awaiting keep or dismiss |
 | `households/<hid>/people` | slug plus a random suffix | the household roster |
 | `households/<hid>/votes` | `<weekId>__<personId>` | one document per person per week, holding an array of meal ids |
 | `households/<hid>/weeks` | `<weekId>` | the meals locked into that week's plan |
 
-`allow list: if false` on `households` is the single most load-bearing line in `firestore.rules`. Without it one query returns every household id in the project, and a deliberately guessable id becomes a harvestable list.
+`allow list: if false` on `households` and on `invites` are the most load-bearing lines in `firestore.rules`.
+Without the first, one query returns every household id in the project; without the second, every code.
 
 `weekId` is the Sunday of the week, as `YYYY-MM-DD`.
 
@@ -210,27 +248,49 @@ One document per voter per week means two phones never contend on the same write
 
 ## Layout
 
-Single static file, `index.html`. No build step, no dependencies to install, nothing to run locally - open it and it works.
+The app is a single static file, `index.html`, with no build step - open it and it works.
+`package.json` holds the test and deploy tooling only; nothing in it ships to a phone.
 
 ```
-index.html          the whole app
-site.webmanifest    home-screen name and icons
-firestore.rules     reference copy; paste into the console to apply
-icons/              home-screen and favicon PNGs, generated from icon.typ
-diagrams/           Typst sources and rendered SVGs
-  design/           palette and tokens shared by every diagram
+index.html            the whole app
+site.webmanifest      home-screen name and icons
+firestore.rules       the security rules; mise run rules-deploy publishes them
+firebase.json         emulator ports and the rules file, for tests and deploys
+tests/rules.test.mjs  every rule against the emulator, negative cases first
+tests/e2e/            two- and three-phone browser tests, and screenshots
+tests/serve.mjs       a static server that behaves like GitHub Pages
+icons/                home-screen and favicon PNGs, generated from icon.typ
+diagrams/             Typst sources and rendered SVGs
+  design/             palette and tokens shared by every diagram
 ```
+
+## Testing
+
+```bash
+npm install                    # once
+npx playwright install chromium # once
+mise run rules-test            # security rules against the Firestore emulator
+mise run e2e                   # phones in a browser against the emulators
+```
+
+`mise` installs the Java the emulator needs, locally to this project.
+Both suites run against the Firebase emulators under the throwaway project id `demo-dinner-decisions`, so no test ever touches a real family.
+The page joins the emulators only when served from `localhost` with `?emu=1`; the live site cannot take that path.
+The browser tests write screenshots of every screen, light and dark, at two phone widths, to `test-results/screens/`.
+GitHub Actions runs both suites on every push.
+
+The emulators use ports 8181 and 9199 rather than the defaults, which other local projects tend to hold.
 
 ## Configuration
 
 Two things in `index.html`:
 
 - `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the Pages origin, and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
-- `MANAGE_PIN` - the code that reveals the Manage tab. It hides Manage from the kids' phones. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
+- `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the kids' phones. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
 
 And two things that are deliberately **not** here:
 
-- The **family code** lives in Firestore at `households/<hid>/private/join`, never in the source. That is the whole point - it is the one value that must not be readable, and a static site served from a public repo cannot keep a secret in its own source.
+- **Invite codes** live in Firestore, never in the source, and are generated on the phone with the browser's cryptographic random generator.
 - The **household** a phone belongs to is chosen in the app and kept in that device's `localStorage`, so the same `index.html` serves every family without knowing about any of them.
 
 ## Regenerating

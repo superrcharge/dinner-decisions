@@ -1,60 +1,190 @@
 rules_version = '2';
 
 // Everything lives under a household, and a device gets into one by
-// presenting a code it can never read back.
+// presenting a code it can only have been given.
 //
-// The household id is a slug of the family's surname, so it is short,
-// memorable, and guessable by anyone who knows them. That is deliberate and
-// harmless: the id alone grants nothing. What admits a device is the code,
-// which lives in a document denied to every client in both directions.
+// Anyone may start a household. Its id is random, so it cannot be guessed and
+// two families with the same surname never meet. What admits a second device
+// is the invite code, which lives in private/join and is readable only by
+// devices already inside. invites/<code> is nothing more than a lookup from a
+// code to the household it belongs to.
 //
-// Anonymous Auth still signs everyone in, but an anonymous identity now buys
-// nothing on its own. A stranger who finds the URL signs in fine, cannot
-// enumerate households, cannot read the code, and cannot touch any data.
+// Anonymous Auth still signs everyone in, and an anonymous identity still
+// buys nothing on its own. A stranger who finds the URL signs in fine, can
+// start a household of their own, cannot enumerate households or invites,
+// cannot read anyone's code, and cannot touch anyone else's data.
+//
+// One household, "charge", predates all this: its id is a surname slug and its
+// code was short. Nothing below treats it specially. Its devices are members
+// like any other, and the first time one of them shares an invite the app
+// swaps the short code for a strong one.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /households/{hid} {
+    function signedIn() {
+      return request.auth != null;
+    }
 
-      function member() {
-        return request.auth != null
-               && exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
-      }
+    function isMember(hid) {
+      return signedIn()
+             && exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+    }
 
-      // A device resolves a typed surname to a household here, so it can tell
-      // "no family by that name" from "wrong code". That is all this is for.
-      allow get: if request.auth != null;
+    // The same question asked of the state this write would leave behind.
+    // Starting a household writes four documents at once, and each has to be
+    // able to see the other three.
+    function willBeMember(hid) {
+      return signedIn()
+             && existsAfter(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+    }
 
-      // LOAD-BEARING. Without this a single query returns every household id
-      // in the project, and a guessable id becomes a harvestable list.
+    function joinCodeAfter(hid) {
+      return getAfter(/databases/$(database)/documents/households/$(hid)/private/join).data.code;
+    }
+
+    // Ten characters from an alphabet with no 0, O, 1, I or L, so a code read
+    // aloud or typed from a screenshot cannot be mistyped into a different
+    // valid one. About 49 bits, which is what makes guessing pointless: the
+    // rules cannot count attempts, so the code has to be unguessable instead.
+    function strongCode(c) {
+      return c is string && c.matches('^[A-HJKMNP-Z2-9]{10}$');
+    }
+
+    function inviteMatches(hid, code) {
+      return existsAfter(/databases/$(database)/documents/invites/$(code))
+             && getAfter(/databases/$(database)/documents/invites/$(code)).data.hid == hid;
+    }
+
+    /* ---- field checks ----
+       Strangers hold valid tokens now, so every write names the fields it may
+       carry and bounds each one. Without hasOnly a single document could be
+       padded to a megabyte under a field nobody reads. */
+
+    function text(v, max) {
+      return v is string && v.size() > 0 && v.size() <= max;
+    }
+
+    function optString(d, field, max) {
+      return !(field in d) || (d[field] is string && d[field].size() <= max);
+    }
+
+    // A list of strings, bounded in count and in total length.
+    //
+    // The rules language has no loop, so the per-item type check is a round
+    // trip: join the list on a control character nobody types, split it back,
+    // and compare. join() quietly turns a number into text, so ["a", 7] comes
+    // back as ["a", "7"] and fails the comparison; a map makes join() fail
+    // outright. An empty list has nothing to check.
+    function strings(v, maxItems, maxChars) {
+      return v is list
+             && v.size() <= maxItems
+             && (v.size() == 0
+                 || (v.join('\u001f').size() - (v.size() - 1) <= maxChars
+                     && v.join('\u001f').split('\u001f') == v));
+    }
+
+    // Code -> household. The code is the document id, and holding it is the
+    // whole of the permission: get is open, list is not.
+    match /invites/{code} {
+      allow get: if signedIn();
+
+      // LOAD-BEARING. A listable collection would hand out every code.
       allow list: if false;
 
-      // Households are provisioned by hand in the console. Nothing the app
-      // does creates one, so nobody can fill the project with junk.
-      allow write: if false;
+      // Only for the household's real code, and only by someone inside it, so
+      // nobody can point a code at a household that is not theirs.
+      allow create: if strongCode(code)
+                    && request.resource.data.keys().hasOnly(['hid', 'createdAt'])
+                    && request.resource.data.hid is string
+                    && optString(request.resource.data, 'createdAt', 40)
+                    && willBeMember(request.resource.data.hid)
+                    && joinCodeAfter(request.resource.data.hid) == code;
 
-      // LOAD-BEARING. The whole model rests on the code being unreadable.
-      // A rule's own get() is not subject to these rules, which is the only
-      // way a static site served from a public repo can hold a secret at all.
-      match /private/{doc} {
-        allow read, write: if false;
+      allow update: if false;
+
+      allow delete: if resource == null || isMember(resource.data.hid);
+    }
+
+    match /households/{hid} {
+
+      // A joining device reads the name here to show which family it is about
+      // to enter. The id is random, so being able to get one you already know
+      // the id of gives nothing away.
+      allow get: if signedIn();
+
+      // LOAD-BEARING. Without this a single query returns every household id
+      // in the project.
+      allow list: if false;
+
+      // Starting a household is one batch: this document, private/join, the
+      // invite, and the creator's own membership. A household that arrives
+      // without the other three is refused, so none can exist that nobody is
+      // in or that nobody can be invited to.
+      allow create: if signedIn()
+                    && hid.matches('^[A-Za-z0-9]{20}$')
+                    && request.resource.data.keys().hasOnly(['name', 'createdBy', 'createdAt'])
+                    && text(request.resource.data.name, 40)
+                    && request.resource.data.createdBy == request.auth.uid
+                    && optString(request.resource.data, 'createdAt', 40)
+                    && willBeMember(hid)
+                    && strongCode(joinCodeAfter(hid))
+                    && inviteMatches(hid, joinCodeAfter(hid));
+
+      allow update: if false;
+
+      allow delete: if isMember(hid);
+
+      // LOAD-BEARING. The invite code. Readable by members, who were given it
+      // to get in, and by nobody else. Any other document under private/ has
+      // no rule at all and is therefore closed to every client.
+      match /private/join {
+        allow get: if isMember(hid);
+
+        // Only as part of starting the household, by the device starting it.
+        allow create: if signedIn()
+                      && !exists(/databases/$(database)/documents/households/$(hid))
+                      && getAfter(/databases/$(database)/documents/households/$(hid)).data.createdBy == request.auth.uid
+                      && request.resource.data.keys().hasOnly(['code'])
+                      && strongCode(request.resource.data.code);
+
+        // Changing the code. The new one must arrive with its invite, or the
+        // household would be left with a code nobody could look up.
+        allow update: if isMember(hid)
+                      && request.resource.data.keys().hasOnly(['code'])
+                      && strongCode(request.resource.data.code)
+                      && inviteMatches(hid, request.resource.data.code);
+
+        // Only on the way out with the household itself. Deleting it alone
+        // would leave a family that could never admit another device.
+        allow delete: if isMember(hid)
+                      && !existsAfter(/databases/$(database)/documents/households/$(hid));
       }
 
-      // One document per admitted device, keyed by its anonymous uid. It
-      // stores the code it presented; only that device can read it back.
+      // One document per admitted device, keyed by its anonymous uid.
       match /members/{uid} {
-        allow get: if request.auth != null && request.auth.uid == uid;
-        allow list: if false;
+        allow get: if signedIn() && (request.auth.uid == uid || isMember(hid));
 
-        allow create: if request.auth != null
+        // Members only, and only needed to empty a household before deleting it.
+        allow list: if isMember(hid);
+
+        // The code goes up with the write and is compared here, against a
+        // document the device cannot read until this write has succeeded.
+        // getAfter rather than get so the same clause serves the batch that
+        // starts a household, where private/join arrives alongside.
+        allow create: if signedIn()
                       && request.auth.uid == uid
-                      && request.resource.data.code
-                         == get(/databases/$(database)/documents/households/$(hid)/private/join).data.code;
+                      && request.resource.data.keys().hasOnly(['code', 'joinedAt'])
+                      && request.resource.data.code is string
+                      && optString(request.resource.data, 'joinedAt', 40)
+                      && request.resource.data.code == joinCodeAfter(hid);
 
-        // LOAD-BEARING. A device that could edit this record could grant
-        // itself anything; one that could delete it could undo a revocation.
-        // Revoking a phone is deleting its document from the console.
-        allow update, delete: if false;
+        // LOAD-BEARING. A device that could edit this record could present a
+        // new code without being checked against it.
+        allow update: if false;
+
+        // Leaving, or emptying the household. A device that deletes itself has
+        // to present the code again to return, so this grants nothing.
+        allow delete: if signedIn() && (request.auth.uid == uid || isMember(hid));
       }
 
       // The data. create/update and delete stay separate clauses on purpose:
@@ -64,52 +194,67 @@ service cloud.firestore {
       //
       // These rules do not distinguish between members. Anyone holding the
       // code may edit the meal list, which is the intended shape for a
-      // household. The Manage tab's PIN is a UI gate only.
+      // household. The Manage tab's code is a UI gate only.
 
       match /meals/{id} {
-        allow read: if member();
+        allow read: if isMember(hid);
 
-        // ingredients is optional and validated only when present - every
-        // meal predating the grocery list is written without it.
-        allow create, update: if member()
-                              && request.resource.data.name is string
-                              && request.resource.data.name.size() > 0
-                              && request.resource.data.name.size() <= 60
-                              && (!request.resource.data.keys().hasAny(['ingredients'])
-                                  || (request.resource.data.ingredients is list
-                                      && request.resource.data.ingredients.size() <= 20));
-        allow delete: if member();
+        // icon and ingredients are optional and checked only when present.
+        // icon is the one field ever drawn as a glyph rather than as text, so
+        // it is refused anything a browser could read as markup. The page
+        // escapes it as well; this is the second lock, not the only one. The
+        // length bound is generous because one emoji can be many characters.
+        allow create, update: if isMember(hid)
+                              && request.resource.data.keys().hasOnly(['name', 'active', 'createdAt', 'icon', 'ingredients'])
+                              && text(request.resource.data.name, 60)
+                              && (!('active' in request.resource.data) || request.resource.data.active is bool)
+                              && optString(request.resource.data, 'createdAt', 40)
+                              && optString(request.resource.data, 'icon', 64)
+                              && (!('icon' in request.resource.data)
+                                  || request.resource.data.icon.matches('^[^<>&"]*$'))
+                              && (!('ingredients' in request.resource.data)
+                                  || strings(request.resource.data.ingredients, 20, 1200));
+        allow delete: if isMember(hid);
       }
 
       match /suggestions/{id} {
-        allow read: if member();
-        allow create, update: if member()
-                              && request.resource.data.name is string
-                              && request.resource.data.name.size() > 0
-                              && request.resource.data.name.size() <= 60;
-        allow delete: if member();
+        allow read: if isMember(hid);
+        allow create, update: if isMember(hid)
+                              && request.resource.data.keys().hasOnly(['name', 'addedBy', 'createdAt'])
+                              && text(request.resource.data.name, 60)
+                              && optString(request.resource.data, 'addedBy', 24)
+                              && optString(request.resource.data, 'createdAt', 40);
+        allow delete: if isMember(hid);
       }
 
       match /people/{id} {
-        allow read: if member();
-        allow create, update: if member()
-                              && request.resource.data.name is string
-                              && request.resource.data.name.size() > 0
-                              && request.resource.data.name.size() <= 24;
-        allow delete: if member();
+        allow read: if isMember(hid);
+        allow create, update: if isMember(hid)
+                              && request.resource.data.keys().hasOnly(['name', 'createdAt'])
+                              && text(request.resource.data.name, 24)
+                              && optString(request.resource.data, 'createdAt', 40);
+        allow delete: if isMember(hid);
       }
 
       match /votes/{id} {
-        allow read: if member();
-        allow create, update: if member()
-                              && request.resource.data.mealIds is list
-                              && request.resource.data.mealIds.size() <= 200;
-        allow delete: if member();
+        allow read: if isMember(hid);
+        allow create, update: if isMember(hid)
+                              && request.resource.data.keys().hasOnly(['weekId', 'personId', 'name', 'mealIds', 'updatedAt'])
+                              && strings(request.resource.data.mealIds, 200, 8000)
+                              && optString(request.resource.data, 'weekId', 20)
+                              && optString(request.resource.data, 'personId', 60)
+                              && optString(request.resource.data, 'name', 24)
+                              && optString(request.resource.data, 'updatedAt', 40);
+        allow delete: if isMember(hid);
       }
 
       match /weeks/{id} {
-        allow read: if member();
-        allow write: if member();
+        allow read: if isMember(hid);
+        allow create, update: if isMember(hid)
+                              && request.resource.data.keys().hasOnly(['chosen', 'updatedAt'])
+                              && strings(request.resource.data.chosen, 200, 8000)
+                              && optString(request.resource.data, 'updatedAt', 40);
+        allow delete: if isMember(hid);
       }
     }
   }
