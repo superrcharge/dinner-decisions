@@ -79,6 +79,23 @@ test("a tap made before sign-in finishes waits for it instead of failing", async
   noErrors(ana, ben);
 });
 
+test("the ? explains the app, before and after joining a family", async ({ browser }) => {
+  const ana = await phone(browser);
+  await ana.click("#helpBtn");
+  await expect(ana.locator("#dialog .dialog-title")).toHaveText("How it works");
+  await expect(ana.locator(".help-head").first()).toHaveText("Get started");
+  await ana.click("#dlgCancel");
+  await expect(ana.locator("#dialog")).toHaveCount(0);
+
+  await startFamily(ana, "The Riveras", "Ana");
+  await ana.click("#helpBtn");
+  await expect(ana.locator(".help-head").first()).toHaveText("Add your family");
+  await expect(ana.locator(".help-head")).toHaveCount(7);
+  await ana.click("#sheetBackdrop", { position: { x: 5, y: 5 } });
+  await expect(ana.locator("#dialog")).toHaveCount(0);
+  noErrors(ana);
+});
+
 test("bad, unknown and replaced codes each say what went wrong", async ({ browser }) => {
   const ana = await phone(browser);
   const first = (await startFamily(ana, "The Riveras", "Ana")).code;

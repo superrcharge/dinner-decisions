@@ -169,6 +169,60 @@
   .chip:hover { border-color: var(--accent); }
   .chip .caret { color: var(--ink-faint); font-size: 11px; }
 
+  .masthead-side {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Same height and outline as the name chip beside it, so the two read as
+     one row of controls. */
+  .help-btn {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--ink-muted);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .help-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- how it works ---------- */
+
+  .help { padding: 0 12px 4px; }
+
+  .help-item {
+    padding: 11px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .help-item:first-child { border-top: 0; padding-top: 2px; }
+
+  .help-head {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+
+  .help p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+
+  .help strong { color: var(--ink); font-weight: 600; }
+
   /* ---------- tabs ---------- */
 
   /* Sticks to the top so the tabs stay reachable from anywhere in a long
@@ -1146,11 +1200,14 @@
       <h1 class="wordmark">Dinner Decisions</h1>
       <div class="week-line" id="weekLine">&nbsp;</div>
     </div>
-    <div class="whoami">
-      <span class="whoami-label">Picking as</span>
-      <button class="chip" id="whoBtn" type="button">
-        <span id="whoName">Choose&hellip;</span><span class="caret">&#9662;</span>
-      </button>
+    <div class="masthead-side">
+      <div class="whoami">
+        <span class="whoami-label">Picking as</span>
+        <button class="chip" id="whoBtn" type="button">
+          <span id="whoName">Choose&hellip;</span><span class="caret">&#9662;</span>
+        </button>
+      </div>
+      <button class="help-btn" id="helpBtn" type="button" aria-label="How it works" title="How it works">?</button>
     </div>
   </header>
 
@@ -2205,6 +2262,46 @@
     return "Something went wrong. Try again.";
   }
 
+  /* ---------------- how it works ---------------- */
+
+  // Reachable from every screen, including the welcome card, so the first
+  // item depends on whether this phone is in a family yet.
+  function openHelp() {
+    function item(head, body) {
+      return '<div class="help-item"><div class="help-head">' + head + "</div><p>" + body + "</p></div>";
+    }
+    var start = S.hid
+      ? item("Add your family",
+          "Tap your name at the top, then <strong>Invite someone</strong>, and send them the link. " +
+          "Everyone picks on their own phone.")
+      : item("Get started",
+          "One person taps <strong>Start a family</strong> and sends the invite to everyone else in the house. " +
+          "They open the link, or tap <strong>I have a code</strong> and type it in.");
+
+    openDialog("How it works",
+      '<h2 class="dialog-title">How it works</h2>' +
+      '<div class="help">' +
+      start +
+      item("Pick your meals",
+        "Choose your name at the top, then tap every meal you&rsquo;d happily eat this week. " +
+        "Pick as many as you like. Picks save as you tap.") +
+      item("Want something that isn&rsquo;t listed?",
+        "Type it into <strong>Something else</strong> under the meals. " +
+        "It&rsquo;s added to your picks, and others can vote for it too.") +
+      item("See what won",
+        "<strong>Shopping</strong> ranks every meal by votes and shows who hasn&rsquo;t picked yet. " +
+        "Once meals go into the week&rsquo;s plan, their grocery list shows up there too.") +
+      item("Plan the week",
+        "Whoever does the shopping taps <strong>Manage</strong> at the bottom and enters the Manage code. " +
+        "From there they put meals in the plan, edit the meal list and ingredients, and keep or dismiss new ideas.") +
+      item("A fresh start every Sunday",
+        "Votes and the plan clear when a new week begins. The meal list stays.") +
+      item("Make it feel like an app!",
+        "On iPhone, tap Safari&rsquo;s Share button, then <strong>Add to Home Screen</strong>. " +
+        "On Android, open Chrome&rsquo;s menu, then <strong>Add to Home screen</strong>.") +
+      "</div>" + cancelRow("Done"));
+  }
+
   /* ---------------- starting a family ---------------- */
 
   function openStart() {
@@ -2754,6 +2851,8 @@
     if (id === "managerBtn") return openManageMenu();
     if (id === "managePinGo") return submitManagePin();
     if (id === "stopManagingBtn") return stopManaging();
+
+    if (id === "helpBtn") return openHelp();
 
     if (id === "addBtn") {
       var ai = $("addInput");

@@ -11,7 +11,9 @@ import os from "node:os";
 import { test, expect } from "@playwright/test";
 import { phone, startFamily, addMe, tile, noErrors } from "../e2e/helpers.mjs";
 
-const SITE = process.env.LIVE_URL || "https://superrcharge.github.io/dinner-decisions/";
+// The query string gets past the edge cache, which can hold the previous
+// deploy for up to ten minutes. The invite link keeps it, which is harmless.
+const SITE = (process.env.LIVE_URL || "https://superrcharge.github.io/dinner-decisions/") + "?smoke=" + Date.now();
 const DB = "https://firestore.googleapis.com/v1/projects/dinner-decisions-6af97/databases/(default)/documents";
 
 function ownerToken() {

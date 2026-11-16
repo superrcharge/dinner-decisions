@@ -12,6 +12,9 @@ for (const colorScheme of ["light", "dark"]) {
 
       const ana = await phone(browser, { colorScheme, width, height: 800 });
       await snap(ana, "01-welcome");
+      await ana.click("#helpBtn");
+      await snap(ana, "01b-help-welcome");
+      await ana.click("#dlgCancel");
 
       await ana.click("#welcomeStart");
       await ana.fill("#startFamily", "The Riveras");
@@ -28,6 +31,9 @@ for (const colorScheme of ["light", "dark"]) {
       await ana.click("#starterBtn");
       await expect(ana.locator(".tile")).toHaveCount(16);
       await snap(ana, "05-starters");
+      await ana.click("#helpBtn");
+      await snap(ana, "05b-help-family");
+      await ana.click("#dlgCancel");
 
       await ana.click("#whoBtn");
       await snap(ana, "06-chip-menu");
