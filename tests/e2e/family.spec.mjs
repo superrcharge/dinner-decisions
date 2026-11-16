@@ -136,6 +136,87 @@ test("every tile is two lines tall; a longer name is cut short and kept in full 
   noErrors(ana);
 });
 
+test("the week's plan and the shopping list share as text, and the list prints on its own", async ({ browser }) => {
+  const ana = await phone(browser);
+  await startFamily(ana, "The Riveras", "Ana");
+  await ana.click("#starterBtn");
+  for (const n of ["Chili", "Tacos"]) await (await tile(ana, n)).click();
+
+  // Nothing planned yet: no share button.
+  await ana.click("#tab-shop");
+  await expect(ana.locator("#sharePlan")).toBeHidden();
+  await expect(ana.locator("#shareBuy")).toHaveCount(0);
+
+  await ana.click('[data-plan="chili"]');
+  await ana.click('[data-plan="tacos"]');
+  await expect(ana.locator("#sharePlan")).toBeVisible();
+  // Planned meals with no ingredients yet: still nothing to share or print.
+  await expect(ana.locator("#shareBuy")).toHaveCount(0);
+
+  await ana.click("#tab-manage");
+  const ing = { chili: ["Ground beef", "Onion"], tacos: ["Tortillas", "onion"] };
+  for (const [id, list] of Object.entries(ing)) {
+    await ana.click(`[data-addingr="${id}"]`);
+    for (const g of list) {
+      await ana.fill(`#ingInput-${id}`, g);
+      await ana.click(`[data-addingrgo="${id}"]`);
+    }
+  }
+
+  // An update from elsewhere in the family redraws the list but keeps what
+  // is half typed, and the cursor with it.
+  await ana.fill("#ingInput-tacos", "Sal");
+  const hid = await ana.evaluate(() => localStorage.getItem("dinner.householdId"));
+  await seed(`households/${hid}/meals/soup`, { name: "Soup", createdAt: new Date().toISOString() });
+  await expect(ana.locator('button[data-expand="soup"]')).toBeVisible();
+  await expect(ana.locator("#ingInput-tacos")).toHaveValue("Sal");
+  await expect(ana.locator("#ingInput-tacos")).toBeFocused();
+  await ana.fill("#ingInput-tacos", "");
+
+  await ana.click("#tab-shop");
+  await expect(ana.locator(".buy-item")).toHaveCount(3);
+
+  // The phone's share sheet gets plain text.
+  await ana.evaluate(() => {
+    window.shared = [];
+    navigator.share = (d) => { window.shared.push(d); return Promise.resolve(); };
+  });
+  await ana.click("#sharePlan");
+  await ana.click("#shareBuy");
+  const shared = await ana.evaluate(() => window.shared);
+  const week = await ana.evaluate(() => document.getElementById("weekLine").textContent.replace(/^Week of /i, ""));
+  expect(shared.map((s) => s.text)).toEqual([
+    "Dinners for the week of " + week + ":\n1. Chili\n2. Tacos",
+    "Shopping list for the week of " + week + ":\n• Ground beef\n• Onion\n• Tortillas"
+  ]);
+
+  // Without a share sheet the text is copied and the button shows a tick.
+  await ana.evaluate(() => { delete navigator.share; });
+  await ana.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await ana.click("#sharePlan");
+  await expect(ana.locator("#sharePlan")).toHaveClass(/is-done/);
+  // (The Windows clipboard hands line breaks back as \r\n.)
+  expect((await ana.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n")).toBe(shared[0].text);
+  await expect(ana.locator("#sharePlan")).not.toHaveClass(/is-done/);
+
+  // Print shows only the list, and puts the page back afterwards.
+  await ana.evaluate(() => { window.printed = 0; window.print = () => { window.printed++; }; });
+  const title = await ana.title();
+  await ana.click("#printBuy");
+  expect(await ana.evaluate(() => window.printed)).toBe(1);
+  await ana.emulateMedia({ media: "print" });
+  await expect(ana.locator("#printSheet")).toBeVisible();
+  await expect(ana.locator(".wrap")).toBeHidden();
+  await expect(ana.locator("#printSheet li")).toHaveText(["Ground beef", "OnionChili, Tacos", "Tortillas"]);
+  await expect(ana.locator("#printSheet .print-sub")).toHaveText("The Riveras · Week of " + week + " · Chili, Tacos");
+  await ana.screenshot({ path: "test-results/screens/print-shopping-list.png" });  await ana.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+  await expect(ana.locator(".wrap")).toBeVisible();
+  expect(await ana.title()).toBe(title);
+  await ana.emulateMedia({ media: "screen" });
+  await expect(ana.locator("#printSheet")).toBeHidden();
+  noErrors(ana);
+});
+
 test("bad, unknown and replaced codes each say what went wrong", async ({ browser }) => {
   const ana = await phone(browser);
   const first = (await startFamily(ana, "The Riveras", "Ana")).code;
