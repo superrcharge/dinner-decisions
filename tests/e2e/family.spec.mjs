@@ -91,8 +91,48 @@ test("the ? explains the app, before and after joining a family", async ({ brows
   await ana.click("#helpBtn");
   await expect(ana.locator(".help-head").first()).toHaveText("Add your family");
   await expect(ana.locator(".help-head")).toHaveCount(7);
-  await ana.click("#sheetBackdrop", { position: { x: 5, y: 5 } });
+  await ana.click("#dlgClose");
   await expect(ana.locator("#dialog")).toHaveCount(0);
+
+  // On a short screen only the middle scrolls: the X and Done stay in view.
+  await ana.setViewportSize({ width: 440, height: 600 });
+  await ana.click("#helpBtn");
+  await expect(ana.locator("#dlgClose")).toBeInViewport({ ratio: 1 });
+  await expect(ana.locator("#dlgCancel")).toBeInViewport({ ratio: 1 });
+  await ana.click("#sheetBackdrop", { position: { x: 5, y: 590 } });
+  await expect(ana.locator("#dialog")).toHaveCount(0);
+  noErrors(ana);
+});
+
+test("every tile is two lines tall; a longer name is cut short and kept in full elsewhere", async ({ browser }) => {
+  const ana = await phone(browser, { width: 375 });
+  await startFamily(ana, "The Riveras", "Ana");
+  await ana.click("#starterBtn");
+  await ana.click("#tab-manage");
+  const long = "Sheet Pan Lemon Herb Chicken with Potatoes";
+  for (const name of ["Gnocchi and Italian Sausage Soup", long]) {
+    await ana.fill("#manageAddInput", name);
+    await ana.click("#manageAddBtn");
+  }
+  await ana.click("#tab-pick");
+  await expect(ana.locator(".tile")).toHaveCount(18);
+
+  const heights = async () => new Set(await ana.locator(".tile").evaluateAll((ts) => ts.map((t) => Math.round(t.getBoundingClientRect().height))));
+  expect(await heights()).toEqual(new Set([125]));
+
+  // On a phone only the name that needs a third line is cut, and only it
+  // carries a tooltip.
+  const titled = () => ana.locator(".tile[title]").evaluateAll((ts) => ts.map((t) => t.title));
+  expect(await titled()).toEqual([long]);
+
+  // Picking it shows the whole name in Your picks.
+  await (await tile(ana, long)).click();
+  await expect(ana.locator(".mypick-name")).toHaveText(long);
+
+  // A wider window has narrower tiles, so more names are cut.
+  await ana.setViewportSize({ width: 1100, height: 900 });
+  await expect.poll(titled).toEqual(["Gnocchi and Italian Sausage Soup", long]);
+  expect(await heights()).toEqual(new Set([125]));
   noErrors(ana);
 });
 

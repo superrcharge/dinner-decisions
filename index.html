@@ -227,12 +227,16 @@
 
   /* Sticks to the top so the tabs stay reachable from anywhere in a long
      list. It bleeds past the wrap's padding so the ground and the rule run
-     the full width rather than leaving gutters for content to show through. */
+     the full width rather than leaving gutters for content to show through.
+     The negative top margin makes the gap from the week line's letters to
+     the pill the same 12px as the pill to the rule below: the week line's
+     box runs about 5px below its capitals, and the 8px top padding has to
+     stay for when the bar is stuck to the top of the screen. */
   .tabbar {
     position: sticky;
     top: 0;
     z-index: 20;
-    margin: 14px -16px 18px;
+    margin: -3px -16px 18px;
     padding: 8px 16px 12px;
     background: var(--ground);
     border-bottom: 1px solid var(--line);
@@ -369,6 +373,22 @@
     text-align: left;
   }
 
+  /* Icon and name are separate boxes so a long name wraps under its own
+     first line rather than back under the icon. */
+  /* A fixed one-line box, centred, because the emoji font's taller metrics
+     would otherwise sit the icon low against the text beside it. */
+  .mypick-icon {
+    flex: none;
+    align-self: flex-start;
+    height: 1.2em;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    max-width: 40px;
+    white-space: nowrap;
+  }
+  .mypick-name { min-width: 0; overflow-wrap: break-word; }
+
   .mypick .x {
     font-size: 15px;
     line-height: 1;
@@ -416,10 +436,20 @@
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   }
 
+  /* Always two lines tall, so every tile in the grid is the same size, and
+     never more: a longer name ends in an ellipsis. Its full text is in the
+     tile's tooltip on a computer and in Your picks once it is picked. */
   .tile-name {
     font-weight: 600;
     font-size: 15px;
     line-height: 1.25;
+    min-height: 2.5em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: break-word;
   }
 
   .tile-foot {
@@ -1098,15 +1128,68 @@
   }
   :root[data-theme="dark"] .menu-backdrop.dim { background: rgba(0, 0, 0, .55); }
 
+  /* Sized against dvh, the screen as it is right now. Plain vh on iPhone
+     Safari is the screen with its toolbars hidden, so a dialog sized by it
+     runs under the bottom toolbar and hides its last button. The vh lines
+     stay as the fallback for browsers without dvh. */
   .menu.dialog {
     left: 50%;
     top: max(56px, 11vh);
+    top: max(56px, 11dvh);
     transform: translateX(-50%);
     width: min(400px, calc(100vw - 32px));
     max-width: none;
-    max-height: calc(100vh - max(56px, 11vh) - 24px);
+    max-height: calc(100vh - max(56px, 11vh) - 24px - env(safe-area-inset-bottom));
+    max-height: calc(100dvh - max(56px, 11dvh) - 24px - env(safe-area-inset-bottom));
     padding: 10px 8px 8px;
   }
+
+  /* A dialog with more to read than fits: it starts near the top, and only
+     the middle scrolls, so the title, the X and Done are always on screen. */
+  .menu.dialog.dialog-tall {
+    top: calc(16px + env(safe-area-inset-top));
+    max-height: calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .dialog-tall .help {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--line);
+    margin: 0 4px;
+    padding: 0 8px 4px;
+  }
+
+  .dialog-tall > .menu-add { flex: none; margin-top: 4px; }
+
+  .dialog-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-right: 4px;
+  }
+
+  .dialog-close {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    color: var(--ink-muted);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .dialog-close:hover { border-color: var(--accent); color: var(--accent); }
 
   .dialog-title {
     font-family: var(--display);
@@ -1778,6 +1861,27 @@
     }
   }
 
+  // A name cut short by the two-line limit gets its full text as a hover
+  // tooltip. Only those: a tooltip repeating a name already in full is noise.
+  // Whether a name is cut depends on the tile's width, so this runs again
+  // when the window is resized or the phone is turned, and when the tab is
+  // shown, because a hidden tile has no size to measure.
+  function markClipped() {
+    if ($("panel-pick").hidden) return;
+    var names = $("mealGrid").querySelectorAll(".tile-name");
+    for (var i = 0; i < names.length; i++) {
+      var tile = names[i].parentNode;
+      if (names[i].scrollHeight > names[i].clientHeight + 1) tile.title = names[i].textContent;
+      else tile.removeAttribute("title");
+    }
+  }
+
+  var clipFrame = 0;
+  window.addEventListener("resize", function () {
+    cancelAnimationFrame(clipFrame);
+    clipFrame = requestAnimationFrame(markClipped);
+  });
+
   function renderPick() {
     var grid = $("mealGrid");
     var items = pickable();
@@ -1817,6 +1921,8 @@
         "</button>";
     }).join("");
 
+    markClipped();
+
     $("barCount").innerHTML = "<strong>" + mine.length + "</strong> picked";
 
     // Your own picks, gathered in one place. Scattered green tiles are hard to
@@ -1830,7 +1936,8 @@
         chosen.map(function (m) {
           return '<button class="mypick" type="button" data-unpick="' + esc(m.id) +
             '" aria-label="Remove ' + esc(m.name) + '">' +
-            iconFor(m.name, m.icon) + " " + esc(m.name) +
+            '<span class="mypick-icon" aria-hidden="true">' + iconFor(m.name, m.icon) + "</span>" +
+            '<span class="mypick-name">' + esc(m.name) + "</span>" +
             '<span class="x" aria-hidden="true">&times;</span></button>';
         }).join("");
       strip.hidden = false;
@@ -2190,12 +2297,12 @@
 
   /* ---------------- dialogs ---------------- */
 
-  function openDialog(label, html, focusId) {
+  function openDialog(label, html, focusId, extraClass) {
     S.sheetOpen = true;
     S.sheet = "dialog";
     $("sheetHost").innerHTML =
       '<div class="menu-backdrop dim" id="sheetBackdrop"></div>' +
-      '<div class="menu dialog" id="dialog" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' +
+      '<div class="menu dialog' + (extraClass ? " " + extraClass : "") + '" id="dialog" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' +
       html + "</div>";
     var f = focusId && $(focusId);
     if (f) f.focus();
@@ -2279,7 +2386,11 @@
           "They open the link, or tap <strong>I have a code</strong> and type it in.");
 
     openDialog("How it works",
-      '<h2 class="dialog-title">How it works</h2>' +
+      '<div class="dialog-head"><h2 class="dialog-title">How it works</h2>' +
+      '<button class="dialog-close" id="dlgClose" type="button" aria-label="Close">' +
+      '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
+      '<path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>' +
+      "</button></div>" +
       '<div class="help">' +
       start +
       item("Pick your meals",
@@ -2299,7 +2410,7 @@
       item("Make it feel like an app!",
         "On iPhone, tap Safari&rsquo;s Share button, then <strong>Add to Home Screen</strong>. " +
         "On Android, open Chrome&rsquo;s menu, then <strong>Add to Home screen</strong>.") +
-      "</div>" + cancelRow("Done"));
+      "</div>" + cancelRow("Done"), null, "dialog-tall");
   }
 
   /* ---------------- starting a family ---------------- */
@@ -2716,6 +2827,7 @@
       $("tab-" + k).setAttribute("aria-selected", String(k === which));
       $("panel-" + k).hidden = k !== which;
     });
+    if (which === "pick") markClipped();
   }
 
   // Anchored above the Manage button rather than a browser popup, so it
@@ -2823,12 +2935,12 @@
     // Clicks can land on a child span, so resolve the owning control.
     var hit = ev.target.closest
       ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage," +
-          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn")
+          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#dlgClose,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn")
       : null;
     var id = hit ? hit.id : ev.target.id;
 
     if (id === "whoBtn") return openSheet();
-    if (id === "sheetBackdrop" || id === "dlgCancel") return closeSheet();
+    if (id === "sheetBackdrop" || id === "dlgCancel" || id === "dlgClose") return closeSheet();
     if (id === "showAddName") return openSheet(true);
     if (id === "personAdd") return submitPerson($("personInput").value);
 
