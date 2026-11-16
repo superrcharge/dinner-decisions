@@ -20,8 +20,16 @@ export async function phone(browser, opts = {}) {
   const page = await ctx.newPage();
   page.errors = [];
   page.on("pageerror", (e) => page.errors.push(e.message));
+  // Holds anonymous sign-in back until the test calls page.releaseSignIn(),
+  // to act in the moment before a phone is signed in.
+  if (opts.holdSignIn) {
+    let release;
+    const held = new Promise((r) => { release = r; });
+    page.releaseSignIn = release;
+    await page.route("**/accounts:signUp*", async (route) => { await held; await route.continue(); });
+  }
   await page.goto(opts.url || "/index.html?emu=1");
-  if (!opts.url) await expect(page.locator("#barStatus")).toHaveText(/Not joined/i);
+  if (!opts.url && !opts.holdSignIn) await expect(page.locator("#barStatus")).toHaveText(/Not joined/i);
   return page;
 }
 

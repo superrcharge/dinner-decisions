@@ -258,6 +258,7 @@ firestore.rules       the security rules; mise run rules-deploy publishes them
 firebase.json         emulator ports and the rules file, for tests and deploys
 tests/rules.test.mjs  every rule against the emulator, negative cases first
 tests/e2e/            two- and three-phone browser tests, and screenshots
+tests/live/           a smoke test of the deployed site; mise run live-check
 tests/serve.mjs       a static server that behaves like GitHub Pages
 icons/                home-screen and favicon PNGs, generated from icon.typ
 diagrams/             Typst sources and rendered SVGs
@@ -280,6 +281,10 @@ The browser tests write screenshots of every screen, light and dark, at two phon
 GitHub Actions runs both suites on every push.
 
 The emulators use ports 8181 and 9199 rather than the defaults, which other local projects tend to hold.
+
+After a deploy, `mise run live-check` runs one test against the real site and the real database.
+Two phones start a throwaway family, join it by its link, vote and see the tally, then delete it, and the test reads Firestore as the project owner to confirm nothing was left behind.
+It needs `firebase login` on the machine, so it is not part of CI, and it never opens or touches an existing family.
 
 ## Configuration
 

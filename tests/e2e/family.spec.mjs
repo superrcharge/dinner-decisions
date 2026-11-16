@@ -53,6 +53,32 @@ test("start a family, invite by link and by typed code, vote, see the tally", as
   noErrors(ana, ben, cal, again);
 });
 
+test("a tap made before sign-in finishes waits for it instead of failing", async ({ browser }) => {
+  const ana = await phone(browser, { holdSignIn: true });
+  await ana.click("#welcomeStart");
+  await ana.fill("#startFamily", "The Riveras");
+  await ana.fill("#startName", "Ana");
+  await ana.click("#startGo");
+  await expect(ana.locator("#startGo")).toHaveText("Connecting…");
+  await expect(ana.locator("#startGo")).toBeDisabled();
+  await expect(ana.locator("#dlgError")).toBeEmpty();
+
+  ana.releaseSignIn();
+  await expect(ana.locator("#codeShow")).toHaveText(CODE_SHAPE);
+  const code = await ana.textContent("#codeShow");
+  await ana.click("#dlgCancel");
+  await expect(ana.locator("#whoName")).toHaveText("Ana");
+
+  // The same for a join typed before sign-in.
+  const ben = await phone(browser, { holdSignIn: true });
+  await joinWith(ben, code);
+  await expect(ben.locator("#joinGo")).toHaveText("Connecting…");
+  ben.releaseSignIn();
+  await addMe(ben, "Ben");
+
+  noErrors(ana, ben);
+});
+
 test("bad, unknown and replaced codes each say what went wrong", async ({ browser }) => {
   const ana = await phone(browser);
   const first = (await startFamily(ana, "The Riveras", "Ana")).code;

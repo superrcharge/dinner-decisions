@@ -2173,13 +2173,29 @@
   }
 
   // Every form is reachable as soon as the cached view paints, which is
-  // before anonymous sign-in has necessarily come back.
-  function notReady() {
+  // before anonymous sign-in has necessarily come back. A tap made in that
+  // first moment is held, with the button saying so, and replayed once
+  // sign-in lands, rather than asking the person to tap again. If sign-in
+  // fails instead, the replay finds S.ready set and shows the error.
+  var authWaiters = [];
+
+  function notReady(btnId, retry) {
     if (S.db && S.uid) return false;
-    dialogError(S.ready
-      ? "Can’t reach Dinner Decisions right now. Check your connection and try again."
-      : "Still connecting. Try again in a moment.");
+    if (!S.ready && retry) {
+      dialogError("");
+      busy(btnId, true, "Connecting…");
+      authWaiters.push(function () {
+        busy(btnId, false);
+        retry();
+      });
+      return true;
+    }
+    dialogError("Can’t reach Dinner Decisions right now. Check your connection and try again.");
     return true;
+  }
+
+  function releaseWaiters() {
+    authWaiters.splice(0).forEach(function (fn) { fn(); });
   }
 
   function failText(e) {
@@ -2213,7 +2229,7 @@
     var who = clean(nameEl.value, 24);
     if (!fam) return famEl.focus();
     if (!who) return nameEl.focus();
-    if (notReady()) return;
+    if (notReady("startGo", submitStart)) return;
 
     var hid = newHouseholdId();
     var code = newCode();
@@ -2293,7 +2309,7 @@
       '<button class="btn btn-quiet" id="copyCode" type="button" disabled>Copy code</button>' +
       "</div></div>" + errorLine() + cancelRow("Done"));
 
-    if (notReady()) return;
+    if (notReady(null, function () { if ($("codeShow")) openInvite(fresh); })) return;
     loadInvite().then(function (code) {
       var show = $("codeShow");
       if (!show) return;
@@ -2369,7 +2385,7 @@
   }
 
   function submitNewCode() {
-    if (!$("newCodeGo") || $("newCodeGo").disabled || notReady()) return;
+    if (!$("newCodeGo") || $("newCodeGo").disabled || notReady("newCodeGo", submitNewCode)) return;
     busy("newCodeGo", true, "Making…");
     var hid = S.hid;
     var join = S.db.collection("households").doc(hid).collection("private").doc("join");
@@ -2410,7 +2426,7 @@
     if (!STRONG_CODE.test(code)) {
       return dialogError("Codes are 10 letters and numbers, like ABCDE-23456. Check for a missing or extra character.");
     }
-    if (notReady()) return;
+    if (notReady("joinGo", submitJoin)) return;
 
     dialogError("");
     busy("joinGo", true, "Joining…");
@@ -2500,7 +2516,7 @@
   // membership. Until that last batch lands the family still exists, so a
   // delete cut short by a lost signal can simply be tried again.
   function submitDelete() {
-    if (!deleteArmed() || $("deleteGo").disabled || notReady()) return;
+    if (!deleteArmed() || $("deleteGo").disabled || notReady("deleteGo", submitDelete)) return;
     busy("deleteGo", true, "Deleting…");
     dialogError("");
 
@@ -2962,6 +2978,7 @@
     S.ready = true;
     status("On this device");
     render();
+    releaseWaiters();
   }
 
   if (window.firebase && FIREBASE_CONFIG.apiKey.indexOf("AIza") === 0) {
@@ -2988,8 +3005,9 @@
 
         // A phone that has not joined a household has nothing to subscribe
         // to. It sits on the welcome card until it starts or joins one.
-        if (!S.hid) { S.ready = true; status("Not joined"); return render(); }
-        connect(store);
+        if (!S.hid) { S.ready = true; status("Not joined"); render(); }
+        else connect(store);
+        releaseWaiters();
       });
 
       firebase.auth().signInAnonymously().catch(function (e) { offline(e); });

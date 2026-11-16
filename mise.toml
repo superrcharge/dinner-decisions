@@ -26,3 +26,7 @@ run = "npm run test:e2e"
 [tasks.rules-deploy]
 description = "Publish firestore.rules to the live project (needs `firebase login` once)"
 run = "npm run rules:deploy"
+
+[tasks.live-check]
+description = "Smoke-test the deployed site with a throwaway family, then delete it (needs `firebase login`)"
+run = "npm run test:live"

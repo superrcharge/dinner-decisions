@@ -6,7 +6,8 @@
   "scripts": {
     "test:rules": "firebase emulators:exec --only firestore --project demo-dinner-decisions \"node --test tests/rules.test.mjs\"",
     "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-dinner-decisions \"playwright test\"",
-    "rules:deploy": "firebase deploy --only firestore:rules"
+    "rules:deploy": "firebase deploy --only firestore:rules",
+    "test:live": "firebase projects:list && playwright test --config playwright.live.config.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",
