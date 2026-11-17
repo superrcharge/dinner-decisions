@@ -12,7 +12,8 @@ export async function phone(browser, opts = {}) {
     deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
-    colorScheme: opts.colorScheme || "light"
+    colorScheme: opts.colorScheme || "light",
+    ...(opts.userAgent ? { userAgent: opts.userAgent } : {})
   });
   // Headless Chromium on Windows has a real share sheet, which a test cannot
   // press. Taking it away exercises the copy fallback instead.

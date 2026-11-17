@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { test, expect } from "@playwright/test";
 import {
   phone, startFamily, joinWith, addMe, tile, stored, storedCount, seed, noErrors, CODE_SHAPE
@@ -209,11 +210,94 @@ test("the week's plan and the shopping list share as text, and the list prints o
   await expect(ana.locator(".wrap")).toBeHidden();
   await expect(ana.locator("#printSheet li")).toHaveText(["Ground beef", "OnionChili, Tacos", "Tortillas"]);
   await expect(ana.locator("#printSheet .print-sub")).toHaveText("The Riveras · Week of " + week + " · Chili, Tacos");
-  await ana.screenshot({ path: "test-results/screens/print-shopping-list.png" });  await ana.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+  await ana.screenshot({ path: "test-results/screens/print-shopping-list.png" });
+  await ana.evaluate(() => window.dispatchEvent(new Event("afterprint")));
   await expect(ana.locator(".wrap")).toBeVisible();
   expect(await ana.title()).toBe(title);
   await ana.emulateMedia({ media: "screen" });
   await expect(ana.locator("#printSheet")).toBeHidden();
+  noErrors(ana);
+});
+
+test("on an iPhone, Print hands the share sheet a PDF of the list", async ({ browser }) => {
+  // A home-screen app on iPhone ignores window.print(), so there Print has
+  // to go through the share sheet instead.
+  const ana = await phone(browser, {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 26_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Mobile/15E148 Safari/604.1"
+  });
+  await startFamily(ana, "The (Big) Riveras", "Ana");
+  await ana.click("#starterBtn");
+  await expect(ana.locator(".tile")).toHaveCount(16);
+  const hid = await ana.evaluate(() => localStorage.getItem("dinner.householdId"));
+
+  // Enough for a second page, with a shared item, a very long name, and
+  // characters the PDF must escape or leave out.
+  const lists = {
+    chili: ["Ground beef", "Onion", "Kidney beans (2 cans)", "Back\\slash", "Chili powder 🌶️"],
+    tacos: ["Tortillas", "onion", "Extra-large family size bag of shredded Mexican-style four cheese blend", "Jalapeños"]
+  };
+  for (let i = 0; i < 20; i++) lists.chili.length < 20 ? lists.chili.push("Chili thing " + i) : 0;
+  for (let i = 0; i < 20; i++) lists.tacos.length < 20 ? lists.tacos.push("Taco thing " + i) : 0;
+  lists.burgers = Array.from({ length: 20 }, (_, i) => "Burger thing " + i);
+  await ana.evaluate(async ({ hid, lists }) => {
+    for (const [id, ingredients] of Object.entries(lists)) {
+      await firebase.firestore().doc("households/" + hid + "/meals/" + id).update({ ingredients });
+    }
+  }, { hid, lists });
+
+  for (const n of ["Chili", "Tacos", "Burgers"]) await (await tile(ana, n)).click();
+  await ana.click("#tab-shop");
+  for (const id of ["chili", "tacos", "burgers"]) await ana.click(`[data-plan="${id}"]`);
+  await expect(ana.locator(".buy-item")).toHaveCount(59);
+
+  await ana.evaluate(() => {
+    window.printed = 0;
+    window.print = () => { window.printed++; };
+    navigator.canShare = (d) => !!(d.files && d.files.length);
+    navigator.share = async (d) => {
+      const f = d.files[0];
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      window.sharedPdf = { name: f.name, type: f.type, text: d.text, bytes: Array.from(bytes) };
+    };
+  });
+  await ana.click("#printBuy");
+  await expect.poll(() => ana.evaluate(() => !!window.sharedPdf)).toBe(true);
+  const pdf = await ana.evaluate(() => window.sharedPdf);
+  expect(await ana.evaluate(() => window.printed)).toBe(0);
+  const week = await ana.evaluate(() => document.getElementById("weekLine").textContent.replace(/^Week of /i, ""));
+  expect(pdf.name).toBe("Shopping list " + week + ".pdf");
+  expect(pdf.type).toBe("application/pdf");
+  expect(pdf.text).toBeUndefined();
+
+  const bytes = Buffer.from(pdf.bytes);
+  fs.mkdirSync("test-results/screens", { recursive: true });
+  fs.writeFileSync("test-results/screens/shopping-list.pdf", bytes);
+  const raw = bytes.toString("latin1");
+  expect(raw.startsWith("%PDF-1.4\n")).toBe(true);
+  expect(raw.endsWith("%%EOF\n")).toBe(true);
+
+  // Every object sits exactly where the cross-reference table says.
+  const xrefAt = Number(raw.match(/startxref\n(\d+)\n%%EOF\n$/)[1]);
+  expect(raw.slice(xrefAt, xrefAt + 5)).toBe("xref\n");
+  const [, count] = raw.slice(xrefAt).match(/^xref\n0 (\d+)\n/);
+  const entries = raw.slice(xrefAt).split("\n").slice(3, 2 + Number(count));
+  entries.forEach((e, i) => expect(raw.slice(Number(e.slice(0, 10))).startsWith((i + 1) + " 0 obj\n")).toBe(true));
+  // Each stream's stated length is its real length.
+  for (const m of raw.matchAll(/<< \/Length (\d+) >>\nstream\n/g)) {
+    const start = m.index + m[0].length;
+    expect(raw.slice(start + Number(m[1]), start + Number(m[1]) + 9)).toBe("endstream");
+  }
+
+  expect(raw).toContain("/Count 2");
+  expect(raw).toContain("(Shopping list) Tj");
+  expect(raw).toContain("(The \\(Big\\) Riveras \xB7 Week of " + week + " \xB7 Chili, Tacos, Burgers) Tj");
+  expect(raw).toContain("(Kidney beans \\(2 cans\\)) Tj");
+  expect(raw).toContain("(Back\\\\slash) Tj");
+  expect(raw).toContain("(Chili powder) Tj");
+  expect(raw).toContain("(Jalape\xF1os) Tj");
+  expect(raw).toContain("(Chili, Tacos) Tj");
+  expect(raw).toMatch(/\(Extra-large family size bag of [^)]*\x85\) Tj/);
+  expect(raw).toContain("(Burger thing 19) Tj");
   noErrors(ana);
 });
 

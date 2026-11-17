@@ -996,7 +996,10 @@
     bottom: 0;
     background: var(--surface);
     border-top: 1px solid var(--line);
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    /* 6px further in than the page's 16px: down here the phone's rounded
+       corners, and a case's lip, start to crowd the ends of the bar. */
+    --bar-x: 22px;
+    padding: 12px max(var(--bar-x), env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(var(--bar-x), env(safe-area-inset-left));
     z-index: 30;
   }
 
@@ -1006,7 +1009,7 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin: -12px -16px 11px;
+    margin: -12px calc(-1 * max(var(--bar-x), env(safe-area-inset-right))) 11px calc(-1 * max(var(--bar-x), env(safe-area-inset-left)));
     padding: 10px 16px;
     background: var(--accent);
     color: var(--accent-ink);
@@ -2159,6 +2162,22 @@
     var items = buyList();
     if (!items.length) return;
     var meals = plannedNames();
+
+    // An iPhone or iPad will not print a page from script, and an app added
+    // to the home screen ignores window.print() altogether. There the list
+    // goes to the share sheet as a PDF instead, whose Print action prints
+    // it (and Save to Files, Messages and the rest come with it). Built
+    // without waiting on anything, so the tap still counts as the gesture
+    // the share sheet needs.
+    if (appleTouch() && navigator.share && window.File) {
+      var file = new File([listPdf(items, meals)],
+        "Shopping list " + WEEK_LABEL.replace(/^Week of /, "") + ".pdf", { type: "application/pdf" });
+      if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function () {});
+        return;
+      }
+    }
+
     $("printSheet").innerHTML =
       "<h1>Shopping list</h1>" +
       '<p class="print-sub">' + esc(S.hname || "") + " &middot; " + WEEK_LABEL +
@@ -2171,6 +2190,157 @@
     document.title = "Shopping list - " + WEEK_LABEL;
     document.body.classList.add("printing");
     window.print();
+  }
+
+  // iPadOS reports itself as a Mac; a real Mac has no touch points.
+  function appleTouch() {
+    return /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
+  /* ---------------- the shopping list as a PDF ---------------- */
+
+  // A small hand-written PDF: US Letter, the printer's built-in Helvetica
+  // (so no font is embedded and the text stays sharp and selectable), the
+  // same layout as the printed page. Text is measured with a canvas in
+  // Helvetica or Arial, which share their widths.
+
+  var PDF_W = 612, PDF_H = 792, PDF_M = 54, PDF_GAP = 28, PDF_ROW = 24;
+
+  // The few characters past Latin-1 that Helvetica's WinAnsi encoding has.
+  var WIN_ANSI = { "\u20AC": 128, "\u2026": 133, "\u2018": 145, "\u2019": 146, "\u201C": 147,
+    "\u201D": 148, "\u2022": 149, "\u2013": 150, "\u2014": 151 };
+
+  var measurer = null;
+
+  function textWidth(s, size, bold) {
+    if (!measurer) measurer = document.createElement("canvas").getContext("2d");
+    measurer.font = (bold ? "bold " : "") + size + "px Helvetica, Arial, sans-serif";
+    return measurer.measureText(s).width;
+  }
+
+  // Keeps only what the built-in fonts can draw; emoji and the like drop out.
+  function pdfSafe(s) {
+    var out = "";
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if ((c >= 32 && c < 127) || (c >= 160 && c < 256) || WIN_ANSI[s.charAt(i)]) out += s.charAt(i);
+    }
+    return out.replace(/\s+/g, " ").trim();
+  }
+
+  // A PDF string literal, one byte per character.
+  function pdfString(s) {
+    var out = "";
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      if (ch === "(" || ch === ")" || ch === "\\") out += "\\" + ch;
+      else out += String.fromCharCode(WIN_ANSI[ch] || s.charCodeAt(i));
+    }
+    return "(" + out + ")";
+  }
+
+  function fitText(s, size, bold, max) {
+    if (textWidth(s, size, bold) <= max) return s;
+    while (s.length > 1 && textWidth(s + "…", size, bold) > max) s = s.slice(0, -1);
+    return s.replace(/\s+$/, "") + "…";
+  }
+
+  function wrapText(s, size, max) {
+    var lines = [], line = "";
+    s.split(" ").forEach(function (word) {
+      var next = line ? line + " " + word : word;
+      if (line && textWidth(next, size) > max) { lines.push(line); line = word; } else line = next;
+    });
+    if (line) lines.push(line);
+    return lines.map(function (l) { return fitText(l, size, false, max); });
+  }
+
+  function n2(v) { return (Math.round(v * 100) / 100).toString(); }
+
+  // top is measured down from the top of the page, as in CSS.
+  function pdfText(x, top, size, bold, gray, s) {
+    return "BT /" + (bold ? "F2 " : "F1 ") + size + " Tf " + n2(gray) + " g " +
+      n2(x) + " " + n2(PDF_H - top) + " Td " + pdfString(s) + " Tj ET\n";
+  }
+
+  function listPdf(items, meals) {
+    var width = PDF_W - 2 * PDF_M;
+    var colW = (width - PDF_GAP) / 2;
+    var head = pdfText(PDF_M, PDF_M + 20, 22, true, 0, "Shopping list");
+    var sub = pdfSafe((S.hname || "") + " · " + WEEK_LABEL + (meals.length ? " · " + meals.join(", ") : ""));
+    var y = PDF_M + 42;
+    wrapText(sub, 11, width).forEach(function (line) {
+      head += pdfText(PDF_M, y, 11, false, 0.27, line);
+      y += 15;
+    });
+    var firstTop = y + 6;
+
+    var pages = [], i = 0;
+    while (i < items.length || !pages.length) {
+      var top = pages.length ? PDF_M : firstTop;
+      var rows = Math.max(1, Math.floor((PDF_H - PDF_M - top) / PDF_ROW));
+      var take = items.slice(i, i + 2 * rows);
+      var perCol = Math.ceil(take.length / 2);
+      var s = pages.length ? "" : head;
+      s += "0.8 w\n";
+
+      take.forEach(function (it, k) {
+        var x = PDF_M + (k < perCol ? 0 : colW + PDF_GAP);
+        var rowTop = top + (k % perCol) * PDF_ROW;
+        var forText = it.meals.length > 1 ? pdfSafe(it.meals.join(", ")) : "";
+        var forW = forText ? Math.min(textWidth(forText, 8.5), colW * 0.45) : 0;
+        if (forText) forText = fitText(forText, 8.5, false, forW);
+        var name = fitText(pdfSafe(it.name), 12, false, colW - 18 - (forW ? forW + 8 : 0));
+
+        s += "0 G " + n2(x) + " " + n2(PDF_H - rowTop - 17) + " 10 10 re S\n";
+        s += pdfText(x + 18, rowTop + 16, 12, false, 0, name);
+        if (forText) s += pdfText(x + colW - textWidth(forText, 8.5), rowTop + 16, 8.5, false, 0.4, forText);
+        s += "0.73 G " + n2(x) + " " + n2(PDF_H - rowTop - PDF_ROW) + " m " +
+          n2(x + colW) + " " + n2(PDF_H - rowTop - PDF_ROW) + " l S\n";
+      });
+
+      pages.push(s);
+      i += take.length;
+    }
+
+    return pdfBytes(pages, "Shopping list - " + WEEK_LABEL);
+  }
+
+  // Objects: 1 catalog, 2 page tree, 3 and 4 the fonts, then a page and its
+  // contents for each page, then the document info.
+  function pdfBytes(pages, title) {
+    var objs = [null,
+      "<< /Type /Catalog /Pages 2 0 R >>",
+      "",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
+    var kids = [];
+    pages.forEach(function (content) {
+      var pageNo = objs.length;
+      kids.push(pageNo + " 0 R");
+      objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PDF_W + " " + PDF_H + "] " +
+        "/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + (pageNo + 1) + " 0 R >>");
+      objs.push("<< /Length " + content.length + " >>\nstream\n" + content + "endstream");
+    });
+    objs[2] = "<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>";
+    var info = objs.length;
+    objs.push("<< /Title " + pdfString(pdfSafe(title)) + " /Producer (Dinner Decisions) >>");
+
+    var out = "%PDF-1.4\n%âãÏÓ\n";
+    var offsets = [];
+    for (var o = 1; o < objs.length; o++) {
+      offsets[o] = out.length;
+      out += o + " 0 obj\n" + objs[o] + "\nendobj\n";
+    }
+    var xref = out.length;
+    out += "xref\n0 " + objs.length + "\n0000000000 65535 f \n";
+    for (o = 1; o < objs.length; o++) out += ("000000000" + offsets[o]).slice(-10) + " 00000 n \n";
+    out += "trailer\n<< /Size " + objs.length + " /Root 1 0 R /Info " + info + " 0 R >>\nstartxref\n" + xref + "\n%%EOF\n";
+
+    var bytes = new Uint8Array(out.length);
+    for (var b = 0; b < out.length; b++) bytes[b] = out.charCodeAt(b) & 255;
+    return bytes;
   }
 
   window.addEventListener("afterprint", function () {
