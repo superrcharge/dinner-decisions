@@ -71,6 +71,7 @@ Planned meals with nothing listed yet are named beneath the list, so a short lis
 **Sending and printing it** - the round share button beside **This week's plan**, and the one beside **To buy**, open the phone's own share sheet (Messages, other apps, Copy) with the plan or the list as plain text.
 Where there is no share sheet the text is copied instead, and the button shows a tick.
 The print button beside **To buy** prints just the list, black on white, in two columns with a box to tick beside each item; on a computer it also saves as a PDF.
+Each page carries only the time it was printed, top right, and "Dinner Decisions", bottom left: the page leaves no margin for the browser's own header and footer (date, page title, web address), so Chrome and Edge leave them out.
 On iPhone and iPad it opens the share sheet with that list as a PDF instead, because a home-screen web app there ignores the page's print command; the sheet's own **Print** prints it, and Save to Files or Messages work too.
 
 **Not built: ticking things off as you shop.** Deliberately left out for now rather than overlooked. It needs somewhere to keep per-week checked state that every phone can see, which means new Firestore documents and a rules change - worth doing only once the list has been shopped with a few times and it is clear what is actually wanted.

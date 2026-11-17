@@ -65,6 +65,18 @@ export async function tile(page, name) {
   return page.locator(".tile", { has: page.locator(".tile-name", { hasText: new RegExp("^" + name + "$") }) });
 }
 
+// Picks a meal the way a person does. A tap before this week's votes have
+// arrived is ignored on purpose ("Still loading"), so that the phone cannot
+// overwrite picks it has not seen yet; like a person, tap again until the
+// tile turns on.
+export async function pick(page, name) {
+  const t = await tile(page, name);
+  await expect(async () => {
+    if ((await t.getAttribute("aria-pressed")) !== "true") await t.click();
+    await expect(t).toHaveAttribute("aria-pressed", "true", { timeout: 1000 });
+  }).toPass();
+}
+
 // Reads the emulator directly, around the rules, to check what is really
 // stored rather than what a page believes.
 export async function stored(path) {

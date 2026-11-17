@@ -1318,6 +1318,25 @@
     body.printing > *:not(#printSheet) { display: none !important; }
     body.printing #printSheet { display: block; }
 
+    #printSheet .print-date,
+    #printSheet .print-foot { font-size: 8pt; color: #666; margin: 0; }
+    #printSheet .print-date { text-align: right; margin-bottom: 4pt; }
+    #printSheet .print-foot { margin-top: 14pt; }
+
+    /* Chrome and Edge print the date, the page title and the web address in
+       the page margins, and leave them out only when a page has no margin.
+       So where the sheet can repeat its own padding on every page, the page
+       gets no margin and the sheet draws its own: the date top right and the
+       app's name bottom left, on every page. */
+    @supports (box-decoration-break: clone) {
+      @page { margin: 0; }
+      body.printing #printSheet { padding: 15mm; box-decoration-break: clone; }
+      #printSheet .print-date,
+      #printSheet .print-foot { position: fixed; margin: 0; }
+      #printSheet .print-date { top: 7mm; right: 15mm; }
+      #printSheet .print-foot { bottom: 7mm; left: 15mm; }
+    }
+
     #printSheet h1 {
       font-family: var(--display);
       font-size: 22pt;
@@ -2154,9 +2173,13 @@
   }
 
   // A plain page with just the list, built when Print is tapped so it is
-  // always current. The page title becomes the printout's header and the
-  // file name when saving as PDF.
+  // always current. The page title becomes the file name when saving as PDF.
   var printTitle = "";
+
+  // When the list was printed, as Chrome writes it in its own headers.
+  function printedAt() {
+    return new Date().toLocaleString([], { year: "2-digit", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
 
   function printBuy() {
     var items = buyList();
@@ -2179,13 +2202,15 @@
     }
 
     $("printSheet").innerHTML =
+      '<p class="print-date">' + esc(printedAt()) + "</p>" +
       "<h1>Shopping list</h1>" +
       '<p class="print-sub">' + esc(S.hname || "") + " &middot; " + WEEK_LABEL +
       (meals.length ? " &middot; " + esc(meals.join(", ")) : "") + "</p>" +
       "<ul>" + items.map(function (it) {
         return "<li><span>" + esc(it.name) + "</span>" +
           (it.meals.length > 1 ? '<span class="print-for">' + esc(it.meals.join(", ")) + "</span>" : "") + "</li>";
-      }).join("") + "</ul>";
+      }).join("") + "</ul>" +
+      '<p class="print-foot">Dinner Decisions</p>';
     if (!printTitle) printTitle = document.title;
     document.title = "Shopping list - " + WEEK_LABEL;
     document.body.classList.add("printing");
@@ -2221,6 +2246,8 @@
 
   // Keeps only what the built-in fonts can draw; emoji and the like drop out.
   function pdfSafe(s) {
+    // Unusual spaces (the narrow one some clocks put before PM) become plain ones.
+    s = s.replace(/\s+/g, " ");
     var out = "";
     for (var i = 0; i < s.length; i++) {
       var c = s.charCodeAt(i);
@@ -2275,6 +2302,10 @@
       y += 15;
     });
     var firstTop = y + 6;
+    // The same small date and name the printed page carries, on every page.
+    var stamp = pdfSafe(printedAt());
+    var edges = pdfText(PDF_W - PDF_M - textWidth(stamp, 8), 28, 8, false, 0.4, stamp) +
+      pdfText(PDF_M, PDF_H - 22, 8, false, 0.4, "Dinner Decisions");
 
     var pages = [], i = 0;
     while (i < items.length || !pages.length) {
@@ -2282,7 +2313,7 @@
       var rows = Math.max(1, Math.floor((PDF_H - PDF_M - top) / PDF_ROW));
       var take = items.slice(i, i + 2 * rows);
       var perCol = Math.ceil(take.length / 2);
-      var s = pages.length ? "" : head;
+      var s = edges + (pages.length ? "" : head);
       s += "0.8 w\n";
 
       take.forEach(function (it, k) {

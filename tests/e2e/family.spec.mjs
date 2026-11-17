@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { test, expect } from "@playwright/test";
 import {
-  phone, startFamily, joinWith, addMe, tile, stored, storedCount, seed, noErrors, CODE_SHAPE
+  phone, startFamily, joinWith, addMe, tile, pick, stored, storedCount, seed, noErrors, CODE_SHAPE
 } from "./helpers.mjs";
 
 test("start a family, invite by link and by typed code, vote, see the tally", async ({ browser }) => {
@@ -30,9 +30,9 @@ test("start a family, invite by link and by typed code, vote, see the tally", as
   await joinWith(cal, " " + code.toLowerCase().replace("-", " ") + " ");
   await addMe(cal, "Cal");
 
-  await (await tile(ben, "Tacos")).click();
-  await (await tile(ana, "Tacos")).click();
-  await (await tile(ana, "Pizza")).click();
+  await pick(ben, "Tacos");
+  await pick(ana, "Tacos");
+  await pick(ana, "Pizza");
   await expect(await tile(ana, "Tacos")).toHaveAttribute("aria-pressed", "true");
 
   await ana.click("#tab-shop");
@@ -127,7 +127,7 @@ test("every tile is two lines tall; a longer name is cut short and kept in full 
   expect(await titled()).toEqual([long]);
 
   // Picking it shows the whole name in Your picks.
-  await (await tile(ana, long)).click();
+  await pick(ana, long);
   await expect(ana.locator(".mypick-name")).toHaveText(long);
 
   // A wider window has narrower tiles, so more names are cut.
@@ -141,7 +141,11 @@ test("the week's plan and the shopping list share as text, and the list prints o
   const ana = await phone(browser);
   await startFamily(ana, "The Riveras", "Ana");
   await ana.click("#starterBtn");
-  for (const n of ["Chili", "Tacos"]) await (await tile(ana, n)).click();
+  // All the starters first: a tap while they are still arriving can land
+  // on a tile that is being redrawn, and the vote is lost.
+  await expect(ana.locator(".tile")).toHaveCount(16);
+  for (const n of ["Chili", "Tacos"]) await pick(ana, n);
+  await expect(ana.locator("#barCount")).toHaveText("2 picked");
 
   // Nothing planned yet: no share button.
   await ana.click("#tab-shop");
@@ -210,7 +214,12 @@ test("the week's plan and the shopping list share as text, and the list prints o
   await expect(ana.locator(".wrap")).toBeHidden();
   await expect(ana.locator("#printSheet li")).toHaveText(["Ground beef", "OnionChili, Tacos", "Tortillas"]);
   await expect(ana.locator("#printSheet .print-sub")).toHaveText("The Riveras · Week of " + week + " · Chili, Tacos");
+  // Its own date and name stand in for the browser's headers and footers.
+  await expect(ana.locator("#printSheet .print-date")).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{2}, \d{1,2}:\d{2}\s[AP]M$/);
+  await expect(ana.locator("#printSheet .print-foot")).toHaveText("Dinner Decisions");
   await ana.screenshot({ path: "test-results/screens/print-shopping-list.png" });
+  // What Chrome's print dialog makes of it, its own headers and footers on.
+  await ana.pdf({ path: "test-results/screens/print-shopping-list.pdf", displayHeaderFooter: true, preferCSSPageSize: true });
   await ana.evaluate(() => window.dispatchEvent(new Event("afterprint")));
   await expect(ana.locator(".wrap")).toBeVisible();
   expect(await ana.title()).toBe(title);
@@ -245,7 +254,7 @@ test("on an iPhone, Print hands the share sheet a PDF of the list", async ({ bro
     }
   }, { hid, lists });
 
-  for (const n of ["Chili", "Tacos", "Burgers"]) await (await tile(ana, n)).click();
+  for (const n of ["Chili", "Tacos", "Burgers"]) await pick(ana, n);
   await ana.click("#tab-shop");
   for (const id of ["chili", "tacos", "burgers"]) await ana.click(`[data-plan="${id}"]`);
   await expect(ana.locator(".buy-item")).toHaveCount(59);
@@ -298,6 +307,17 @@ test("on an iPhone, Print hands the share sheet a PDF of the list", async ({ bro
   expect(raw).toContain("(Chili, Tacos) Tj");
   expect(raw).toMatch(/\(Extra-large family size bag of [^)]*\x85\) Tj/);
   expect(raw).toContain("(Burger thing 19) Tj");
+  // Every page carries the date top right and the app's name bottom left.
+  expect(raw.match(/\(Dinner Decisions\) Tj/g)).toHaveLength(2);
+  expect(raw.match(/\(\d{1,2}\/\d{1,2}\/\d{2}, \d{1,2}:\d{2} [AP]M\) Tj/g)).toHaveLength(2);
+
+  // Where there is no share sheet for files, the same long list prints as a
+  // page, over two sheets of paper.
+  await ana.evaluate(() => { navigator.canShare = () => false; });
+  await ana.click("#printBuy");
+  expect(await ana.evaluate(() => window.printed)).toBe(1);
+  await ana.pdf({ path: "test-results/screens/print-shopping-list-long.pdf", displayHeaderFooter: true, preferCSSPageSize: true });
+  await ana.evaluate(() => window.dispatchEvent(new Event("afterprint")));
   noErrors(ana);
 });
 
@@ -376,7 +396,7 @@ test("leave, come back, then delete the family for everyone", async ({ browser }
   const ben = await phone(browser);
   await joinWith(ben, code);
   await addMe(ben, "Ben");
-  await (await tile(ben, "Chili")).click();
+  await pick(ben, "Chili");
 
   // Leave on this phone only.
   await ben.click("#whoBtn");
