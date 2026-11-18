@@ -1,12 +1,13 @@
-// Dinner Decisions Plus, server side.
+// Dinner Decisions: Easy Mode, server side. ("plus" in the code and the
+// database; Easy Mode is the name families see.)
 //
 // The page talks to Firestore directly for everything else. These functions
-// exist for the two things a phone must not do itself: decide who is on Plus,
+// exist for the two things a phone must not do itself: decide who has Easy Mode,
 // and sign requests to Walmart with the private key.
 //
 // Every function checks that the caller's phone is a member of the family it
 // names, as the security rules do, and the Walmart ones that the family has
-// Plus. Walmart calls are counted per family per day, so a family (or a
+// Easy Mode. Walmart calls are counted per family per day, so a family (or a
 // stranger who joined one) cannot run through the shared API allowance.
 
 import { initializeApp } from "firebase-admin/app";
@@ -46,7 +47,7 @@ async function member(req) {
 async function plus(hid) {
   const p = await db.doc(`households/${hid}/billing/plan`).get();
   if (!p.exists || !PLUS.includes(p.get("status"))) {
-    throw new HttpsError("failed-precondition", "Plus is not on for this family.");
+    throw new HttpsError("failed-precondition", "Easy Mode is not on for this family.");
   }
 }
 

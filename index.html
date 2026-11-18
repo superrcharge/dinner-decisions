@@ -1382,7 +1382,7 @@
     .grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
   }
 
-  /* ---------- Dinner Decisions Plus ---------- */
+  /* ---------- Dinner Decisions: Easy Mode ("plus" in the code) ---------- */
 
   .plus-hint { margin-top: 10px; }
 
@@ -1655,7 +1655,7 @@
     </div>
     <p class="hint" style="margin-top:10px">Type the Manage code on another phone to open this tab there.</p>
 
-    <h2 class="section">Dinner Decisions Plus</h2>
+    <h2 class="section">Dinner Decisions: Easy Mode</h2>
     <div id="plusBox"></div>
 
     <p class="eyebrow">Start over</p>
@@ -1723,7 +1723,7 @@
     localPicks: [],
     saveTimer: null,
     openMeals: {},      // meal ids whose ingredient panel is expanded, in Manage
-    plus: null,         // billing/plan: { status } while the family has Plus
+    plus: null,         // billing/plan: { status } while the family has Easy Mode
     store: null,        // store/walmart: the family's Walmart, once picked
     sheetOpen: false
   };
@@ -3717,11 +3717,12 @@
     if (newId) { setMe(newId); closeSheet(); }
   }
 
-  /* ---------------- Dinner Decisions Plus ---------------- */
+  /* ---------------- Dinner Decisions: Easy Mode ---------------- */
 
-  // Plus sends the week's list to a Walmart cart, for pickup or delivery.
+  // Easy Mode, the paid tier ("plus" in the code and the database), sends
+  // the week's list to a Walmart cart, for pickup or delivery.
   // During the beta a family turns it on in Manage. Whether a family has
-  // Plus is decided by the server (billing/plan), never by a phone, and the
+  // Easy Mode is decided by the server (billing/plan), never by a phone, and the
   // Walmart lookups run on the server because they are signed with a key
   // the page must not hold. The list is only shown on Manage phones, so the
   // cart button is too.
@@ -3752,7 +3753,7 @@
     if (el) el.textContent = text || "";
   }
 
-  // Redrawn only when Plus turns on or off, so a reply arriving mid-tap
+  // Redrawn only when Easy Mode turns on or off, so a reply arriving mid-tap
   // does not wipe a button's busy label or an error.
   var plusShown = null;
 
@@ -3763,12 +3764,12 @@
     if (plusShown === on && box.innerHTML) return;
     plusShown = on;
     box.innerHTML = on
-      ? '<div class="rows"><div class="row"><div class="row-name">Plus beta <span class="row-sub">on</span></div>' +
-        '<div class="row-actions"><button class="btn btn-quiet btn-tiny" id="plusLeave" type="button">Leave Beta</button></div></div></div>' +
+      ? '<div class="rows"><div class="row"><div class="row-name">Easy Mode <span class="row-sub">on</span></div>' +
+        '<div class="row-actions"><button class="btn btn-quiet btn-tiny" id="plusLeave" type="button">Leave Easy Mode</button></div></div></div>' +
         '<p class="hint plus-hint">The cart button is on the Shopping tab, beside Print and Share.</p>' +
         '<div class="plus-error" id="plusError" role="alert"></div>'
       : '<p class="hint">Send the week&rsquo;s shopping list straight to a Walmart cart, for pickup or delivery. Free while it&rsquo;s being tested.</p>' +
-        '<button class="btn btn-primary" id="plusJoin" type="button">Try Plus Beta</button>' +
+        '<button class="btn btn-primary" id="plusJoin" type="button">Try Easy Mode</button>' +
         '<div class="plus-error" id="plusError" role="alert"></div>';
   }
 
@@ -3788,10 +3789,10 @@
   }
 
   function openLeavePlus() {
-    openDialog("Leave the Plus beta",
-      '<h2 class="dialog-title">Leave the Plus beta?</h2>' +
+    openDialog("Leave Easy Mode",
+      '<h2 class="dialog-title">Leave Easy Mode?</h2>' +
       '<div class="menu-note">The cart button goes away. Your Walmart store and the products you picked are kept, in case you come back.</div>' +
-      '<div class="menu-stack"><button class="btn btn-primary" id="plusLeaveGo" type="button">Leave Beta</button></div>' +
+      '<div class="menu-stack"><button class="btn btn-primary" id="plusLeaveGo" type="button">Leave Easy Mode</button></div>' +
       errorLine() + cancelRow());
   }
 

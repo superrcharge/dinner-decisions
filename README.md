@@ -82,14 +82,15 @@ On iPhone and iPad it opens the share sheet with that list as a PDF instead, bec
 
 **Not built: ticking things off as you shop.** Deliberately left out for now rather than overlooked. It needs somewhere to keep per-week checked state that every phone can see, which means new Firestore documents and a rules change - worth doing only once the list has been shopped with a few times and it is clear what is actually wanted.
 
-## Dinner Decisions Plus (beta)
+## Dinner Decisions: Easy Mode (beta)
 
-Plus sends the week's **To buy** list straight into a Walmart cart, for pickup or delivery.
+Easy Mode sends the week's **To buy** list straight into a Walmart cart, for pickup or delivery.
 It is in a free beta for the families already using the app, with a limited number of spots; payments come later.
+In the code and the database it is still called `plus` (`billing/plan`, `joinPlusBeta`, `plus.spec.mjs`); Easy Mode is only the name families see.
 
-**Turning it on** - in **Manage**, under **Dinner Decisions Plus**, tap **Try Plus Beta**.
-The server decides whether there is a spot and records it; a phone cannot give itself Plus.
-**Leave Beta** gives the spot back, and keeps the family's store and chosen products in case it returns.
+**Turning it on** - in **Manage**, under **Dinner Decisions: Easy Mode**, tap **Try Easy Mode**.
+The server decides whether there is a spot and records it; a phone cannot give itself Easy Mode.
+**Leave Easy Mode** gives the spot back, and keeps the family's store and chosen products in case it returns.
 
 **Sending the list** - a cart button joins Print and Share beside **To buy**.
 The first time, the family types its ZIP code and picks its Walmart.
@@ -106,7 +107,7 @@ The products a family opened the cart with are remembered, so next week's list p
 | `walmartMatch` | the list's items to Walmart products, or the family's remembered ones |
 | `familyDeleted` | when a family is deleted, gives its spot back and removes its server-only records |
 
-Each one checks that the calling phone is a member of the family it names, and the Walmart ones that the family has Plus.
+Each one checks that the calling phone is a member of the family it names, and the Walmart ones that the family has Easy Mode.
 Walmart lookups are capped at 300 per family per day, so nobody can run through the shared API allowance.
 The Walmart consumer id and private key are in Secret Manager (`WALMART_CONSUMER_ID`, `WALMART_PRIVATE_KEY`); the key version is `WALMART_KEY_VERSION`, default 1.
 The beta's size is `config/plusBeta` (`cap`, default 10, and the families in it), which only the server and `admin/plus.mjs` can change.
@@ -120,7 +121,7 @@ mise run functions-deploy   # publish the functions (Blaze, secrets set first)
 
 1. Put the Walmart consumer id and private key into Secret Manager with `npx firebase functions:secrets:set WALMART_CONSUMER_ID` and `... WALMART_PRIVATE_KEY --data-file <path to private_key.pem>`, run by Mike himself so the key never passes through a chat.
 2. `mise run rules-deploy`, then `mise run functions-deploy`.
-3. Set the effective date on `terms.html` and `privacy.html` (they describe Plus and what goes to Walmart), and `currentPolicy()` in `index.html` to the same date, so every family sees the "updated" line.
+3. Set the effective date on `terms.html` and `privacy.html` (they describe Easy Mode and what goes to Walmart), and `currentPolicy()` in `index.html` to the same date, so every family sees the "updated" line.
 4. `mise run site-deploy` from this branch (it contains the legal pages from `main`), then push it to `main` so GitHub matches.
 5. `mise run live-check`, and one real list sent to a real Walmart cart on a phone.
 
@@ -214,7 +215,7 @@ Four products are switched on and the rest are deliberately off:
 | Cloud Firestore | on | the shared data, with realtime listeners |
 | Anonymous Authentication | on | gives every visitor an identity without an account |
 | Firebase Hosting | on | serves the app at dinnerdecisions.app |
-| Cloud Functions | on | Dinner Decisions Plus: the beta sign-up and the Walmart lookups |
+| Cloud Functions | on | Easy Mode: the beta sign-up and the Walmart lookups |
 
 **Anonymous auth** means nobody signs up and nobody has a password. On first load the SDK silently mints an identity for that browser and hands back a token. It exists so the rules have something to check - it is not a login, and it does not identify a *person*. Which family member a phone is picking as is a separate thing entirely, chosen from the roster and remembered in that device's `localStorage`.
 
@@ -329,7 +330,7 @@ Everything hangs off a household, so the app touches only two top-level collecti
 | `households/<hid>/people` | slug plus a random suffix | the household roster |
 | `households/<hid>/votes` | `<weekId>__<personId>` | one document per person per week, holding an array of meal ids |
 | `households/<hid>/weeks` | `<weekId>` | the meals locked into that week's plan |
-| `households/<hid>/billing` | `plan` | `status` (`beta`, later `active`) and `since`, while the family has Plus. Members read it; **only the server writes it** |
+| `households/<hid>/billing` | `plan` | `status` (`beta`, later `active`) and `since`, while the family has Easy Mode. Members read it; **only the server writes it** |
 | `households/<hid>/store` | `walmart` | the family's Walmart: `storeId`, `name`, `address`, `zip` |
 | `households/<hid>/matches` | item key from the server | the Walmart product chosen for a list item: `itemId`, `name`, `price`, `image` (https from Walmart's image servers only) |
 | `config` | `plusBeta` | the beta's `cap` and its families. Server only |
@@ -355,7 +356,7 @@ privacy.html, terms.html, delete.html, accessibility.html
 robots.txt, sitemap.xml  for search engines; add new public pages to the sitemap
 site.webmanifest      home-screen name and icons
 firestore.rules       the security rules; mise run rules-deploy publishes them
-functions/            Cloud Functions for Plus: the beta and the Walmart lookups
+functions/            Cloud Functions for Easy Mode: the beta and the Walmart lookups
 firebase.json         emulator ports, the rules file and Hosting headers
 scripts/build-site.mjs  copies the served files into dist/ for Hosting
 tests/rules.test.mjs  every rule against the emulator, negative cases first

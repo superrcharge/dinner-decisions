@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { phone, startFamily, pick, stored, EMU, noErrors } from "./helpers.mjs";
 
-// Dinner Decisions Plus, beta: a family turns it on in Manage, picks its
+// Dinner Decisions: Easy Mode ("plus" in the code), beta: a family turns it on in Manage, picks its
 // Walmart by ZIP code, and sends the week's list to a Walmart cart. The
 // server talks to the pretend Walmart (tests/fake-walmart.mjs), which checks
 // every request's signature as the real one does.
@@ -62,18 +62,18 @@ test.beforeEach(async () => {
   await config({ cap: 10, hids: [] });
 });
 
-test("Plus beta: turn it on, pick a Walmart, choose products, open the cart, and next week's list remembers them", async ({ browser }) => {
+test("Easy Mode beta: turn it on, pick a Walmart, choose products, open the cart, and next week's list remembers them", async ({ browser }) => {
   const { ana, hid } = await plannedFamily(browser);
 
   // Off: Manage offers the beta, and the list has no cart button.
-  await expect(ana.locator("#plusJoin")).toHaveText("Try Plus Beta");
+  await expect(ana.locator("#plusJoin")).toHaveText("Try Easy Mode");
   await ana.click("#tab-shop");
   await expect(ana.locator("#printBuy")).toBeVisible();
   await expect(ana.locator("#storeBuy")).toHaveCount(0);
 
   await ana.click("#tab-manage");
   await ana.click("#plusJoin");
-  await expect(ana.locator("#plusBox .row-name")).toHaveText(/Plus beta\s*on/);
+  await expect(ana.locator("#plusBox .row-name")).toHaveText(/Easy Mode\s*on/);
   expect((await stored(`households/${hid}/billing/plan`)).fields.status.stringValue).toBe("beta");
 
   // The first time: find the family's Walmart by ZIP code.
@@ -168,18 +168,18 @@ test("Plus beta: turn it on, pick a Walmart, choose products, open the cart, and
   noErrors(ana);
 });
 
-test("Plus beta: spots are limited, and only the family's own phones can use its Plus", async ({ browser }) => {
+test("Easy Mode beta: spots are limited, and only the family's own phones can use it", async ({ browser }) => {
   const { ana, hid } = await plannedFamily(browser);
   await config({ cap: 1, hids: ["SomeOtherFamily0000"] });
   await ana.click("#plusJoin");
   await expect(ana.locator("#plusError")).toHaveText("The beta is full right now.");
-  await expect(ana.locator("#plusJoin")).toHaveText("Try Plus Beta");
+  await expect(ana.locator("#plusJoin")).toHaveText("Try Easy Mode");
 
   await config({ cap: 1, hids: [] });
   await ana.click("#plusJoin");
   await expect(ana.locator("#plusLeave")).toBeVisible();
 
-  // A phone from another family cannot act for this one, or give itself Plus.
+  // A phone from another family cannot act for this one, or give itself Easy Mode.
   const eve = await phone(browser);
   await startFamily(eve, "The Eves", "Eve");
   const tryCall = (name, data) => eve.evaluate(([n, d]) =>
@@ -192,7 +192,7 @@ test("Plus beta: spots are limited, and only the family's own phones can use its
   noErrors(ana, eve);
 });
 
-test("deleting a family gives its beta spot back and leaves nothing of Plus behind", async ({ browser }) => {
+test("deleting a family gives its beta spot back and leaves nothing of Easy Mode behind", async ({ browser }) => {
   const { ana, hid } = await plannedFamily(browser);
   await ana.click("#plusJoin");
   await expect(ana.locator("#plusLeave")).toBeVisible();
@@ -224,7 +224,7 @@ test("deleting a family gives its beta spot back and leaves nothing of Plus behi
   noErrors(ana);
 });
 
-// The Plus screens, light and dark, at a small and a large phone width, for
+// The Easy Mode screens, light and dark, at a small and a large phone width, for
 // checking by eye. Written to test-results/screens/.
 for (const colorScheme of ["light", "dark"]) {
   for (const width of [375, 430]) {
