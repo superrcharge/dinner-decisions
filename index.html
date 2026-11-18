@@ -3,8 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="What the family wants for dinner this week.">
-<title>Dinner Decisions</title>
+<meta name="description" content="Everyone in the house votes on this week's dinners from their own phone, and the shopping list builds itself. Free, with no accounts and no email.">
+<title>Dinner Decisions - Family dinner voting and shopping list</title>
+<link rel="canonical" href="https://dinnerdecisions.app/">
+
+<!-- Link previews: the card shown when someone texts or posts a link,
+     invites included (the invite code sits after the #, so it never reaches
+     the preview). The image is rendered by icons/render-og.mjs. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Dinner Decisions">
+<meta property="og:title" content="Dinner Decisions">
+<meta property="og:description" content="The whole family votes on this week's dinners. The shopping list builds itself. Free, with no accounts and no email.">
+<meta property="og:url" content="https://dinnerdecisions.app/">
+<meta property="og:image" content="https://dinnerdecisions.app/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Dinner Decisions: the whole family votes on this week's dinners.">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- Tells search engines what this is, for richer search results. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Dinner Decisions",
+  "url": "https://dinnerdecisions.app/",
+  "description": "A family dinner planner: everyone in the house votes on this week's dinners from their own phone, and the shopping list builds itself.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requires JavaScript",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "Dinner Decisions LLC", "email": "hello@dinnerdecisions.app" }
+}
+</script>
 
 <!-- Home screen. iOS would fall back to the <title> above, which now matches,
      but the tag stays because the two are free to diverge again. Android takes
@@ -231,6 +262,41 @@
   }
 
   .help-legal a { color: inherit; }
+
+  /* Under the welcome card. The accent colour, not the muted text colour, so
+     the privacy link stands out the way CalOPPA expects. */
+  .welcome-legal {
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--ink-muted);
+    margin: 4px 0 20px;
+    text-wrap: balance;
+  }
+
+  .welcome-legal a {
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* Looks like .notice but is its own class, so it never stands in for the
+     banner's one status line (tests and code look for #banner .notice). */
+  .policy-notice {
+    background: var(--warm-wash);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .policy-notice a { color: var(--ink); }
+
+  .policy-notice .btn { flex: none; }
 
   /* ---------- tabs ---------- */
 
@@ -1967,10 +2033,59 @@
     return id;
   }
 
+  // Removing a name takes every week's votes under it too, so nothing left in
+  // the family still carries the name (delete.html promises that). It reaches
+  // every phone and cannot be undone, so it asks first. Kept with its own
+  // click listener, below, so the main click handler is untouched.
   function removePerson(p) {
     if (!S.connected) return;
-    ref("people/" + p.id).delete().catch(function (e) { console.warn("person delete failed", e); });
+    S.removingId = p.id;
+    openDialog("Remove name",
+      '<h2 class="dialog-title">Remove ' + esc(p.name) + "?</h2>" +
+      '<div class="menu-note">This removes the name and all of its votes from the family, on every phone. ' +
+      "It cannot be undone.</div>" +
+      '<div class="menu-stack"><button class="btn btn-danger" id="removePersonGo" type="button">Remove</button></div>' +
+      errorLine() + cancelRow());
   }
+
+  // The votes go first and the name last, so a lost signal part way leaves
+  // the name in place and the button ready to try again.
+  function submitRemovePerson() {
+    var pid = S.removingId;
+    if (!pid || !$("removePersonGo") || $("removePersonGo").disabled || notReady("removePersonGo", submitRemovePerson)) return;
+    busy("removePersonGo", true, "Removing…");
+    dialogError("");
+
+    var db = S.db;
+    var root = db.collection("households").doc(S.hid);
+    serverGet(root.collection("votes").where("personId", "==", pid)).then(function (snap) {
+      var refs = snap.docs.map(function (d) { return d.ref; });
+      refs.push(root.collection("people").doc(pid));
+      var chain = Promise.resolve();
+      for (var i = 0; i < refs.length; i += 400) {
+        (function (chunk) {
+          chain = chain.then(function () {
+            var b = db.batch();
+            chunk.forEach(function (r) { b.delete(r); });
+            return withTimeout(b.commit(), 20000);
+          });
+        })(refs.slice(i, i + 400));
+      }
+      return chain;
+    }).then(function () {
+      S.removingId = null;
+      closeSheet();
+    }).catch(function (e) {
+      console.warn("person delete failed", e);
+      busy("removePersonGo", false);
+      dialogError(failText(e));
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var hit = ev.target.closest ? ev.target.closest("#removePersonGo") : null;
+    if (hit) submitRemovePerson();
+  });
 
   function setMe(id) {
     S.meId = id;
@@ -2000,17 +2115,55 @@
         '<button class="btn btn-quiet" id="welcomeJoin" type="button">I have a code</button>' +
         "</div>" +
         '<p class="welcome-foot">Free &middot; No accounts &middot; No email</p>' +
-        "</div>";
+        "</div>" +
+        // The homepage link to the privacy policy that California's CalOPPA
+        // expects, with the other three legal pages beside it.
+        '<nav class="welcome-legal" aria-label="Policies"><a href="privacy.html">Privacy</a> &middot; ' +
+        '<a href="terms.html">Terms</a> &middot; <a href="delete.html">Delete your data</a> &middot; ' +
+        '<a href="accessibility.html">Accessibility</a></nav>';
     } else if (!S.ready) {
       el.innerHTML = "";
     } else if (!S.connected) {
-      el.innerHTML = '<div class="notice">Not connected to the family list, so picks are saved on this device only.</div>';
+      el.innerHTML = policyNotice() + '<div class="notice">Not connected to the family list, so picks are saved on this device only.</div>';
     } else if (!S.meId) {
-      el.innerHTML = '<div class="notice">Tap <strong>Choose</strong> at the top right to say who you are, then start picking.</div>';
+      el.innerHTML = policyNotice() + '<div class="notice">Tap <strong>Choose</strong> at the top right to say who you are, then start picking.</div>';
     } else {
-      el.innerHTML = "";
+      el.innerHTML = policyNotice();
     }
   }
+
+  /* ---------------- policy updates ---------------- */
+
+  // The privacy policy and terms promise a notice in the app before a change
+  // that matters takes effect. There is no email to send it to, so it is this
+  // line, shown once on each phone in a family until OK is tapped.
+  //
+  // To announce a change: publish the new pages with an effective date far
+  // enough ahead that phones open the app before it (two weeks is a fair
+  // default), then change the version and date below. A phone that has never
+  // tapped OK sees the current version once, which is how the families from
+  // before the policy existed hear about it.
+  //
+  // A function rather than two vars, so it is ready however early the first
+  // render runs.
+  function currentPolicy() {
+    return { version: "2026-11-17", date: "November 17, 2026" };
+  }
+
+  function policyNotice() {
+    var p = currentPolicy();
+    if (LS.get("policySeen") === p.version) return "";
+    return '<div class="policy-notice" role="status">' +
+      '<span>Our <a href="privacy.html">Privacy Policy</a> and <a href="terms.html">Terms</a> were updated ' + p.date + ".</span>" +
+      '<button class="btn btn-quiet btn-tiny" id="policyOk" type="button">OK</button></div>';
+  }
+
+  document.addEventListener("click", function (ev) {
+    var hit = ev.target.closest ? ev.target.closest("#policyOk") : null;
+    if (!hit) return;
+    LS.set("policySeen", currentPolicy().version);
+    renderBanner();
+  });
 
   // A name cut short by the two-line limit gets its full text as a hover
   // tooltip. Only those: a tooltip repeating a name already in full is noise.

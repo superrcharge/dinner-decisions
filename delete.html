@@ -326,13 +326,10 @@
         <li>Open Dinner Decisions on any phone in the family.</li>
         <li>Tap <span class="ui">Manage</span> at the bottom of the screen, and enter the Manage code if it asks for one.</li>
         <li>Under <span class="ui">Who's in the house</span>, tap <span class="ui">Remove</span> next to the name.</li>
+        <li>Tap <span class="ui">Remove</span> again to confirm.</li>
       </ol>
-      <p><strong>What is deleted:</strong> the name, from the family's list of who is picking.</p>
-      <p><strong>What stays:</strong> votes already made under that name stay with the family's weekly history until the family is deleted.
-      To remove those as well, delete the family, or <a href="#email">email us</a> and we will remove them for you.</p>
-      <!-- PRODUCT: removing a name today deletes only the people/<id>
-           document; that name's votes documents (which also carry the name)
-           stay. Consider deleting them with the name, then simplify this. -->
+      <p><strong>What is deleted, on every phone:</strong> the name, and every vote made under it, this week's and earlier weeks'.</p>
+      <p><strong>What stays:</strong> the family's meals and plan, and everyone else's names and votes.</p>
     </section>
 
     <section class="card" aria-labelledby="family">
@@ -375,8 +372,8 @@
     We will only use your email to deal with your request.</p>
     <!-- LAWYER/OPS: 30 days is shorter than the 45 in the privacy policy on
          purpose (a deletion is quicker than a general request). Keep or align.
-         Deleting by request means finding the household in the Firebase
-         console as project owner; a short runbook in the README would help. -->
+         The private admin/delete-family.mjs does these deletions, and its
+         header is the runbook for an emailed request. -->
   </main>
 
   <footer>

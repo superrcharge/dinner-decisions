@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Every public page. Add a page here when it is added to PAGES in
+     scripts/build-site.mjs, and change its lastmod when it changes. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://dinnerdecisions.app/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://dinnerdecisions.app/privacy.html</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://dinnerdecisions.app/terms.html</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://dinnerdecisions.app/delete.html</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://dinnerdecisions.app/accessibility.html</loc><lastmod>2026-11-17</lastmod></url>
+</urlset>

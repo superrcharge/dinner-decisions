@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate the home-screen and favicon PNGs.
+# Regenerate the home-screen and favicon PNGs, and the link preview card.
 #
 # Compiled at 72 ppi so the pt page size equals the pixel size exactly.
 # Needs a colour emoji font: Segoe UI Emoji on Windows, Apple Color Emoji on macOS.
@@ -11,5 +11,7 @@ for size in 32 180 192 512; do
   typst compile --input "size=${size}" --format png --ppi 72 icon.typ "icon-${size}.png" 2>/dev/null
   echo "  icon-${size}.png"
 done
+
+node render-og.mjs
 
 echo "done"

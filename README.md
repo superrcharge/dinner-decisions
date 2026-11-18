@@ -49,6 +49,9 @@ The old code stops working at once; phones already in the family stay in.
 **Leaving:** the name menu's **Leave** link takes this phone out of the family and clears what it had cached.
 Everyone else keeps everything, and coming back needs the invite code.
 
+**Removing a name:** **Manage → Who's in the house → Remove**, confirmed once.
+It deletes the name and every vote made under it, this week's and earlier ones, on every phone.
+
 **Deleting:** **Manage → Delete this family**, confirmed by typing the family's name.
 It removes every meal, vote, name, ingredient and invite for everyone.
 Other phones notice within a second or two and return to the welcome screen with a line saying why.
@@ -100,6 +103,22 @@ Icons aren't stored and aren't looked up - they're worked out in the browser fro
 The override is the normal way to fix a glyph - it needs no code change and no deploy. Editing the keyword table only makes sense for a whole category that keeps recurring.
 
 The Icon button appears on meals in the master list, not on pending suggestions, so *Keep* one first and then set its icon.
+
+## Legal pages, deletion requests and search
+
+`privacy.html`, `terms.html`, `delete.html` and `accessibility.html` are linked under the welcome card (the homepage link to the privacy policy that California's CalOPPA expects) and from the help screen.
+Their HTML comments are notes for the lawyer and for later work; `scripts/build-site.mjs` strips them from what is served.
+
+**Announcing a change.** The policy and terms promise a notice in the app before a change that matters takes effect.
+Publish the new pages with an effective date about two weeks ahead, then change `currentPolicy()` in `index.html` to the new version and date.
+Every phone in a family then shows one line saying the policy was updated, with links, until someone taps **OK** on it.
+
+**Deletion requests by email.** Someone who has lost access to their family can ask hello@dinnerdecisions.app to delete it.
+The private `admin/delete-family.mjs` finds the family by name or invite code, lists what it would delete, and deletes it with `--apply`; its header is the runbook, including how to check the request really comes from that family.
+
+**Search.** `robots.txt` lets every crawler in and points at `sitemap.xml`, which lists every public page.
+`index.html` carries the page title and description shown in search results, a canonical link to `dinnerdecisions.app`, structured data describing the app, and the link preview card (Open Graph tags and `icons/og-image.png`) shown when a link is texted or posted.
+Google Search Console, verified by a DNS record at Cloudflare, shows which searches find the site without adding any tracking to it.
 
 ## How it's put together
 
@@ -229,15 +248,18 @@ Publish rules before the page that depends on them; the rules here are written t
 
 `create`/`update` and `delete` are written as separate clauses on purpose: a delete carries no `request.resource`, so a single combined rule with a field check silently blocks every delete - removing a meal, dismissing a suggestion, clearing a week.
 
-### Free tier
+### Cost
 
-1 GiB of storage, 50,000 reads and 20,000 writes per day, and anonymous sign-in at no cost.
-A family of five voting weekly is nowhere near any of those.
+The project is on the pay-as-you-go Blaze plan, with the same free allowances as before: 1 GiB of storage, 50,000 reads and 20,000 writes a day.
+Opening the app costs roughly one read per meal, person and vote, so on the order of a hundred; at the current size the bill is $0.
+A monthly budget of $25 emails alerts at $5, $12.50, $22.50 and $25, and when Google forecasts the month will pass $25.
 
-The daily limits are shared by every family on the project.
-Opening the app costs roughly one read per meal, person and vote, so on the order of a hundred, and the reads run out at around 500 opens a day.
-Past that the app keeps working from its cached copy until the daily reset; nothing is billed, because the free plan has no card on it.
-Moving to the pay-as-you-go plan is the fix if it ever comes to that.
+### Backups
+
+Google backs the database up every day and keeps each backup for 7 days (a Firestore backup schedule).
+A second copy is made every morning onto the home NAS by the private `admin/backup.mjs`, kept 30 days, and `admin/restore.mjs` puts one family or everything back from it.
+Delete protection is on, so the database itself cannot be deleted by accident.
+The privacy policy and the deletion page say how long backups keep data; change them together if either retention changes.
 
 ### Recreating it from scratch
 
@@ -283,7 +305,8 @@ The app is a single static file, `index.html`, with no build step - open it and 
 ```
 index.html            the whole app
 privacy.html, terms.html, delete.html, accessibility.html
-                      the legal pages, linked from the help screen
+                      the legal pages, linked from the welcome and help screens
+robots.txt, sitemap.xml  for search engines; add new public pages to the sitemap
 site.webmanifest      home-screen name and icons
 firestore.rules       the security rules; mise run rules-deploy publishes them
 firebase.json         emulator ports, the rules file and Hosting headers
@@ -292,7 +315,8 @@ tests/rules.test.mjs  every rule against the emulator, negative cases first
 tests/e2e/            two- and three-phone browser tests, and screenshots
 tests/live/           a smoke test of the deployed site; mise run live-check
 tests/serve.mjs       a static server with an ETag, like the real host
-icons/                home-screen and favicon PNGs, generated from icon.typ
+icons/                home-screen and favicon PNGs, generated from icon.typ,
+                      and og-image.png, the link preview card, from og.html
 diagrams/             Typst sources and rendered SVGs
   design/             palette and tokens shared by every diagram
 ```
@@ -334,7 +358,7 @@ And two things that are deliberately **not** here:
 
 ```bash
 mise run render   # diagrams → dual-theme SVGs
-mise run icons    # home-screen and favicon PNGs
+mise run icons    # home-screen and favicon PNGs, and the link preview card
 ```
 
 Diagrams need `typst` and the **CaskaydiaMono NFP** font. Each source compiles once per theme, and the fixed pt dimensions are stripped so the SVGs scale to the README's width. Icons need a colour emoji font - Segoe UI Emoji on Windows, Apple Color Emoji on macOS - and compile at 72 ppi so the page size in points equals the pixel size exactly.
