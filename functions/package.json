@@ -1,0 +1,15 @@
+{
+  "name": "dinner-decisions-functions",
+  "private": true,
+  "description": "Server side of Dinner Decisions Plus: the beta sign-up and the Walmart lookups.",
+  "type": "module",
+  "main": "index.js",
+  "engines": { "node": "22" },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0"
+  }
+}

@@ -1382,6 +1382,120 @@
     .grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
   }
 
+  /* ---------- Dinner Decisions Plus ---------- */
+
+  .plus-hint { margin-top: 10px; }
+
+  .plus-error {
+    color: var(--warm);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 8px 0 0;
+  }
+
+  .plus-error:empty { display: none; }
+
+  .link-btn {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .wm-where { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .wm-where-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .wm-where-name { font-weight: 600; color: var(--ink); }
+  .wm-where-addr { font-size: 13px; }
+  .wm-where .link-btn { flex: none; margin-top: 1px; }
+
+  .wm-stores { display: flex; flex-direction: column; gap: 6px; padding: 6px 12px 8px; }
+  .wm-stores:empty { display: none; }
+
+  .wm-store,
+  .wm-option {
+    font: inherit;
+    text-align: left;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .wm-store { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; }
+  .wm-store:hover,
+  .wm-option:hover { border-color: var(--accent); }
+  .wm-store-name { font-weight: 600; font-size: 15px; }
+  .wm-store-addr { font-size: 13px; color: var(--ink-muted); }
+
+  .dialog-tall > .menu-note,
+  .dialog-tall > .menu-error { flex: none; }
+
+  .dialog-tall .wm-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin: 0 4px;
+    padding: 2px 8px;
+  }
+
+  .wm-wait { color: var(--ink-muted); font-size: 14px; text-align: center; margin: 0; padding: 18px 4px; }
+
+  .wm-item { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .wm-item:last-child { border-bottom: 0; }
+
+  .wm-row { display: flex; align-items: center; gap: 10px; }
+
+  .wm-img {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid var(--line);
+  }
+
+  .wm-img-none { background: var(--surface-sunk); }
+
+  .wm-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+  .wm-name {
+    font-size: 14px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .wm-price { font-size: 13px; font-weight: 600; color: var(--ink-muted); }
+  .wm-for { font-size: 12px; color: var(--ink-faint); margin: 3px 0 0 54px; }
+  .wm-item.is-off .wm-name { color: var(--ink-muted); }
+
+  .wm-options { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 0 54px; }
+  .wm-option { display: flex; align-items: center; gap: 10px; padding: 6px 8px; }
+  .wm-option[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .wm-skip { justify-content: center; font-size: 13px; color: var(--ink-muted); padding: 10px 8px; }
+
+  .wm-missing { padding: 12px 0 6px; }
+  .wm-missing .eyebrow { margin: 0; }
+  .wm-missing p:last-child { font-size: 14px; margin: 4px 0 0; }
+
+  .wm-foot { flex: none; padding-top: 10px; }
+  .wm-foot:empty { display: none; }
+  .wm-fine { font-size: 12px; color: var(--ink-faint); text-align: center; line-height: 1.4; margin: 0; }
+
   /* ---------- printed shopping list ---------- */
 
   /* Only the Print button fills this and sets body.printing; printing the
@@ -1541,6 +1655,9 @@
     </div>
     <p class="hint" style="margin-top:10px">Type the Manage code on another phone to open this tab there.</p>
 
+    <h2 class="section">Dinner Decisions Plus</h2>
+    <div id="plusBox"></div>
+
     <p class="eyebrow">Start over</p>
     <button class="btn btn-quiet" id="clearBtn" type="button">Clear this week&rsquo;s votes</button>
 
@@ -1572,6 +1689,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 
 <script>
 (function () {
@@ -1605,6 +1723,8 @@
     localPicks: [],
     saveTimer: null,
     openMeals: {},      // meal ids whose ingredient panel is expanded, in Manage
+    plus: null,         // billing/plan: { status } while the family has Plus
+    store: null,        // store/walmart: the family's Walmart, once picked
     sheetOpen: false
   };
 
@@ -2309,6 +2429,7 @@
 
     var actions = items.length
       ? '<div class="head-actions">' +
+        (hasPlus() ? '<button class="icon-btn" id="storeBuy" type="button" aria-label="Send the shopping list to Walmart" title="Walmart">' + ICON_CART + "</button>" : "") +
         '<button class="icon-btn" id="printBuy" type="button" aria-label="Print the shopping list" title="Print">' + ICON_PRINT + "</button>" +
         '<button class="icon-btn" id="shareBuy" type="button" aria-label="Share the shopping list" title="Share">' + ICON_SHARE + "</button>" +
         "</div>"
@@ -2769,6 +2890,7 @@
     }
 
     $("manageCount").textContent = S.suggestions.length ? String(S.suggestions.length) : "";
+    renderPlus();
   }
 
   function render() {
@@ -3436,7 +3558,11 @@
     var refs = [];
     var code = "";
 
-    var reads = ["meals", "suggestions", "people", "votes", "weeks", "members"].map(function (c) {
+    // The family's Walmart is one known document, deleted by name: the rules
+    // allow reading it, not listing the collection it sits in.
+    refs.push(root.collection("store").doc("walmart"));
+
+    var reads = ["meals", "suggestions", "people", "votes", "weeks", "members", "matches"].map(function (c) {
       return serverGet(root.collection(c)).then(function (snap) {
         snap.docs.forEach(function (d) {
           if (!(c === "members" && d.id === uid)) refs.push(d.ref);
@@ -3466,6 +3592,7 @@
       var b = db.batch();
       if (STRONG_CODE.test(code)) b.delete(db.collection("invites").doc(code));
       b.delete(root.collection("private").doc("join"));
+      b.delete(root.collection("billing").doc("plan"));
       b.delete(root);
       b.delete(root.collection("members").doc(uid));
       return withTimeout(b.commit());
@@ -3590,11 +3717,324 @@
     if (newId) { setMe(newId); closeSheet(); }
   }
 
+  /* ---------------- Dinner Decisions Plus ---------------- */
+
+  // Plus sends the week's list to a Walmart cart, for pickup or delivery.
+  // During the beta a family turns it on in Manage. Whether a family has
+  // Plus is decided by the server (billing/plan), never by a phone, and the
+  // Walmart lookups run on the server because they are signed with a key
+  // the page must not hold. The list is only shown on Manage phones, so the
+  // cart button is too.
+
+  var ICON_CART = "<svg " + ICON_ATTR + '><path d="M3 4h2.2l2.3 10.4a1.5 1.5 0 0 0 1.5 1.2h7.8a1.5 1.5 0 0 0 1.4-1.1L20 8H6.3"/><circle cx="9.6" cy="19.6" r="1.4"/><circle cx="16.8" cy="19.6" r="1.4"/></svg>';
+  var WALMART_CART = "https://www.walmart.com/sc/cart/addToCart";
+
+  function hasPlus() {
+    return !!S.plus && (S.plus.status === "beta" || S.plus.status === "active");
+  }
+
+  function callable(name, timeout) {
+    return firebase.functions().httpsCallable(name, { timeout: timeout || 70000 });
+  }
+
+  // The server's own words where it gave a reason a person can act on.
+  function callText(e) {
+    var code = String((e && e.code) || "").replace(/^functions\//, "");
+    if (/^(invalid-argument|resource-exhausted|failed-precondition|unavailable|permission-denied)$/.test(code) && e.message) {
+      return e.message;
+    }
+    if (code === "deadline-exceeded") return "That took too long. Try again.";
+    return failText(e);
+  }
+
+  function plusError(text) {
+    var el = $("plusError");
+    if (el) el.textContent = text || "";
+  }
+
+  // Redrawn only when Plus turns on or off, so a reply arriving mid-tap
+  // does not wipe a button's busy label or an error.
+  var plusShown = null;
+
+  function renderPlus() {
+    var box = $("plusBox");
+    if (!box) return;
+    var on = hasPlus();
+    if (plusShown === on && box.innerHTML) return;
+    plusShown = on;
+    box.innerHTML = on
+      ? '<div class="rows"><div class="row"><div class="row-name">Plus beta <span class="row-sub">on</span></div>' +
+        '<div class="row-actions"><button class="btn btn-quiet btn-tiny" id="plusLeave" type="button">Leave Beta</button></div></div></div>' +
+        '<p class="hint plus-hint">The cart button is on the Shopping tab, beside Print and Share.</p>' +
+        '<div class="plus-error" id="plusError" role="alert"></div>'
+      : '<p class="hint">Send the week&rsquo;s shopping list straight to a Walmart cart, for pickup or delivery. Free while it&rsquo;s being tested.</p>' +
+        '<button class="btn btn-primary" id="plusJoin" type="button">Try Plus Beta</button>' +
+        '<div class="plus-error" id="plusError" role="alert"></div>';
+  }
+
+  function joinPlus() {
+    var b = $("plusJoin");
+    if (!b || b.disabled) return;
+    if (!S.db || !S.uid) return plusError("Can’t reach Dinner Decisions right now. Check your connection and try again.");
+    plusError("");
+    busy("plusJoin", true, "Turning On…");
+    callable("joinPlusBeta")({ hid: S.hid }).then(function () {
+      busy("plusJoin", false);
+    }, function (e) {
+      console.warn("plus beta failed", e);
+      busy("plusJoin", false);
+      plusError(callText(e));
+    });
+  }
+
+  function openLeavePlus() {
+    openDialog("Leave the Plus beta",
+      '<h2 class="dialog-title">Leave the Plus beta?</h2>' +
+      '<div class="menu-note">The cart button goes away. Your Walmart store and the products you picked are kept, in case you come back.</div>' +
+      '<div class="menu-stack"><button class="btn btn-primary" id="plusLeaveGo" type="button">Leave Beta</button></div>' +
+      errorLine() + cancelRow());
+  }
+
+  function submitLeavePlus() {
+    if (!$("plusLeaveGo") || $("plusLeaveGo").disabled) return;
+    busy("plusLeaveGo", true, "Leaving…");
+    callable("leavePlusBeta")({ hid: S.hid }).then(function () {
+      closeSheet();
+    }, function (e) {
+      console.warn("leave plus failed", e);
+      busy("plusLeaveGo", false);
+      dialogError(callText(e));
+    });
+  }
+
+  /* ---- picking the family's Walmart ---- */
+
+  // What the Walmart sheet is showing: the list's items with their product
+  // choices, which one is picked for each, and which item is opened up to
+  // choose a different product.
+  var WM = { items: [], pick: {}, open: null, loading: false, stores: [] };
+
+  function openWalmart() {
+    if (!hasPlus()) return;
+    if (!S.store) return openStorePicker();
+    openWalmartList();
+  }
+
+  function openStorePicker() {
+    WM.stores = [];
+    openDialog("Your Walmart",
+      '<div class="dialog-head"><h2 class="dialog-title">Your Walmart</h2>' + closeX() + "</div>" +
+      '<div class="menu-note">Pick the store you shop at. Your list goes into your Walmart cart for that store.</div>' +
+      '<div class="menu-stack"><div class="btn-row">' +
+      '<input type="text" id="wmZip" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="ZIP code" value="' + esc(S.store ? S.store.zip : "") + '">' +
+      '<button class="btn btn-primary" id="wmFind" type="button">Find Stores</button>' +
+      "</div></div>" +
+      '<div class="wm-stores" id="wmStores"></div>' +
+      errorLine() + cancelRow(), "wmZip");
+  }
+
+  function findStores() {
+    var zip = ($("wmZip") || {}).value || "";
+    zip = zip.replace(/\D/g, "");
+    if (!/^\d{5}$/.test(zip)) return dialogError("Type a 5-digit ZIP code.");
+    if (!$("wmFind") || $("wmFind").disabled) return;
+    dialogError("");
+    busy("wmFind", true, "Finding…");
+    callable("walmartStores")({ hid: S.hid, zip: zip }).then(function (r) {
+      busy("wmFind", false);
+      WM.stores = (r.data && r.data.stores) || [];
+      var box = $("wmStores");
+      if (!box) return;
+      if (!WM.stores.length) {
+        box.innerHTML = "";
+        return dialogError("No Walmart stores found near " + zip + ".");
+      }
+      box.innerHTML = WM.stores.map(function (s, i) {
+        return '<button class="wm-store" type="button" data-wmstore="' + i + '">' +
+          '<span class="wm-store-name">' + esc(s.name) + "</span>" +
+          '<span class="wm-store-addr">' + esc(s.address) + "</span></button>";
+      }).join("");
+    }, function (e) {
+      console.warn("stores failed", e);
+      busy("wmFind", false);
+      dialogError(callText(e));
+    });
+  }
+
+  function chooseStore(i) {
+    var s = WM.stores[i];
+    if (!s) return;
+    var doc = { storeId: s.id, name: s.name, address: s.address, zip: s.zip, updatedAt: nowIso() };
+    S.store = doc;
+    S.db.collection("households").doc(S.hid).collection("store").doc("walmart").set(doc)
+      .catch(function (e) { console.warn("store save failed", e); });
+    WM.items = [];
+    openWalmartList();
+  }
+
+  /* ---- the list, matched to Walmart products ---- */
+
+  function openWalmartList() {
+    WM.open = null;
+    openDialog("Send to Walmart",
+      '<div class="dialog-head"><h2 class="dialog-title">Send to Walmart</h2>' + closeX() + "</div>" +
+      '<div class="menu-note wm-where"><span class="wm-where-text"><span class="wm-where-name">' + esc(S.store.name) + "</span>" +
+      (S.store.address ? '<span class="wm-where-addr">' + esc(S.store.address) + "</span>" : "") + "</span>" +
+      '<button class="link-btn" id="wmChangeStore" type="button">Change Store</button></div>' +
+      '<div class="wm-body" id="wmBody"><p class="wm-wait">Finding your items at Walmart&hellip;</p></div>' +
+      '<div class="menu-stack wm-foot" id="wmFoot"></div>' +
+      errorLine() + cancelRow("Done"), null, "dialog-tall");
+    loadMatches();
+  }
+
+  function loadMatches() {
+    var names = buyList().map(function (it) { return it.name; });
+    if (!names.length) return closeSheet();
+    WM.loading = true;
+    callable("walmartMatch", 100000)({ hid: S.hid, items: names }).then(function (r) {
+      WM.loading = false;
+      WM.items = (r.data && r.data.items) || [];
+      WM.pick = {};
+      WM.items.forEach(function (it) { WM.pick[it.key] = it.options.length ? 0 : -1; });
+      drawMatches();
+    }, function (e) {
+      console.warn("match failed", e);
+      WM.loading = false;
+      var body = $("wmBody");
+      if (body) body.innerHTML = "";
+      dialogError(callText(e));
+    });
+  }
+
+  function money(n) {
+    return typeof n === "number" ? "$" + n.toFixed(2) : "";
+  }
+
+  function productLine(p, cls) {
+    return (p.image
+      ? '<img class="wm-img" src="' + esc(p.image) + '" alt="" width="44" height="44" loading="lazy" referrerpolicy="no-referrer">'
+      : '<span class="wm-img wm-img-none" aria-hidden="true"></span>') +
+      '<span class="' + cls + '"><span class="wm-name">' + esc(p.name) + "</span>" +
+      (p.price != null ? '<span class="wm-price">' + money(p.price) + "</span>" : "") + "</span>";
+  }
+
+  function drawMatches() {
+    var body = $("wmBody");
+    if (!body) return;
+    var found = WM.items.filter(function (it) { return it.options.length; });
+    var missing = WM.items.filter(function (it) { return !it.options.length; });
+
+    body.innerHTML = found.map(function (it) {
+      var i = WM.pick[it.key];
+      var p = i >= 0 ? it.options[i] : null;
+      var open = WM.open === it.key;
+      return '<div class="wm-item' + (p ? "" : " is-off") + '" data-wmrow="' + esc(it.key) + '">' +
+        '<div class="wm-row">' +
+        (p ? productLine(p, "wm-text") : '<span class="wm-img wm-img-none" aria-hidden="true"></span><span class="wm-text"><span class="wm-name">Left off the cart</span></span>') +
+        '<button class="btn btn-quiet btn-tiny" type="button" data-wmchange="' + esc(it.key) + '" aria-expanded="' + open + '">' + (open ? "Close" : "Change") + "</button>" +
+        "</div>" +
+        '<div class="wm-for">For ' + esc(it.name) + "</div>" +
+        (open ? optionsFor(it) : "") +
+        "</div>";
+    }).join("") +
+    (missing.length
+      ? '<div class="wm-missing"><p class="eyebrow">Add these yourself</p><p>' +
+        missing.map(function (it) { return esc(it.name); }).join(", ") +
+        "</p></div>"
+      : "");
+
+    var count = found.filter(function (it) { return WM.pick[it.key] >= 0; }).length;
+    var foot = $("wmFoot");
+    if (!foot) return;
+    foot.innerHTML = count
+      ? '<a class="btn btn-primary" id="wmCart" href="' + esc(cartUrl()) + '" target="_blank" rel="noopener">Open Walmart Cart</a>' +
+        '<p class="wm-fine">' + count + (count === 1 ? " item goes" : " items go") + " into your cart. Walmart checks prices and stock for your store before you pay.</p>"
+      : "";
+  }
+
+  function optionsFor(it) {
+    if (it.loadingMore) return '<div class="wm-options"><p class="wm-wait">Finding other choices&hellip;</p></div>';
+    return '<div class="wm-options">' + it.options.map(function (p, i) {
+      return '<button class="wm-option" type="button" data-wmpick="' + esc(it.key) + '" data-i="' + i + '" aria-pressed="' + (WM.pick[it.key] === i) + '">' +
+        productLine(p, "wm-text") + "</button>";
+    }).join("") +
+    '<button class="wm-option wm-skip" type="button" data-wmpick="' + esc(it.key) + '" data-i="-1" aria-pressed="' + (WM.pick[it.key] === -1) + '">Leave it off the cart</button>' +
+    "</div>";
+  }
+
+  function itemByKey(key) {
+    return WM.items.filter(function (it) { return it.key === key; })[0];
+  }
+
+  // A product remembered from an earlier week comes alone; asking for a
+  // different one searches Walmart for that item again.
+  function toggleChoices(key) {
+    var it = itemByKey(key);
+    if (!it) return;
+    WM.open = WM.open === key ? null : key;
+    if (WM.open && it.remembered && !it.searched) {
+      it.loadingMore = true;
+      callable("walmartMatch")({ hid: S.hid, items: [it.name], refresh: true }).then(function (r) {
+        var fresh = ((r.data && r.data.items) || [])[0];
+        var mine = it.options[WM.pick[key]] || it.options[0];
+        var others = fresh ? fresh.options.filter(function (p) { return p.itemId !== mine.itemId; }) : [];
+        it.options = [mine].concat(others);
+        WM.pick[key] = WM.pick[key] === -1 ? -1 : 0;
+        it.searched = true;
+        it.loadingMore = false;
+        drawMatches();
+      }, function (e) {
+        it.loadingMore = false;
+        WM.open = null;
+        dialogError(callText(e));
+        drawMatches();
+      });
+    }
+    drawMatches();
+  }
+
+  function pickProduct(key, i) {
+    var it = itemByKey(key);
+    if (!it) return;
+    WM.pick[key] = i;
+    WM.open = null;
+    drawMatches();
+  }
+
+  // items=ID_QUANTITY,... fills the cart at the chosen store.
+  function cartUrl() {
+    var ids = [];
+    WM.items.forEach(function (it) {
+      var p = it.options[WM.pick[it.key]];
+      if (p) ids.push(p.itemId + "_1");
+    });
+    return WALMART_CART + "?items=" + ids.join(",") + "&storeId=" + encodeURIComponent(S.store.storeId);
+  }
+
+  // Opening the cart is when the family has settled on these products, so
+  // they are remembered for next week's list.
+  function rememberPicks() {
+    var b = S.db.batch();
+    var col = S.db.collection("households").doc(S.hid).collection("matches");
+    WM.items.forEach(function (it) {
+      var p = it.options[WM.pick[it.key]];
+      if (!p) return;
+      b.set(col.doc(it.key), { itemId: p.itemId, name: p.name, price: p.price == null ? null : p.price, image: p.image || "", updatedAt: nowIso() });
+    });
+    b.commit().catch(function (e) { console.warn("remember failed", e); });
+  }
+
+  function closeX() {
+    return '<button class="dialog-close" id="dlgClose" type="button" aria-label="Close">' +
+      '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
+      '<path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>';
+  }
+
   /* ---------------- events ---------------- */
 
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest
-      ? ev.target.closest("[data-meal],[data-unpick],[data-plan],[data-keep],[data-dismiss],[data-rename],[data-seticon],[data-remove],[data-rmperson],[data-person],[data-expand],[data-addingr],[data-addingrgo],[data-rmingr]")
+      ? ev.target.closest("[data-meal],[data-unpick],[data-plan],[data-keep],[data-dismiss],[data-rename],[data-seticon],[data-remove],[data-rmperson],[data-person],[data-expand],[data-addingr],[data-addingrgo],[data-rmingr],[data-wmstore],[data-wmchange],[data-wmpick]")
       : null;
 
     if (t) {
@@ -3633,12 +4073,16 @@
       if (d.addingr) return toggleMeal(d.addingr, true);
       if (d.addingrgo) return addIngredient(d.addingrgo, ($("ingInput-" + d.addingrgo) || {}).value);
       if (d.rmingr) return removeIngredient(d.rmingr, parseInt(d.i, 10));
+      if (d.wmstore) return chooseStore(parseInt(d.wmstore, 10));
+      if (d.wmchange) return toggleChoices(d.wmchange);
+      if (d.wmpick) return pickProduct(d.wmpick, parseInt(d.i, 10));
     }
 
     // Clicks can land on a child span, so resolve the owning control.
     var hit = ev.target.closest
       ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage," +
-          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#dlgClose,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn,#sharePlan,#shareBuy,#printBuy,#moveRetry,#movedCopy")
+          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#dlgClose,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn,#sharePlan,#shareBuy,#printBuy,#moveRetry,#movedCopy," +
+          "#plusJoin,#plusLeave,#plusLeaveGo,#storeBuy,#wmFind,#wmChangeStore,#wmCart")
       : null;
     var id = hit ? hit.id : ev.target.id;
 
@@ -3659,6 +4103,15 @@
     if (id === "sharePlan") return shareText("sharePlan", "This week’s dinners", planText());
     if (id === "shareBuy") return shareText("shareBuy", "Shopping list", buyText());
     if (id === "printBuy") return printBuy();
+    if (id === "plusJoin") return joinPlus();
+    if (id === "plusLeave") return openLeavePlus();
+    if (id === "plusLeaveGo") return submitLeavePlus();
+    if (id === "storeBuy") return openWalmart();
+    if (id === "wmFind") return findStores();
+    if (id === "wmChangeStore") return openStorePicker();
+    // A real link, so the cart opens in a new tab even on an iPhone home
+    // screen; the tap only remembers the products on its way.
+    if (id === "wmCart") return rememberPicks();
     if (id === "manageNewCode") return openNewCode();
     if (id === "newCodeGo") return submitNewCode();
     if (id === "leaveFamily") return openLeave();
@@ -3710,12 +4163,13 @@
     if (id === "joinCode") { submitJoin(); }
     if (id === "deleteConfirm") { submitDelete(); }
     if (id === "managePin") { submitManagePin(); }
+    if (id === "wmZip") { findStores(); }
   });
 
   // The delete button arms only once the family's name has been typed.
   document.addEventListener("input", function (ev) {
     if (ev.target.id === "deleteConfirm") $("deleteGo").disabled = !deleteArmed();
-    if (ev.target.id === "joinCode" || ev.target.id === "startFamily" || ev.target.id === "startName") dialogError("");
+    if (ev.target.id === "joinCode" || ev.target.id === "startFamily" || ev.target.id === "startName" || ev.target.id === "wmZip") dialogError("");
   });
 
   /* ---------------- boot ---------------- */
@@ -3769,6 +4223,9 @@
     S.chosen = [];
     S.localPicks = [];
     S.meId = null;
+    S.plus = null;
+    S.store = null;
+    plusShown = null;
   }
 
   function connect(db) {
@@ -3826,6 +4283,17 @@
       S.chosen = strList(d.chosen);
       render();
     }, function (e) { console.warn("week subscription ended", e); lostAccess(e); }));
+
+    S.subs.push(root.collection("billing").doc("plan").onSnapshot(function (snap) {
+      var d = snap.exists ? (snap.data() || {}) : null;
+      S.plus = d ? { status: str(d.status) } : null;
+      render();
+    }, function (e) { console.warn("plan subscription ended", e); lostAccess(e); }));
+
+    S.subs.push(root.collection("store").doc("walmart").onSnapshot(function (snap) {
+      var d = snap.exists ? (snap.data() || {}) : null;
+      S.store = d && d.storeId ? { storeId: str(d.storeId), name: str(d.name, "Walmart"), address: str(d.address), zip: str(d.zip) } : null;
+    }, function (e) { console.warn("store subscription ended", e); lostAccess(e); }));
 
     status("Connected", true);
     render();
@@ -3926,6 +4394,7 @@
       if (EMULATED) {
         firebase.auth().useEmulator("http://127.0.0.1:9199", { disableWarnings: true });
         store.useEmulator("127.0.0.1", 8181);
+        firebase.functions().useEmulator("127.0.0.1", 5001);
       }
 
       // Firestore keeps its own offline queue; the localStorage cache above

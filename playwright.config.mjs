@@ -18,9 +18,17 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:5180"
   },
-  webServer: {
-    command: "node tests/serve.mjs 5180",
-    url: "http://127.0.0.1:5180/index.html",
-    reuseExistingServer: true
-  }
+  webServer: [
+    {
+      command: "node tests/serve.mjs 5180",
+      url: "http://127.0.0.1:5180/index.html",
+      reuseExistingServer: true
+    },
+    {
+      // The pretend Walmart the Functions emulator talks to (functions/.env.local).
+      command: "node tests/fake-walmart.mjs 5199",
+      url: "http://127.0.0.1:5199/_calls",
+      reuseExistingServer: true
+    }
+  ]
 });

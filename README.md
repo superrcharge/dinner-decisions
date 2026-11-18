@@ -82,6 +82,40 @@ On iPhone and iPad it opens the share sheet with that list as a PDF instead, bec
 
 **Not built: ticking things off as you shop.** Deliberately left out for now rather than overlooked. It needs somewhere to keep per-week checked state that every phone can see, which means new Firestore documents and a rules change - worth doing only once the list has been shopped with a few times and it is clear what is actually wanted.
 
+## Dinner Decisions Plus (beta)
+
+Plus sends the week's **To buy** list straight into a Walmart cart, for pickup or delivery.
+It is in a free beta for the families already using the app, with a limited number of spots; payments come later.
+
+**Turning it on** - in **Manage**, under **Dinner Decisions Plus**, tap **Try Plus Beta**.
+The server decides whether there is a spot and records it; a phone cannot give itself Plus.
+**Leave Beta** gives the spot back, and keeps the family's store and chosen products in case it returns.
+
+**Sending the list** - a cart button joins Print and Share beside **To buy**.
+The first time, the family types its ZIP code and picks its Walmart.
+Each item on the list is then matched to a Walmart product, with its photo and price; **Change** offers other matches or leaves the item off the cart, and anything Walmart has nothing for is listed to add by hand.
+**Open Walmart Cart** opens Walmart with those products in the cart at that store, where Walmart shows the real prices and stock before checkout.
+The products a family opened the cart with are remembered, so next week's list picks them again without searching.
+
+**How it works** - Walmart's product API needs every request signed with a private key, so the lookups run in Cloud Functions (`functions/`), never on the phone:
+
+| Function | Does |
+|---|---|
+| `joinPlusBeta`, `leavePlusBeta` | takes or gives back a beta spot; writes `billing/plan` |
+| `walmartStores` | ZIP code to nearby Walmart stores |
+| `walmartMatch` | the list's items to Walmart products, or the family's remembered ones |
+| `familyDeleted` | when a family is deleted, gives its spot back and removes its server-only records |
+
+Each one checks that the calling phone is a member of the family it names, and the Walmart ones that the family has Plus.
+Walmart lookups are capped at 300 per family per day, so nobody can run through the shared API allowance.
+The Walmart consumer id and private key are in Secret Manager (`WALMART_CONSUMER_ID`, `WALMART_PRIVATE_KEY`); the key version is `WALMART_KEY_VERSION`, default 1.
+The beta's size is `config/plusBeta` (`cap`, default 10, and the families in it), which only the server and `admin/plus.mjs` can change.
+
+```bash
+mise run functions-test     # signing and parsing, no network
+mise run functions-deploy   # publish the functions (Blaze, secrets set first)
+```
+
 ## Installing it on a phone
 
 Safari: share menu → *Add to Home Screen*. Chrome: ⋮ → *Add to Home screen*.
@@ -165,14 +199,14 @@ Project **`dinner-decisions-6af97`**.
   <img src="./diagrams/firebase-light.svg" alt="Firebase: Anonymous Auth issues a token to the security rules, which gate every read and write into Cloud Firestore. Everything nests under a households collection whose ids cannot be listed, beside a top-level invites collection that maps a code to its household and cannot be listed either. Inside one household sit five data collections - meals, suggestions, people, votes and weeks - plus two gate collections drawn in the rules' own colour: members, one document per admitted device, and private/join, holding the invite code that only members may read." width="100%">
 </picture>
 
-Two products are switched on and the rest are deliberately off:
+Four products are switched on and the rest are deliberately off:
 
 | Product | State | Why |
 |---|---|---|
 | Cloud Firestore | on | the shared data, with realtime listeners |
 | Anonymous Authentication | on | gives every visitor an identity without an account |
 | Firebase Hosting | on | serves the app at dinnerdecisions.app |
-| Cloud Functions | **off** | there is no server-side logic |
+| Cloud Functions | on | Dinner Decisions Plus: the beta sign-up and the Walmart lookups |
 
 **Anonymous auth** means nobody signs up and nobody has a password. On first load the SDK silently mints an identity for that browser and hands back a token. It exists so the rules have something to check - it is not a login, and it does not identify a *person*. Which family member a phone is picking as is a separate thing entirely, chosen from the roster and remembered in that device's `localStorage`.
 
@@ -250,7 +284,7 @@ Publish rules before the page that depends on them; the rules here are written t
 
 ### Cost
 
-The project is on the pay-as-you-go Blaze plan, with the same free allowances as before: 1 GiB of storage, 50,000 reads and 20,000 writes a day.
+The project is on the pay-as-you-go Blaze plan, which Cloud Functions needs, with the same free allowances as before: 1 GiB of storage, 50,000 reads and 20,000 writes a day, and 2 million function calls a month.
 Opening the app costs roughly one read per meal, person and vote, so on the order of a hundred; at the current size the bill is $0.
 A monthly budget of $25 emails alerts at $5, $12.50, $22.50 and $25, and when Google forecasts the month will pass $25.
 
@@ -287,6 +321,10 @@ Everything hangs off a household, so the app touches only two top-level collecti
 | `households/<hid>/people` | slug plus a random suffix | the household roster |
 | `households/<hid>/votes` | `<weekId>__<personId>` | one document per person per week, holding an array of meal ids |
 | `households/<hid>/weeks` | `<weekId>` | the meals locked into that week's plan |
+| `households/<hid>/billing` | `plan` | `status` (`beta`, later `active`) and `since`, while the family has Plus. Members read it; **only the server writes it** |
+| `households/<hid>/store` | `walmart` | the family's Walmart: `storeId`, `name`, `address`, `zip` |
+| `households/<hid>/matches` | item key from the server | the Walmart product chosen for a list item: `itemId`, `name`, `price`, `image` (https from Walmart's image servers only) |
+| `config` | `plusBeta` | the beta's `cap` and its families. Server only |
 
 `allow list: if false` on `households` and on `invites` are the most load-bearing lines in `firestore.rules`.
 Without the first, one query returns every household id in the project; without the second, every code.
@@ -309,12 +347,15 @@ privacy.html, terms.html, delete.html, accessibility.html
 robots.txt, sitemap.xml  for search engines; add new public pages to the sitemap
 site.webmanifest      home-screen name and icons
 firestore.rules       the security rules; mise run rules-deploy publishes them
+functions/            Cloud Functions for Plus: the beta and the Walmart lookups
 firebase.json         emulator ports, the rules file and Hosting headers
 scripts/build-site.mjs  copies the served files into dist/ for Hosting
 tests/rules.test.mjs  every rule against the emulator, negative cases first
 tests/e2e/            two- and three-phone browser tests, and screenshots
 tests/live/           a smoke test of the deployed site; mise run live-check
 tests/serve.mjs       a static server with an ETag, like the real host
+tests/fake-walmart.mjs  a pretend Walmart API for the browser tests
+scripts/test-walmart-keys.mjs  a throwaway Walmart key pair for each test run
 icons/                home-screen and favicon PNGs, generated from icon.typ,
                       and og-image.png, the link preview card, from og.html
 diagrams/             Typst sources and rendered SVGs
@@ -327,8 +368,12 @@ diagrams/             Typst sources and rendered SVGs
 npm install                    # once
 npx playwright install chromium # once
 mise run rules-test            # security rules against the Firestore emulator
+mise run functions-test        # the server functions' unit tests
 mise run e2e                   # phones in a browser against the emulators
 ```
+
+`npm install` in `functions/` once as well; the browser tests run the server functions in the Functions emulator.
+They talk to a pretend Walmart (`tests/fake-walmart.mjs`) that checks every request's signature against a key pair made fresh for each run, so the real Walmart and the real key are never involved.
 
 `mise` installs the Java the emulator needs, locally to this project.
 Both suites run against the Firebase emulators under the throwaway project id `demo-dinner-decisions`, so no test ever touches a real family.

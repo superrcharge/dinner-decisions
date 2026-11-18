@@ -23,6 +23,14 @@ run = "npm run test:rules"
 description = "Run the browser tests against the local emulators"
 run = "npm run test:e2e"
 
+[tasks.functions-test]
+description = "Run the server functions' unit tests (Walmart signing and parsing)"
+run = "npm run test:functions"
+
+[tasks.functions-deploy]
+description = "Publish the server functions to the live project (needs Blaze and the Walmart secrets set)"
+run = "npm run functions:deploy"
+
 [tasks.rules-deploy]
 description = "Publish firestore.rules to the live project (needs `firebase login` once)"
 run = "npm run rules:deploy"

@@ -256,6 +256,55 @@ service cloud.firestore {
                               && optString(request.resource.data, 'updatedAt', 40);
         allow delete: if isMember(hid);
       }
+
+      /* ---- Dinner Decisions Plus ---- */
+
+      // LOAD-BEARING. Whether the family has Plus. Only the server writes it
+      // (joinPlusBeta, and later payments), so no phone can give itself Plus.
+      // A phone may delete it only on the way out with the household itself,
+      // as with private/join.
+      match /billing/plan {
+        allow get: if isMember(hid);
+        allow create, update: if false;
+        allow delete: if isMember(hid)
+                      && !existsAfter(/databases/$(database)/documents/households/$(hid));
+      }
+
+      // The family's chosen Walmart store, picked by ZIP code on a phone.
+      match /store/walmart {
+        allow get: if isMember(hid);
+        allow create, update: if isMember(hid)
+                              && request.resource.data.keys().hasOnly(['storeId', 'name', 'address', 'zip', 'updatedAt'])
+                              && request.resource.data.storeId is string
+                              && request.resource.data.storeId.matches('^[0-9]{1,10}$')
+                              && text(request.resource.data.name, 80)
+                              && optString(request.resource.data, 'address', 160)
+                              && optString(request.resource.data, 'zip', 10)
+                              && optString(request.resource.data, 'updatedAt', 40);
+        allow delete: if isMember(hid);
+      }
+
+      // The product the family chose for a list item, so next week's list
+      // picks it again. The key is made by the server (walmartMatch). The
+      // photo is drawn as an image, so only https on Walmart's image servers.
+      match /matches/{key} {
+        allow read: if isMember(hid);
+        allow create, update: if isMember(hid)
+                              && key.matches('^[a-z0-9-]{1,100}$')
+                              && request.resource.data.keys().hasOnly(['itemId', 'name', 'price', 'image', 'updatedAt'])
+                              && request.resource.data.itemId is string
+                              && request.resource.data.itemId.matches('^[0-9]{1,15}$')
+                              && text(request.resource.data.name, 200)
+                              && (!('price' in request.resource.data)
+                                  || request.resource.data.price == null
+                                  || request.resource.data.price is number)
+                              && optString(request.resource.data, 'image', 500)
+                              && (!('image' in request.resource.data)
+                                  || request.resource.data.image == ''
+                                  || request.resource.data.image.matches('^https://([a-z0-9-]+[.])*walmartimages[.]com/[^"<>]*$'))
+                              && optString(request.resource.data, 'updatedAt', 40);
+        allow delete: if isMember(hid);
+      }
     }
   }
 }

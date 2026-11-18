@@ -377,3 +377,88 @@ test("one family's member cannot touch another family", async () => {
   await assertFails(deleteDoc(doc(eve, "invites", CODE)));
   await assertFails(rotate(eve, HID, CODE, "QRSTUVWXYZ"));
 });
+
+/* ---------------- Dinner Decisions Plus ---------------- */
+
+const PLAN = ["households", HID, "billing", "plan"];
+const STORE = { storeId: "1234", name: "Walmart Supercenter", address: "1550 Skibo Rd, Fayetteville, NC", zip: "28303", updatedAt: NOW };
+const MATCH = { itemId: "10450114", name: "Great Value Whole Milk, 1 Gallon", price: 3.12, image: "https://i5.walmartimages.com/asr/milk.jpeg", updatedAt: NOW };
+
+async function seedPlan(status = "beta") {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), ...PLAN), { status, since: NOW });
+  });
+}
+
+test("no phone can give its family Plus, or change it", async () => {
+  await startBatch(as("mom"), "mom");
+  const mom = as("mom");
+  await assertFails(setDoc(doc(mom, ...PLAN), { status: "beta", since: NOW }));
+  await seedPlan();
+  await assertSucceeds(getDoc(doc(mom, ...PLAN)));
+  await assertFails(updateDoc(doc(mom, ...PLAN), { status: "active" }));
+  await assertFails(setDoc(doc(mom, "households", HID, "billing", "other"), { status: "active" }));
+  // Only on the way out with the family.
+  await assertFails(deleteDoc(doc(mom, ...PLAN)));
+});
+
+test("a stranger or another family cannot see or touch a family's Plus, store or remembered products", async () => {
+  await startBatch(as("mom"), "mom");
+  await startBatch(as("bob"), "bob", HID2, CODE2);
+  await seedPlan();
+  await assertSucceeds(setDoc(doc(as("mom"), "households", HID, "store", "walmart"), STORE));
+  await assertSucceeds(setDoc(doc(as("mom"), "households", HID, "matches", "whole-milk"), MATCH));
+  for (const who of ["eve", "bob"]) {
+    const db = as(who);
+    await assertFails(getDoc(doc(db, ...PLAN)));
+    await assertFails(getDoc(doc(db, "households", HID, "store", "walmart")));
+    await assertFails(getDocs(collection(db, "households", HID, "matches")));
+    await assertFails(setDoc(doc(db, "households", HID, "store", "walmart"), STORE));
+    await assertFails(setDoc(doc(db, "households", HID, "matches", "eggs"), MATCH));
+    await assertFails(deleteDoc(doc(db, "households", HID, "matches", "whole-milk")));
+  }
+});
+
+test("the store choice is checked field by field", async () => {
+  await startBatch(as("mom"), "mom");
+  const ref = doc(as("mom"), "households", HID, "store", "walmart");
+  await assertSucceeds(setDoc(ref, STORE));
+  await assertFails(setDoc(ref, { ...STORE, storeId: "12a4" }));
+  await assertFails(setDoc(ref, { ...STORE, storeId: 1234 }));
+  await assertFails(setDoc(ref, { ...STORE, name: "" }));
+  await assertFails(setDoc(ref, { ...STORE, name: "x".repeat(81) }));
+  await assertFails(setDoc(ref, { ...STORE, extra: "padding" }));
+  await assertFails(setDoc(doc(as("mom"), "households", HID, "store", "kroger"), STORE));
+  await assertSucceeds(deleteDoc(ref));
+});
+
+test("a remembered product is checked, and its photo can only come from Walmart over https", async () => {
+  await startBatch(as("mom"), "mom");
+  const db = as("mom");
+  const ref = doc(db, "households", HID, "matches", "whole-milk");
+  await assertSucceeds(setDoc(ref, MATCH));
+  await assertSucceeds(setDoc(ref, { ...MATCH, price: null, image: "" }));
+  await assertFails(setDoc(ref, { ...MATCH, image: "http://i5.walmartimages.com/a.jpg" }));
+  await assertFails(setDoc(ref, { ...MATCH, image: "https://evil.example.com/a.jpg" }));
+  await assertFails(setDoc(ref, { ...MATCH, image: "https://walmartimages.com.evil.net/a.jpg" }));
+  await assertFails(setDoc(ref, { ...MATCH, image: 'https://i5.walmartimages.com/"onerror="x' }));
+  await assertFails(setDoc(ref, { ...MATCH, itemId: "abc" }));
+  await assertFails(setDoc(ref, { ...MATCH, price: "3.12" }));
+  await assertFails(setDoc(ref, { ...MATCH, name: "" }));
+  await assertFails(setDoc(ref, { ...MATCH, extra: 1 }));
+  await assertFails(setDoc(doc(db, "households", HID, "matches", "Whole Milk"), MATCH));
+  await assertSucceeds(deleteDoc(ref));
+});
+
+test("deleting the family takes its Plus record with it", async () => {
+  await startBatch(as("mom"), "mom");
+  await seedPlan();
+  const mom = as("mom");
+  const b = writeBatch(mom);
+  b.delete(doc(mom, "invites", CODE));
+  b.delete(doc(mom, "households", HID, "private", "join"));
+  b.delete(doc(mom, ...PLAN));
+  b.delete(doc(mom, "households", HID));
+  b.delete(doc(mom, "households", HID, "members", "mom"));
+  await assertSucceeds(b.commit());
+});
