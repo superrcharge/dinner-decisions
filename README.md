@@ -19,7 +19,7 @@ A stranger who finds the URL can start a family of their own, and can see nothin
 
 - **Pick meals** - tap tiles to vote. Everything you've chosen is gathered into a **Your picks** strip at the top, so you can read your own selections back without hunting for green tiles. Type anything that isn't on the list and it joins that week's options straight away.
 - **Shopping** - meals ranked by votes, with who picked each one and who hasn't voted yet. Build the week's plan by tapping *Add*.
-- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the kids suggested, set a meal's icon, list what a meal needs, clear the week.
+- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the family suggested, set a meal's icon, list what a meal needs, clear the week.
 
 The tab strip sticks to the top of the screen, so the three views stay reachable however far down the list you've scrolled.
 
@@ -239,7 +239,7 @@ The code must be 10 characters from the code alphabet; the rules check that too,
 
 The rules do not distinguish between members.
 Anyone in a family can edit its meals, change its code, remove a phone, or delete it - the intended shape for a household.
-`MANAGE_PIN` in `index.html` is still only a UI gate: it keeps the Manage tab off the kids' phones and defends nothing, and it is the same for every family.
+`MANAGE_PIN` in `index.html` is still only a UI gate: it keeps the Manage tab off the other family members' phones and defends nothing, and it is the same for every family.
 
 The uid lives in the browser's IndexedDB, so clearing site data means joining with the code once more.
 
@@ -392,7 +392,7 @@ It needs `firebase login` on the machine, so it is not part of CI, and it never 
 Two things in `index.html`:
 
 - `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the site's own addresses, and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
-- `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the kids' phones. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
+- `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the other phones in the house. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
 
 And two things that are deliberately **not** here:
 
