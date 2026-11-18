@@ -231,6 +231,7 @@
   }
 
   .help-legal a { color: inherit; }
+  .menu-note a { color: var(--accent); }
 
   /* ---------- tabs ---------- */
 
@@ -1482,6 +1483,7 @@
     <button class="btn btn-quiet" id="stopManagingBtn" type="button">Stop managing on this phone</button>
 
     <p class="eyebrow">Delete</p>
+    <button class="btn btn-quiet" id="deleteMineManage" type="button">Delete My Data</button>
     <button class="btn btn-danger" id="deleteFamily" type="button">Delete this family</button>
   </section>
 </div>
@@ -2674,6 +2676,7 @@
       '<div class="menu-row"><span>' + esc(S.hname || S.hid) + '</span>' +
       '<button class="menu-link" type="button" id="leaveFamily">Leave</button></div>' +
       '<button class="menu-item menu-add" type="button" id="inviteBtn">Invite someone</button>' +
+      '<button class="menu-item menu-add" type="button" id="deleteMine">Delete My Data</button>' +
       '<div class="menu-sep"></div>' +
       '<div class="menu-head">Who is picking</div>' +
       rows + (rows ? '<div class="menu-sep"></div>' : "") + tail;
@@ -3325,6 +3328,111 @@
       dialogError(failText(e) + " The family is still here, so you can try again.");
     });
   }
+
+  /* ---------------- deleting this phone's own data ---------------- */
+
+  // What both app stores call deleting an account. There is no account, so
+  // it is everything that ties this phone to anyone: its place in the family,
+  // the name it picks as and that name's votes, everything the app keeps on
+  // the phone, and the anonymous sign-in itself. The meals stay, because the
+  // rest of the house still uses them; Delete this family removes those.
+  //
+  // Kept in one block with its own click listener, so it touches nothing the
+  // rest of the page does.
+  function openDeleteMine() {
+    var person = me();
+    openDialog("Delete my data",
+      '<h2 class="dialog-title">Delete your data on this phone?</h2>' +
+      '<div class="menu-note">This takes this phone out of ' + esc(S.hname || "the family") +
+      (person ? ", removes the name <strong>" + esc(person.name) + "</strong> and its votes from the family on every phone," : "") +
+      " and clears everything Dinner Decisions keeps on this phone. It cannot be undone.</div>" +
+      '<div class="menu-note">Everyone else keeps the family&rsquo;s meals. To delete the whole family for everyone, ' +
+      "use <strong>Delete this family</strong> in Manage. " +
+      '<a href="delete.html" id="deleteMineMore">More about deleting your data</a></div>' +
+      '<div class="menu-stack"><button class="btn btn-danger" id="deleteMineGo" type="button">Delete My Data</button></div>' +
+      errorLine() + cancelRow());
+  }
+
+  // The name's votes and the name go first, this phone's membership after
+  // them (nothing can be deleted once it is gone), then the phone itself is
+  // wiped. Each step needs the server, so a lost signal stops it with the
+  // family still reachable and the button ready to try again.
+  function submitDeleteMine() {
+    if (!$("deleteMineGo") || $("deleteMineGo").disabled || notReady("deleteMineGo", submitDeleteMine)) return;
+    busy("deleteMineGo", true, "Deleting…");
+    dialogError("");
+
+    var db = S.db;
+    var root = db.collection("households").doc(S.hid);
+    var pid = me() ? S.meId : "";
+    var refs = [];
+
+    var read = pid
+      ? serverGet(root.collection("votes").where("personId", "==", pid)).then(function (snap) {
+          snap.docs.forEach(function (d) { refs.push(d.ref); });
+          refs.push(root.collection("people").doc(pid));
+        })
+      : Promise.resolve();
+
+    read.then(function () {
+      var chain = Promise.resolve();
+      for (var i = 0; i < refs.length; i += 400) {
+        (function (chunk) {
+          chain = chain.then(function () {
+            var b = db.batch();
+            chunk.forEach(function (r) { b.delete(r); });
+            return withTimeout(b.commit(), 20000);
+          });
+        })(refs.slice(i, i + 400));
+      }
+      return chain;
+    }).then(function () {
+      S.leaving = true;
+      return withTimeout(root.collection("members").doc(S.uid).delete());
+    }).then(wipePhone).catch(function (e) {
+      console.warn("delete my data failed", e);
+      S.leaving = false;
+      busy("deleteMineGo", false);
+      dialogError(failText(e));
+    });
+  }
+
+  // The anonymous sign-in is deleted outright, so the next start is a new,
+  // unconnected identity. Then Firestore's own offline copy and every key
+  // the page keeps go, and the page starts again on the welcome card.
+  function wipePhone() {
+    var user = firebase.auth().currentUser;
+    var signOut = function () { return firebase.auth().signOut(); };
+    return withTimeout(user ? user.delete().catch(signOut) : Promise.resolve(), 8000)
+      .catch(function () {})
+      .then(function () {
+        disconnect();
+        if (window.DDReminders) window.DDReminders.forget();
+        return S.db.terminate().then(function () { return S.db.clearPersistence(); }).catch(function () {});
+      })
+      .then(function () {
+        try {
+          Object.keys(localStorage).forEach(function (k) {
+            if (k.indexOf("dinner.") === 0) localStorage.removeItem(k);
+          });
+        } catch (e) {}
+        LS.set("notice", "Your data was deleted from this phone.");
+        location.reload();
+      });
+  }
+
+  // The one line the wipe leaves behind, read once after the reload.
+  (function () {
+    var note = LS.get("notice");
+    if (note) { LS.del("notice"); S.notice = note; }
+  })();
+
+  document.addEventListener("click", function (ev) {
+    var hit = ev.target.closest ? ev.target.closest("#deleteMine,#deleteMineManage,#deleteMineGo") : null;
+    if (!hit) return;
+    if (hit.id === "deleteMineGo") return submitDeleteMine();
+    openDeleteMine();
+  });
 
   // A listener refused by the rules means this phone may no longer be in the
   // family: someone deleted it, or removed this phone. Ask the server once

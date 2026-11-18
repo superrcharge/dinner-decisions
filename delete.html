@@ -298,11 +298,28 @@
     Everything your family stores can be deleted from inside the app, by anyone in the family, at any time.</p>
     <p>Pick the one that fits:</p>
     <ul>
+      <li><a href="#mine">Delete your own data from one phone</a></li>
       <li><a href="#leave">Take one phone out of a family</a></li>
       <li><a href="#name">Remove a name from a family</a></li>
       <li><a href="#family">Delete a whole family and everything in it</a></li>
       <li><a href="#email">Lost access? Ask us to do it</a></li>
     </ul>
+
+    <section class="card" aria-labelledby="mine">
+      <h2 id="mine">Delete your own data from one phone</h2>
+      <ol class="steps">
+        <li>Open Dinner Decisions on that phone.</li>
+        <li>Tap your name at the top of the screen.
+        If nobody has been chosen yet, it says <span class="ui">Choose…</span></li>
+        <li>Tap <span class="ui">Delete My Data</span>.
+        It is also in the <span class="ui">Manage</span> tab, under <span class="ui">Delete</span>.</li>
+        <li>Read what will be deleted, and tap <span class="ui">Delete My Data</span>.</li>
+      </ol>
+      <p><strong>What is deleted:</strong> the phone is taken off the family's list of phones; the name the phone was picking as is removed from the family, with every vote made under it; everything the app keeps on the phone is cleared; and the phone's anonymous sign-in is deleted.</p>
+      <p><strong>What stays:</strong> the family's meals, ingredients, other names and their votes, because everyone else still uses them.
+      To delete those as well, delete the whole family, as described below.
+      Coming back needs the invite code, and starts as a new phone.</p>
+    </section>
 
     <section class="card" aria-labelledby="leave">
       <h2 id="leave">Take one phone out of a family</h2>
@@ -354,7 +371,8 @@
     <ul>
       <li><strong>On the phone:</strong> nothing of the family.
       If the app was added to the home screen, you can delete that icon like any other app.
-      To clear the phone's anonymous sign-in as well, clear the website data for dinnerdecisions.app in your browser's settings.</li>
+      <span class="ui">Delete My Data</span> also deletes the phone's anonymous sign-in.
+      After leaving instead, clear the website data for dinnerdecisions.app in your browser's settings to remove it.</li>
       <li><strong>The anonymous device id:</strong> a random id that Firebase gave the browser.
       Once its phone has left, or its family has been deleted, it is connected to nothing and carries no name or other information.
       When an id is deleted, Google removes it from its systems within 180 days.</li>

@@ -49,6 +49,11 @@ The old code stops working at once; phones already in the family stay in.
 **Leaving:** the name menu's **Leave** link takes this phone out of the family and clears what it had cached.
 Everyone else keeps everything, and coming back needs the invite code.
 
+**Deleting one phone's data:** **Delete My Data**, in the name menu and in **Manage → Delete**.
+It does what Leave does, and also removes the name this phone picks as, every vote made under that name, Firestore's offline copy on the phone, and the phone's anonymous sign-in, then starts the page again on the welcome screen.
+The family's meals stay for everyone else.
+This is what both app stores mean by deleting an account; [delete.html](delete.html) describes it for families.
+
 **Deleting:** **Manage → Delete this family**, confirmed by typing the family's name.
 It removes every meal, vote, name, ingredient and invite for everyone.
 Other phones notice within a second or two and return to the welcome screen with a line saying why.
