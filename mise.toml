@@ -27,6 +27,10 @@ run = "npm run test:e2e"
 description = "Publish firestore.rules to the live project (needs `firebase login` once)"
 run = "npm run rules:deploy"
 
+[tasks.site-deploy]
+description = "Publish the website to Firebase Hosting (dinnerdecisions.app); copies only the served files into dist/ first"
+run = "npx firebase deploy --only hosting"
+
 [tasks.live-check]
 description = "Smoke-test the deployed site with a throwaway family, then delete it (needs `firebase login`)"
 run = "npm run test:live"

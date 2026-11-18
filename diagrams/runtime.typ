@@ -53,7 +53,7 @@
   spacing: (tokens.space-between-shapes * 3.1, tokens.space-between-ranks * 1.5),
 
   // ---- where the page comes from ----
-  box-node((0, 0), "\u{F0C2}", "GitHub Pages", "static host",
+  box-node((0, 0), "\u{F0C2}", "Firebase Hosting", "static host",
     "Hands over one file: index.html. Holds no data and never sees a vote. "
     + "Also answers the app when it asks whether a newer build exists.",
     palette.orange, <pages>),
@@ -152,7 +152,7 @@
 #align(center, block(width: 720pt, text(
   size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
   "Green edges are the realtime path: a tap writes to Firestore, and every "
-  + "other phone's open listener receives it within about a second. GitHub and "
-  + "Firestore never talk to each other - GitHub serves code, Firestore holds "
+  + "other phone's open listener receives it within about a second. Hosting and "
+  + "Firestore never talk to each other - Hosting serves code, Firestore holds "
   + "data, and the page in the middle is the only thing that touches both.",
 )))

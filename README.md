@@ -3,7 +3,10 @@
 A one-page dinner picker for families.
 Everyone in the house opens it on their own phone, taps the meals they'd be happy to eat this week, and whoever does the shopping sees a live tally.
 
-**→ [superrcharge.github.io/dinner-decisions](https://superrcharge.github.io/dinner-decisions/)**
+**→ [dinnerdecisions.app](https://dinnerdecisions.app/)**
+
+It used to live at superrcharge.github.io/dinner-decisions.
+That address now only hands each phone over to the new one, in the same family and as the same person (see [Moving from GitHub Pages](#moving-from-github-pages)).
 
 No accounts to create, nothing to install, no email. Any phone, any browser. Free.
 
@@ -100,19 +103,39 @@ The Icon button appears on meals in the master list, not on pending suggestions,
 
 ## How it's put together
 
-Two moving parts that never talk to each other: GitHub serves the code, Firestore holds the data, and the page in the browser is the only thing that touches both.
+Two moving parts that never talk to each other: Firebase Hosting serves the code, Firestore holds the data, and the page in the browser is the only thing that touches both.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./diagrams/runtime-dark.svg">
-  <img src="./diagrams/runtime-light.svg" alt="Signal flow: GitHub Pages serves index.html to the browser and answers its periodic check for a newer build. The page fetches the Firebase SDK and fonts from gstatic and signs in anonymously with Firebase Auth, but signing in is not enough - the security rules reject any device not admitted to the household it is asking about. Everything in Firestore sits under households/&lt;hid&gt;/. localStorage holds which household this phone joined, who it is picking as, and a cached copy of that household&apos;s lists. Other phones hold their own live connections to the same Firestore." width="100%">
+  <img src="./diagrams/runtime-light.svg" alt="Signal flow: Firebase Hosting serves index.html to the browser and answers its periodic check for a newer build. The page fetches the Firebase SDK and fonts from gstatic and signs in anonymously with Firebase Auth, but signing in is not enough - the security rules reject any device not admitted to the household it is asking about. Everything in Firestore sits under households/&lt;hid&gt;/. localStorage holds which household this phone joined, who it is picking as, and a cached copy of that household&apos;s lists. Other phones hold their own live connections to the same Firestore." width="100%">
 </picture>
 
-Deploying a change is a push.
+Deploying a change is `mise run site-deploy`.
+It copies only the files the site serves (`index.html`, the legal pages, the manifest and icons) into `dist/` with `scripts/build-site.mjs`, and releases them to Firebase Hosting.
+A page is published only once it is listed in that script, and the review notes the legal pages carry as HTML comments are stripped on the way out.
+Every response is `Cache-Control: no-cache`, so the app's update check and a reload always see the newest release.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./diagrams/hosting-dark.svg">
-  <img src="./diagrams/hosting-light.svg" alt="Deploy path: this machine pushes to the GitHub repo, which triggers a Pages build, which publishes to the Fastly edge, which serves the file to a family phone." width="100%">
+  <img src="./diagrams/hosting-light.svg" alt="Deploy path: this machine runs site-deploy, which copies only the served files into dist/, which Firebase Hosting releases to its edge, which serves the file to a family phone." width="100%">
 </picture>
+
+### Moving from GitHub Pages
+
+The app lived on GitHub Pages until November 2026, and GitHub's rules do not allow Pages to host a paid service, so it moved to Firebase Hosting on its own domain.
+A new address is a new origin, which means a phone's saved family, name and anonymous sign-in do not carry over by themselves.
+
+So the same `index.html` behaves differently on the old address (`OLD_HOST`): instead of connecting, it reads the phone's family, the person it picks as, whether Manage is unlocked, and the family's invite code, which members can read, and sends them to `dinnerdecisions.app` after a `#move=`.
+The fragment never reaches a server.
+The new address joins that family with the code, picks the same person, deletes the old address's member record so the device count stays honest, and clears the fragment.
+A phone that is already in a family ignores a `#move=` link, so a crafted link cannot pull it out of its family.
+An invite link sent before the move still works: the old address forwards its code.
+
+An iPhone gives a home-screen app storage of its own, separate from Safari, so the old icon cannot hand over to a new icon directly.
+There the old icon waits for a tap that opens Safari, which joins as above and shows the family's code to type once in the new icon.
+
+The legacy GitHub Pages build still publishes from `main`, so a push updates the hand-over page.
+`tests/e2e/move.spec.mjs` covers all of it, with `localhost` as the old address and `127.0.0.1` as the new one.
 
 ## Firebase
 
@@ -129,7 +152,7 @@ Two products are switched on and the rest are deliberately off:
 |---|---|---|
 | Cloud Firestore | on | the shared data, with realtime listeners |
 | Anonymous Authentication | on | gives every visitor an identity without an account |
-| Firebase Hosting | **off** | GitHub Pages serves the app |
+| Firebase Hosting | on | serves the app at dinnerdecisions.app |
 | Cloud Functions | **off** | there is no server-side logic |
 
 **Anonymous auth** means nobody signs up and nobody has a password. On first load the SDK silently mints an identity for that browser and hands back a token. It exists so the rules have something to check - it is not a login, and it does not identify a *person*. Which family member a phone is picking as is a separate thing entirely, chosen from the roster and remembered in that device's `localStorage`.
@@ -138,7 +161,7 @@ An anonymous identity on its own buys nothing, though. See below.
 
 ### Who gets in
 
-The site is public and always will be - GitHub Pages has no other setting, and making the repo private would only hide the source, not the URL.
+The site is public and always will be - anyone can open the address, and making the repo private would only hide the source, not the URL.
 So the gate is in the data, not in the hosting.
 
 Three things do the work:
@@ -223,7 +246,7 @@ Moving to the pay-as-you-go plan is the fix if it ever comes to that.
 3. **Authentication → Sign-in method → Anonymous → Enable.**
 4. **Project settings → Your apps → `</>`** and copy the config into `FIREBASE_CONFIG` in `index.html`.
 5. Put the project id in `.firebaserc`, then `firebase login` and `mise run rules-deploy`.
-6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → the Pages origin. API restrictions → only Identity Toolkit, Token Service, Cloud Firestore and Firebase Installations.
+6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → `dinnerdecisions.app/*`, the two Firebase Hosting defaults (`dinner-decisions-6af97.web.app/*`, `dinner-decisions-6af97.firebaseapp.com/*`) and, while it still hands phones over, `superrcharge.github.io/*`. API restrictions → only Identity Toolkit, Token Service, Cloud Firestore and Firebase Installations.
 
 No household needs creating by hand; the first one is started from the app.
 
@@ -259,13 +282,16 @@ The app is a single static file, `index.html`, with no build step - open it and 
 
 ```
 index.html            the whole app
+privacy.html, terms.html, delete.html, accessibility.html
+                      the legal pages, linked from the help screen
 site.webmanifest      home-screen name and icons
 firestore.rules       the security rules; mise run rules-deploy publishes them
-firebase.json         emulator ports and the rules file, for tests and deploys
+firebase.json         emulator ports, the rules file and Hosting headers
+scripts/build-site.mjs  copies the served files into dist/ for Hosting
 tests/rules.test.mjs  every rule against the emulator, negative cases first
 tests/e2e/            two- and three-phone browser tests, and screenshots
 tests/live/           a smoke test of the deployed site; mise run live-check
-tests/serve.mjs       a static server that behaves like GitHub Pages
+tests/serve.mjs       a static server with an ETag, like the real host
 icons/                home-screen and favicon PNGs, generated from icon.typ
 diagrams/             Typst sources and rendered SVGs
   design/             palette and tokens shared by every diagram
@@ -296,7 +322,7 @@ It needs `firebase login` on the machine, so it is not part of CI, and it never 
 
 Two things in `index.html`:
 
-- `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the Pages origin, and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
+- `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the site's own addresses, and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
 - `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the kids' phones. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
 
 And two things that are deliberately **not** here:

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="What the family wants for dinner this week.">
 <title>Dinner Decisions</title>
 
@@ -222,6 +222,15 @@
   }
 
   .help strong { color: var(--ink); font-weight: 600; }
+
+  .help-legal {
+    padding: 11px 0 2px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .help-legal a { color: inherit; }
 
   /* ---------- tabs ---------- */
 
@@ -574,6 +583,8 @@
     border: 1px solid transparent;
     white-space: nowrap;
   }
+
+  a.btn { display: block; text-align: center; text-decoration: none; }
 
   .btn-primary { background: var(--accent); color: var(--accent-ink); }
   .btn-primary:hover { background: var(--accent-hover); }
@@ -1625,6 +1636,35 @@
       var t = setTimeout(function () { reject({ code: "timeout" }); }, ms || 10000);
       p.then(function (v) { clearTimeout(t); resolve(v); },
              function (e) { clearTimeout(t); reject(e); });
+    });
+  }
+
+  // A read that has to come from the server. While Firestore is still
+  // reconnecting (a phone just woken up, a weak signal) it answers
+  // "unavailable" at once, so keep asking until the time is up instead of
+  // giving up on the first try.
+  function serverGet(ref, ms) {
+    var until = Date.now() + (ms || 10000);
+    function attempt() {
+      return withTimeout(ref.get({ source: "server" }), Math.max(until - Date.now(), 1000)).catch(function (e) {
+        if (e && e.code === "unavailable" && Date.now() + 1500 < until) {
+          return new Promise(function (r) { setTimeout(r, 1500); }).then(attempt);
+        }
+        throw e;
+      });
+    }
+    return attempt();
+  }
+
+  // The family's code only changes when someone makes a new one, so with no
+  // connection the copy this phone already has will do.
+  function joinGet(ref) {
+    return serverGet(ref).catch(function (e) {
+      if (!e || (e.code !== "unavailable" && e.code !== "timeout")) throw e;
+      return ref.get({ source: "cache" }).then(function (snap) {
+        if (!snap.exists) throw e;
+        return snap;
+      }, function () { throw e; });
     });
   }
 
@@ -2797,6 +2837,8 @@
       item("Make it feel like an app!",
         "On iPhone, tap Safari&rsquo;s Share button, then <strong>Add to Home Screen</strong>. " +
         "On Android, open Chrome&rsquo;s menu, then <strong>Add to Home screen</strong>.") +
+      '<div class="help-legal"><a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a> &middot; ' +
+      '<a href="delete.html">Delete your data</a> &middot; <a href="accessibility.html">Accessibility</a></div>' +
       "</div>" + cancelRow("Done"), null, "dialog-tall");
   }
 
@@ -2862,10 +2904,16 @@
     var hid = S.hid;
     if (S.invite && S.invite.hid === hid) return Promise.resolve(S.invite.code);
     var join = S.db.collection("households").doc(hid).collection("private").doc("join");
-    return withTimeout(join.get({ source: "server" })).then(function (snap) {
+    return joinGet(join).then(function (snap) {
       var code = snap.exists ? String((snap.data() || {}).code || "") : "";
+      // A copy from this phone was checked when it was saved; making a new
+      // code needs the server.
+      if (snap.metadata.fromCache) {
+        if (STRONG_CODE.test(code)) return code;
+        throw { code: "unavailable" };
+      }
       if (!STRONG_CODE.test(code)) return rotateCode(hid, null);
-      return withTimeout(S.db.collection("invites").doc(code).get({ source: "server" })).then(function (inv) {
+      return serverGet(S.db.collection("invites").doc(code)).then(function (inv) {
         if (inv.exists && (inv.data() || {}).hid === hid) return code;
         return rotateCode(hid, null);
       });
@@ -2984,7 +3032,7 @@
     busy("newCodeGo", true, "Making…");
     var hid = S.hid;
     var join = S.db.collection("households").doc(hid).collection("private").doc("join");
-    withTimeout(join.get({ source: "server" })).then(function (snap) {
+    serverGet(join).then(function (snap) {
       var old = snap.exists ? String((snap.data() || {}).code || "") : "";
       return rotateCode(hid, STRONG_CODE.test(old) ? old : null);
     }).then(function () {
@@ -3028,18 +3076,18 @@
     var prev = S.hid;
     var hid, hname;
 
-    withTimeout(S.db.collection("invites").doc(code).get({ source: "server" })).then(function (inv) {
+    serverGet(S.db.collection("invites").doc(code)).then(function (inv) {
       if (!inv.exists) throw { code: "no-family" };
       hid = String((inv.data() || {}).hid || "");
       if (hid === prev) throw { code: "already" };
       var house = S.db.collection("households").doc(hid);
-      return withTimeout(house.get({ source: "server" })).then(function (snap) {
+      return serverGet(house).then(function (snap) {
         if (!snap.exists) throw { code: "no-family" };
         hname = str((snap.data() || {}).name, "your family");
         var mine = house.collection("members").doc(S.uid);
         // A phone that was in this family before and moved away is still a
         // member; it only needs to switch back.
-        return withTimeout(mine.get({ source: "server" })).then(function (m) {
+        return serverGet(mine).then(function (m) {
           if (m.exists) return;
           // The code is compared by the rules, against a document this phone
           // cannot read until the write has succeeded.
@@ -3062,6 +3110,119 @@
       console.warn("join failed", e);
       dialogError(failText(e));
     });
+  }
+
+  /* ---------------- moving to dinnerdecisions.app ---------------- */
+
+  // The old address (GitHub Pages) no longer runs the app. It reads which
+  // family this phone is in, and the family's code, which members can read,
+  // and sends both to the new address after the #, so they never reach a
+  // server. The new address joins that family as the same person.
+  function handOff() {
+    if (!S.hid) {
+      // An invite link sent before the move still works: its code goes along.
+      var to = HOME + (LINK_CODE ? "#join=" + LINK_CODE : "");
+      showMoving(to);
+      location.replace(to);
+      return;
+    }
+    showMoving("");
+    var house = S.db.collection("households").doc(S.hid);
+    joinGet(house.collection("private").doc("join")).then(function (snap) {
+      var move = { h: S.hid, c: str((snap.data() || {}).code), p: S.meId || "", a: S.admin ? 1 : 0, u: S.uid };
+      var url = HOME + "#move=" + encodeURIComponent(JSON.stringify(move));
+      showMoving(url, false, move.c);
+      // A home-screen app on iPhone would open the new address in a small
+      // in-app browser that cannot add it to the Home Screen, so there the
+      // move waits for a tap that opens Safari itself.
+      if (!iosHomeScreen()) location.replace(url);
+    }).catch(function (e) {
+      // No longer in that family: nothing to carry over.
+      if (e && e.code === "permission-denied") { showMoving(HOME); location.replace(HOME); return; }
+      showMoving("", true);
+    });
+  }
+
+  function iosHomeScreen() { return window.navigator.standalone === true; }
+
+  function codeText(code) { return STRONG_CODE.test(code) ? showCode(code) : code; }
+
+  // The old iPhone icon keeps showing the family's code, so a person who did
+  // not expect the move can always come back to it while setting up the new
+  // icon, which starts empty.
+  function showMoving(url, failed, code) {
+    S.moving = false;
+    openDialog("Dinner Decisions has moved",
+      '<h2 class="dialog-title">Dinner Decisions has moved</h2>' +
+      '<div class="menu-note">It now lives at <strong>dinnerdecisions.app</strong>. Your family, your name and your picks come with you.</div>' +
+      (failed
+        ? '<div class="menu-note">This phone needs a connection to move. Try again when you&rsquo;re back online.</div>' +
+          '<div class="menu-stack"><button class="btn btn-primary" id="moveRetry" type="button">Try again</button></div>'
+        : !url
+          ? '<div class="menu-note" id="moveStatus">Getting ready&hellip;</div>'
+          : iosHomeScreen()
+            ? '<div class="menu-note">Tap below to open it in Safari. Then tap Share, then <strong>Add to Home Screen</strong>, and delete this old icon.</div>' +
+              '<div class="menu-stack"><a class="btn btn-primary" id="moveGo" href="' + esc(url) + '" target="_blank" rel="noopener">Open dinnerdecisions.app</a></div>' +
+              (code
+                ? '<div class="menu-note">The new icon asks for your family&rsquo;s code once. Tap <strong>I have a code</strong> and enter:</div>' +
+                  '<div class="code-show" id="oldIconCode">' + esc(codeText(code)) + "</div>"
+                : "")
+            : '<div class="menu-note" id="moveStatus">Taking you there&hellip;</div>' +
+              '<div class="menu-stack"><a class="btn btn-primary" id="moveGo" href="' + esc(url) + '">Open dinnerdecisions.app</a></div>'));
+    S.moving = true;
+    status(failed ? "Offline" : "Moving");
+  }
+
+  // On the new address: join the family the old address sent, as the same
+  // person, and retire the old address's place in the family. Only a phone
+  // that is in no family yet is ever moved, so a crafted link cannot pull a
+  // phone out of the family it is in.
+  function performMove(m) {
+    var hid = String(m.h || ""), code = String(m.c || ""), pid = String(m.p || ""), oldUid = String(m.u || "");
+    if (S.hid || !/^[A-Za-z0-9]{1,40}$/.test(hid) || !/^[A-Za-z0-9-]{1,40}$/.test(code)) return;
+    var house = S.db.collection("households").doc(hid);
+    var mine = house.collection("members").doc(S.uid);
+    withTimeout(mine.set({ code: code, joinedAt: nowIso() })).then(function () {
+      return serverGet(house);
+    }).then(function (snap) {
+      if (/^[A-Za-z0-9]{1,128}$/.test(oldUid) && oldUid !== S.uid) {
+        house.collection("members").doc(oldUid).delete().catch(function () {});
+      }
+      if (m.a) { S.admin = true; LS.set("manager", "1"); }
+      enterHousehold(hid, str((snap.data() || {}).name, "your family"));
+      if (/^[A-Za-z0-9_-]{1,80}$/.test(pid)) setMe(pid);
+      openMoved(code);
+    }).catch(function (e) {
+      console.warn("move failed", e);
+      // The code changed since, or there is no signal: the ordinary join
+      // form still works.
+      openJoin("");
+      dialogError(e && e.code === "permission-denied"
+        ? "Your family’s code has changed since. Ask for the new one."
+        : failText(e));
+    });
+  }
+
+  function openMoved(code) {
+    var iphone = appleTouch() && !iosHomeScreen();
+    openDialog("Welcome to the new address",
+      '<h2 class="dialog-title">You&rsquo;re all moved</h2>' +
+      '<div class="menu-note">Dinner Decisions now lives at <strong>dinnerdecisions.app</strong>, and this phone is still in your family.</div>' +
+      (iphone
+        ? '<div class="menu-note">To keep it on your Home Screen: tap Share, then <strong>Add to Home Screen</strong>, then delete the old icon. ' +
+          'The first time you open the new icon, tap <strong>I have a code</strong> and paste or type your family&rsquo;s code:</div>' +
+          '<div class="code-show" id="movedCode">' + esc(codeText(code)) + "</div>" +
+          '<div class="menu-stack"><button class="btn btn-primary" id="movedCopy" type="button">Copy code</button></div>'
+        : '<div class="menu-note">If you had it on your home screen, add this one and delete the old icon.</div>') +
+      cancelRow("Done"));
+    S.movedCode = codeText(code);
+  }
+
+  function copyMovedCode() {
+    if (!S.movedCode) return;
+    copyText(S.movedCode).then(
+      function () { flash("movedCopy", "Copied"); },
+      function () { flash("movedCopy", "Couldn’t copy"); });
   }
 
   /* ---------------- leaving and deleting ---------------- */
@@ -3123,13 +3284,13 @@
     var code = "";
 
     var reads = ["meals", "suggestions", "people", "votes", "weeks", "members"].map(function (c) {
-      return withTimeout(root.collection(c).get({ source: "server" })).then(function (snap) {
+      return serverGet(root.collection(c)).then(function (snap) {
         snap.docs.forEach(function (d) {
           if (!(c === "members" && d.id === uid)) refs.push(d.ref);
         });
       });
     });
-    reads.push(withTimeout(root.collection("private").doc("join").get({ source: "server" })).then(function (s) {
+    reads.push(serverGet(root.collection("private").doc("join")).then(function (s) {
       code = s.exists ? String((s.data() || {}).code || "") : "";
     }));
 
@@ -3264,6 +3425,8 @@
   }
 
   function closeSheet() {
+    // On the old address the moving notice is all there is to see.
+    if (S.moving) return;
     S.sheetOpen = false;
     S.sheet = null;
     $("sheetHost").innerHTML = "";
@@ -3322,12 +3485,14 @@
     // Clicks can land on a child span, so resolve the owning control.
     var hit = ev.target.closest
       ? ev.target.closest("#whoBtn,#showAddName,#sheetBackdrop,#personAdd,#clearBtn,#refreshBtn,#updateBtn,#managerBtn,#managePinGo,#stopManagingBtn,#addBtn,#manageAddBtn,#tab-pick,#tab-shop,#tab-manage," +
-          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#dlgClose,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn,#sharePlan,#shareBuy,#printBuy")
+          "#welcomeStart,#welcomeJoin,#startGo,#joinGo,#dlgCancel,#dlgClose,#inviteBtn,#shareInvite,#copyCode,#manageInvite,#manageNewCode,#newCodeGo,#leaveFamily,#leaveGo,#deleteFamily,#deleteGo,#starterBtn,#sharePlan,#shareBuy,#printBuy,#moveRetry,#movedCopy")
       : null;
     var id = hit ? hit.id : ev.target.id;
 
     if (id === "whoBtn") return openSheet();
     if (id === "sheetBackdrop" || id === "dlgCancel" || id === "dlgClose") return closeSheet();
+    if (id === "moveRetry") return handOff();
+    if (id === "movedCopy") return copyMovedCode();
     if (id === "showAddName") return openSheet(true);
     if (id === "personAdd") return submitPerson($("personInput").value);
 
@@ -3566,12 +3731,29 @@
   // Local testing only. On localhost with ?emu=1 the page talks to the
   // Firebase emulators instead of the live project, so tests never create or
   // touch a real family. The live site can never take this path: its host is
-  // github.io.
+  // dinnerdecisions.app.
   var EMULATED = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) &&
     /(?:^|[?&])emu=1(?:&|$)/.test(location.search);
 
   if (EMULATED) {
     FIREBASE_CONFIG = { apiKey: "AIza-emulator", projectId: "demo-dinner-decisions", authDomain: "127.0.0.1" };
+  }
+
+  // The app lives at dinnerdecisions.app. The old GitHub Pages address only
+  // hands each phone over (handOff). In tests the old address is localhost
+  // with &oldhost=1 and the new one is 127.0.0.1, both on the emulators.
+  var OLD_HOST = EMULATED
+    ? /(?:^|[?&])oldhost=1(?:&|$)/.test(location.search)
+    : /(^|\.)github\.io$/.test(location.hostname);
+  var HOME = EMULATED
+    ? "http://127.0.0.1:" + location.port + "/index.html?emu=1"
+    : "https://dinnerdecisions.app/";
+
+  // A move arrives after the #, like an invite link, and is cleared at once.
+  var MOVE = null;
+  if (/^#move=/.test(location.hash)) {
+    try { MOVE = JSON.parse(decodeURIComponent(location.hash.slice(6))); } catch (e) {}
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
   }
 
   function offline(why) {
@@ -3604,11 +3786,14 @@
         S.db = store;
         S.uid = user.uid;
 
+        if (OLD_HOST) { S.ready = true; render(); handOff(); return; }
+
         // A phone that has not joined a household has nothing to subscribe
         // to. It sits on the welcome card until it starts or joins one.
         if (!S.hid) { S.ready = true; status("Not joined"); render(); }
         else connect(store);
         releaseWaiters();
+        if (MOVE && typeof MOVE === "object") performMove(MOVE);
       });
 
       firebase.auth().signInAnonymously().catch(function (e) { offline(e); });

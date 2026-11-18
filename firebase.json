@@ -2,6 +2,20 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "hosting": {
+    "public": "dist",
+    "predeploy": ["node scripts/build-site.mjs"],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        ]
+      }
+    ]
+  },
   "emulators": {
     "auth": { "host": "127.0.0.1", "port": 9199 },
     "firestore": { "host": "127.0.0.1", "port": 8181 },

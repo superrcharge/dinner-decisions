@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="What Dinner Decisions stores, what it does not, and how to delete it.">
+<title>Privacy Policy - Dinner Decisions</title>
+<meta name="theme-color" content="#176B4B">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+  /* Shared by privacy.html, terms.html, delete.html and accessibility.html.
+     Colours and fonts are the app's own tokens from index.html; keep the four
+     copies identical when changing one. */
+  html { color-scheme: light dark; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --ground: #F3F5F0;
+    --surface: #FFFFFF;
+    --surface-sunk: #EAEEE5;
+    --ink: #17201A;
+    --ink-muted: #5C6B5E;
+    --line: #DCE2D6;
+    --line-strong: #C3CCBC;
+    --accent: #176B4B;
+    --accent-hover: #12583D;
+    --accent-ink: #FFFFFF;
+    --warm: #B76D14;
+    --warm-wash: #F7EBD9;
+    --shadow: 0 1px 2px rgba(23, 32, 26, .06), 0 6px 16px -10px rgba(23, 32, 26, .18);
+
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    --r-tile: 14px;
+    --r-pill: 999px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12160F;
+      --surface: #1B2118;
+      --surface-sunk: #232A1F;
+      --ink: #E9EEE4;
+      --ink-muted: #9DAA97;
+      --line: #2D3628;
+      --line-strong: #3E4938;
+      --accent: #57C28E;
+      --accent-hover: #6ED2A0;
+      --accent-ink: #0D1710;
+      --warm: #E0A44E;
+      --warm-wash: #2C2618;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12160F;
+    --surface: #1B2118;
+    --surface-sunk: #232A1F;
+    --ink: #E9EEE4;
+    --ink-muted: #9DAA97;
+    --line: #2D3628;
+    --line-strong: #3E4938;
+    --accent: #57C28E;
+    --accent-hover: #6ED2A0;
+    --accent-ink: #0D1710;
+    --warm: #E0A44E;
+    --warm-wash: #2C2618;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    overflow-wrap: break-word;
+  }
+
+  .skip {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 10px 16px;
+    border-radius: var(--r-pill);
+    font-weight: 600;
+    text-decoration: none;
+    z-index: 2;
+  }
+  .skip:focus { top: 12px; }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px 56px;
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .back:hover { border-color: var(--accent); }
+
+  .docnav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+  .docnav li { margin: 0; }
+  .docnav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: var(--r-pill);
+    background: var(--surface-sunk);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .docnav a:hover { background: var(--line); }
+  .docnav a[aria-current="page"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 28px 0 6px;
+    text-wrap: balance;
+  }
+
+  .meta {
+    color: var(--ink-muted);
+    font-size: 14px;
+    margin: 0 0 20px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 23px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 36px 0 8px;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 22px 0 6px;
+  }
+
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 24px; }
+  li { margin: 0 0 6px; }
+  strong { font-weight: 700; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:hover { color: var(--accent-hover); }
+  a:focus-visible, .back:focus-visible, .docnav a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-tile);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    margin: 0 0 16px;
+  }
+  .card > :last-child { margin-bottom: 0; }
+  .card h2:first-child, .card h3:first-child { margin-top: 0; }
+
+  .data { margin: 0 0 12px; padding: 0; }
+  .data > div {
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .data > div:first-child { border-top: 0; padding-top: 0; }
+  .data > div:last-child { padding-bottom: 0; }
+  .data dt { font-weight: 700; }
+  .data dd { margin: 2px 0 0; color: var(--ink); }
+
+  .muted { color: var(--ink-muted); }
+
+  .steps { padding-left: 26px; }
+  .steps li { padding-left: 2px; }
+
+  .ui {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .placeholder {
+    background: var(--warm-wash);
+    border: 1px solid var(--warm);
+    border-radius: 6px;
+    padding: 0 5px;
+    font-weight: 600;
+  }
+
+  .plain {
+    font-weight: 600;
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+  footer p { margin: 0 0 6px; }
+  footer a { white-space: nowrap; }
+
+  h2[id], h3[id] { scroll-margin-top: 16px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <a class="wordmark" href="/">Dinner Decisions</a>
+      <a class="back" href="/">Open the app</a>
+    </div>
+    <nav class="docnav" aria-label="Policies">
+      <ul>
+        <li><a href="privacy.html" aria-current="page">Privacy</a></li>
+        <li><a href="terms.html">Terms</a></li>
+        <li><a href="delete.html">Delete your data</a></li>
+        <li><a href="accessibility.html">Accessibility</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <h1>Privacy Policy</h1>
+    <!-- TODO before publishing: replace the placeholder with the date this
+         version goes live, and update it on every material change. -->
+    <p class="meta">Effective date: November 17, 2026</p>
+
+    <section class="card" aria-labelledby="short">
+      <h2 id="short">The short version</h2>
+      <ul>
+        <li>We store only what your family types into the app, plus a random, anonymous id for each phone.</li>
+        <li>There are no accounts, and we never ask for an email address, phone number or password.</li>
+        <li>There are no ads, no analytics and no tracking, and we never ask for your location.</li>
+        <li>We do not sell or share your family's information.</li>
+        <li>You can delete it yourself at any time, from inside the app.</li>
+      </ul>
+    </section>
+
+    <h2 id="who">Who we are</h2>
+    <p>Dinner Decisions is a meal-voting and shopping-list app for households.</p>
+    <p>It is run by Dinner Decisions (Dinner Decisions LLC, North Carolina), called "we" or "us" in this policy.</p>
+    <p>This policy covers the Dinner Decisions web app at dinnerdecisions.app and these pages.</p>
+    <p>Questions go to <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a>.</p>
+
+    <h2 id="store">What we store</h2>
+    <p>Everything below belongs to a family.
+    It is typed in by the people in that family, stored in Google Firebase, and shown only to phones that have joined that family.</p>
+    <dl class="data">
+      <div>
+        <dt>Family name</dt>
+        <dd>The name typed in by whoever starts the family, such as "The Garcias".</dd>
+      </div>
+      <div>
+        <dt>First names</dt>
+        <dd>The names on the family's list of who is picking.
+        We ask for first names only, and a nickname works just as well.</dd>
+      </div>
+      <div>
+        <dt>Meals, suggestions and ingredients</dt>
+        <dd>The family's meal list, any icon chosen for a meal, the ingredients listed for a meal, and meals typed in as suggestions, with the first name of whoever suggested them.</dd>
+      </div>
+      <div>
+        <dt>Weekly votes and plan</dt>
+        <dd>Which meals each name picked in a given week, and which meals were added to that week's plan.</dd>
+      </div>
+      <div>
+        <dt>Invite code</dt>
+        <dd>The code that lets a new phone join the family, and a note of the code each phone used when it joined.</dd>
+      </div>
+      <div>
+        <dt>Anonymous device id</dt>
+        <dd>When the app first opens in a browser, Firebase Authentication gives that browser a random id.
+        It is not a login and it is not tied to your name, phone number, or any other account.
+        It is used only so the app can tell that a phone belongs to a family, and to record which phone started the family.</dd>
+      </div>
+      <div>
+        <dt>Dates and times</dt>
+        <dd>When a family, meal or vote was created or changed, and when a phone joined.</dd>
+      </div>
+    </dl>
+    <p>Please do not type anything sensitive into the app, such as health details, addresses or account numbers.
+    Meal names, ingredients and suggestions are visible to everyone in your family.</p>
+
+    <!-- PAID TIER: add "What we store for paid plans" here.
+         Likely: an email address for receipts and sign-in to the paid plan,
+         subscription status, and the payment record held by Stripe (Stripe
+         Managed Payments acts as merchant of record and collects card details
+         itself; we never see full card numbers). Say which of these are
+         optional and which are required to pay. -->
+
+    <h3>Kept only on your phone</h3>
+    <p>The browser on each phone also remembers a few things in its own storage, so the app opens quickly and knows who you are: which family the phone joined, who is picking on it, whether the Manage tab is unlocked there, and a copy of the family's lists.
+    Firebase keeps the phone's anonymous sign-in in the same place.
+    This stays on the phone.
+    Leaving the family, or clearing the website's data in your browser settings, removes it.</p>
+
+    <h2 id="not">What we do not collect</h2>
+    <ul>
+      <li>No accounts, email addresses, phone numbers or passwords.</li>
+      <li>No advertising, and no advertising or analytics tools of any kind.</li>
+      <li>No location, contacts, photos, camera or microphone.</li>
+      <li>No payment details. The app is free.</li>
+      <li>No cookies used for tracking or advertising.</li>
+    </ul>
+    <p>The app's share and print buttons hand your plan or shopping list to your phone's own share sheet or printer.
+    What happens after that is between you and the app or printer you choose, and we do not see it.</p>
+
+    <h3>Technical information</h3>
+    <!-- VERIFIED 2026-11-17: Hosting is live and the project has no Hosting
+         request log (webrequests) in Cloud Logging, only the admin activity
+         audit log, which records console and deploy actions, not visitors.
+         If the Cloud Logging integration is ever switched on under Project
+         settings, Integrations, say how long those logs are kept instead of
+         "we do not keep our own logs". -->
+    <p>Like every website, your browser sends some technical information each time it loads a page or talks to a server, such as your IP address and the type of browser and device.
+    Google receives this as part of delivering the app, its fonts and its data, as described below.
+    We do not keep our own logs of it, and we do not use it to identify you or to build a profile of you.</p>
+
+    <h2 id="use">How we use it</h2>
+    <p>We use what is stored only to run Dinner Decisions:</p>
+    <ul>
+      <li>to show your family's meals, votes, plan and shopping list to the phones in your family, and keep them in step with each other;</li>
+      <li>to keep everyone outside your family out;</li>
+      <li>to keep the service working and secure, and to fix problems;</li>
+      <li>to answer you when you email us.</li>
+    </ul>
+    <p>We do not use it for advertising, we do not build profiles, and we do not use it to make decisions about you.</p>
+
+    <h2 id="share">Who it goes to</h2>
+    <p>We do not sell your information, and we do not share it with anyone for advertising.</p>
+    <p>We use one company to run the app, as a service provider that handles data on our behalf and under our instructions:</p>
+    <dl class="data">
+      <div>
+        <dt>Google (Firebase and Google Fonts)</dt>
+        <dd><strong>Cloud Firestore</strong> stores the family data listed above.
+        <strong>Firebase Authentication</strong> creates and checks the anonymous device id.
+        <strong>Firebase Hosting</strong> delivers the app's pages to your browser.
+        Google also delivers the fonts the app uses.
+        Google's own handling of this data is described in the <a href="https://firebase.google.com/support/privacy">Firebase privacy and security page</a>.</dd>
+      </div>
+    </dl>
+    <!-- PAID TIER: add the payment processor (Stripe, as merchant of record
+         under Stripe Managed Payments) and the grocery partners here. Sending
+         a shopping list to Instacart or Walmart happens only when the user
+         taps that button; say exactly what is sent (the list items, nothing
+         about the family or its members), that the partner's own privacy
+         policy then applies, and that we may earn a commission. -->
+    <p>We may also disclose information if the law requires it, such as a valid court order; if it is needed to protect someone's safety; or to a company that takes over Dinner Decisions, which would have to keep the promises in this policy.</p>
+    <p>No other company is allowed to collect information about your activity on Dinner Decisions to follow you across other websites or apps.</p>
+
+    <h2 id="family">Who can see your family's information</h2>
+    <p>Everyone in your family can see and change your family's information.
+    That means every phone that has joined using your invite code.
+    Every phone in a family has the same access: any of them can change meals and names, remove a name, change the invite code, or delete the family.</p>
+    <p>Other families cannot see your information, and neither can anyone who simply visits the website.</p>
+    <!-- LAWYER: check this paragraph against what is practical. Operator
+         access exists because the operator owns the Firebase project. -->
+    <p>As the people who run the service, we can technically reach the database.
+    We look at a family's data only when we need to fix a problem, when you ask us to help, or when the law requires it.</p>
+
+    <h2 id="children">Children</h2>
+    <p>Dinner Decisions is made for adults running a household.
+    Members of a household, including children, may tap their own votes, on a parent's phone or on their own.
+    A family's list of who is picking may include a child's first name, and children may suggest meals.</p>
+    <p>The app asks for first names only and does nothing else with a child's information.
+    It has no ads, no tracking and no way to contact anyone.
+    We do not knowingly collect personal information from children under 13.</p>
+    <p>A parent or guardian can remove a child's name at any time in the Manage tab, or delete the whole family and everything in it.
+    <a href="delete.html">Delete your data</a> explains how.
+    If you think we hold information about your child that you cannot remove yourself, email <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a> and we will delete it.</p>
+
+    <h2 id="retention">How long we keep it</h2>
+    <ul>
+      <li><strong>Family data</strong> is kept while the family exists.
+      Anyone in the family can change or remove a meal, ingredient or name at any time, and can clear the week's votes.</li>
+      <li><strong>When a family is deleted</strong> from the Manage tab, its meals, ingredients, names, votes, plans, invite code and list of phones are deleted straight away, for everyone.</li>
+      <li><strong>When a phone leaves</strong> a family, that phone is taken off the family's list of phones and the copy kept on the phone is cleared.
+      The family's own data stays, because the rest of the family still uses it.</li>
+      <li><strong>The anonymous device id</strong> is no longer connected to any family once its phone has left or its family has been deleted.
+      It can remain in Firebase Authentication as a bare id, with nothing else attached, until it is removed.
+      When an id is deleted, Google removes it from its systems within 180 days.</li>
+      <li><strong>Emails</strong> you send us are kept only as long as we need them to help you.</li>
+    </ul>
+    <!-- LAWYER/OPS: today nothing removes an anonymous device id after its
+         phone leaves. Either add a periodic cleanup of ids that belong to no
+         family, or keep the wording above.
+         VERIFIED 2026-11-17: Firestore point-in-time recovery is off, there are
+         no backup schedules and no backups. Firestore's default version
+         retention is 1 hour, which is the "short time" below. If PITR or
+         backups are ever turned on, say how long deleted data lingers. -->
+    <p>We do not keep separate backups of family data.
+    Google may hold deleted data for a short time while its own systems finish deleting it.</p>
+
+    <h2 id="choices">Your choices</h2>
+    <ul>
+      <li><strong>See and correct:</strong> everything your family has stored is on screen in the app, and anyone in the family can change it there.</li>
+      <li><strong>Delete:</strong> leave the family on one phone, remove a name, or delete the whole family. <a href="delete.html">Delete your data</a> has the steps.</li>
+      <li><strong>Ask us:</strong> if you cannot do something yourself, or have lost access to your family, email <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a>.
+      Because there are no accounts, we may ask for the family's name and its invite code, or something else only a member would know, so we can be sure the request comes from that family.
+      We will answer within 45 days.</li>
+    </ul>
+    <p>We honor these requests wherever in the United States you live, whether or not your state's law requires it.</p>
+
+    <h2 id="security">Security</h2>
+    <ul>
+      <li>The app is served only over an encrypted connection (HTTPS).</li>
+      <li>Firebase security rules let a phone read or change a family's data only after it has joined that family with the invite code.
+      Families cannot be listed or searched for.</li>
+      <li>Invite codes are 10 random characters, too many to guess.
+      Anyone in the family can replace the code at any time, and the old one stops working at once.</li>
+      <li>The Manage code keeps the Manage tab off children's phones.
+      It is a convenience, not a password, and it is not a security measure.</li>
+    </ul>
+    <p>Treat your invite code like a house key: anyone who has it can join your family.
+    No system is perfectly secure, and we cannot promise that information will never be accessed without permission.</p>
+    <!-- LAWYER: North Carolina breach-notice law (N.C.G.S. 75-65) is built
+         around names combined with identifiers such as account or ID numbers,
+         which the app does not hold. Confirm whether a commitment is needed
+         and how notice would reach users who have no email on file (likely a
+         notice inside the app and on this page). -->
+    <p>If we learn that a family's information has been accessed without permission, we will say so in the app and on this page, and give any other notice the law requires.</p>
+
+    <h2 id="dnt">Do Not Track</h2>
+    <p>We do not track you across other sites and do not respond differently to Do Not Track signals.</p>
+
+    <h2 id="us">United States only</h2>
+    <p>Dinner Decisions is offered to people in the United States, and family data is stored in the United States.
+    It is not intended for use anywhere else.</p>
+    <!-- VERIFIED 2026-11-17: the Firestore database location is nam5, the
+         United States multi-region. -->
+
+    <h2 id="states">Notices for particular states</h2>
+    <p><strong>California and Delaware.</strong>
+    This policy describes the kinds of personal information we collect, who it goes to, how you can review and change it, and how we tell you about changes, as California's Online Privacy Protection Act and Delaware's Online Privacy and Protection Act require.
+    The sections above on <a href="#store">what we store</a>, <a href="#share">who it goes to</a>, <a href="#choices">your choices</a> and <a href="#changes">changes</a> cover each one.</p>
+    <p><strong>Nevada.</strong>
+    We do not sell personal information, as Nevada law defines a sale.
+    Nevada residents may still send a request not to sell to <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a>, and we will confirm it.</p>
+    <!-- PAID TIER: revisit this section once payments and affiliate links
+         exist. Check whether any state comprehensive privacy law (for example
+         California's CCPA/CPRA thresholds) starts to apply, and whether
+         affiliate tracking with grocery partners counts as "sharing". -->
+
+    <h2 id="changes">Changes to this policy</h2>
+    <p>If we change this policy, we will post the new version on this page and change the effective date at the top.</p>
+    <p>If a change makes a real difference to what we collect or who it goes to, we will also show a notice in the app before the change takes effect.
+    We will not start using information already collected in a materially different way without asking first.</p>
+    <!-- LAWYER/PRODUCT: the in-app notice promised above does not exist yet.
+         Build it before the first material change, or soften the promise. -->
+
+    <h2 id="contact">Contact</h2>
+    <p>Dinner Decisions (Dinner Decisions LLC, North Carolina)<br>
+    <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a></p>
+  </main>
+
+  <footer>
+    <p><a href="/">Open Dinner Decisions</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="delete.html">Delete your data</a> · <a href="accessibility.html">Accessibility</a></p>
+    <p>Dinner Decisions (Dinner Decisions LLC, North Carolina) · <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a></p>
+  </footer>
+</div>
+</body>
+</html>

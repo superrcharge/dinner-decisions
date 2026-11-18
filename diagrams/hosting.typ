@@ -51,29 +51,26 @@
   spacing: (tokens.space-between-shapes * 2.4, tokens.space-between-ranks),
 
   stage((0, 0), "\u{F109}", "This machine", "authoring",
-    "Edit index.html. One static file, no build step.",
+    "Edit index.html. One static file, no build step; tests run in CI on every push.",
     palette.purple, <dev>),
 
-  stage((1, 0), "\u{F09B}", "GitHub repo", "source of truth",
-    "superrcharge/dinner-decisions, public. Public is what makes Pages free.",
-    palette.blue, <repo>),
-
-  stage((2, 0), "\u{F0AD}", "Pages build", "ci",
-    "Copies the repo to the Pages origin. Nothing is compiled.",
+  stage((1, 0), "\u{F0AD}", "site-deploy", "copy",
+    "Copies only the served files - the app, the legal pages, icons - into dist/. "
+    + "Nothing is compiled.",
     palette.yellow, <build>),
 
-  stage((3, 0), "\u{F0C2}", "Fastly edge", "cdn",
-    "Serves the file worldwide. Cache-Control: max-age=600.",
+  stage((2, 0), "\u{F0C2}", "Firebase Hosting", "cdn",
+    "Serves dinnerdecisions.app worldwide. Cache-Control: no-cache, so a reload "
+    + "always gets the newest release.",
     palette.orange, <edge>),
 
-  stage((4, 0), "\u{F10B}", "Family phone", "browser",
+  stage((3, 0), "\u{F10B}", "Family phone", "browser",
     "Any phone, any browser. No account and no app install - start a family, "
     + "or join one with its invite code, once.",
     palette.green, <phone>),
 
-  flow(<dev>, <repo>, "git push"),
-  flow(<repo>, <build>, "triggers"),
-  flow(<build>, <edge>, "publishes"),
+  flow(<dev>, <build>, "deploy"),
+  flow(<build>, <edge>, "releases"),
   flow(<edge>, <phone>, "GET /"),
 )
 
@@ -81,8 +78,8 @@
 
 #align(center, block(width: 560pt, text(
   size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
-  "A push reaches every phone within about ten minutes: the Pages build takes " +
-  "seconds, then the edge cache holds the previous copy until max-age expires. " +
+  "A release reaches every phone within minutes: the edge revalidates every " +
+  "request, so there is no stale copy to wait out. " +
   "Nobody has to watch for it - the app asks the edge periodically whether a " +
   "newer build is available and offers a reload once one actually is, which " +
   "matters because a phone running it from the home screen has no address bar " +

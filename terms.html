@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The terms for using Dinner Decisions.">
+<title>Terms of Use - Dinner Decisions</title>
+<meta name="theme-color" content="#176B4B">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+  /* Shared by privacy.html, terms.html, delete.html and accessibility.html.
+     Colours and fonts are the app's own tokens from index.html; keep the four
+     copies identical when changing one. */
+  html { color-scheme: light dark; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --ground: #F3F5F0;
+    --surface: #FFFFFF;
+    --surface-sunk: #EAEEE5;
+    --ink: #17201A;
+    --ink-muted: #5C6B5E;
+    --line: #DCE2D6;
+    --line-strong: #C3CCBC;
+    --accent: #176B4B;
+    --accent-hover: #12583D;
+    --accent-ink: #FFFFFF;
+    --warm: #B76D14;
+    --warm-wash: #F7EBD9;
+    --shadow: 0 1px 2px rgba(23, 32, 26, .06), 0 6px 16px -10px rgba(23, 32, 26, .18);
+
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    --r-tile: 14px;
+    --r-pill: 999px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12160F;
+      --surface: #1B2118;
+      --surface-sunk: #232A1F;
+      --ink: #E9EEE4;
+      --ink-muted: #9DAA97;
+      --line: #2D3628;
+      --line-strong: #3E4938;
+      --accent: #57C28E;
+      --accent-hover: #6ED2A0;
+      --accent-ink: #0D1710;
+      --warm: #E0A44E;
+      --warm-wash: #2C2618;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12160F;
+    --surface: #1B2118;
+    --surface-sunk: #232A1F;
+    --ink: #E9EEE4;
+    --ink-muted: #9DAA97;
+    --line: #2D3628;
+    --line-strong: #3E4938;
+    --accent: #57C28E;
+    --accent-hover: #6ED2A0;
+    --accent-ink: #0D1710;
+    --warm: #E0A44E;
+    --warm-wash: #2C2618;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    overflow-wrap: break-word;
+  }
+
+  .skip {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 10px 16px;
+    border-radius: var(--r-pill);
+    font-weight: 600;
+    text-decoration: none;
+    z-index: 2;
+  }
+  .skip:focus { top: 12px; }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px 56px;
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .back:hover { border-color: var(--accent); }
+
+  .docnav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+  .docnav li { margin: 0; }
+  .docnav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: var(--r-pill);
+    background: var(--surface-sunk);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .docnav a:hover { background: var(--line); }
+  .docnav a[aria-current="page"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 28px 0 6px;
+    text-wrap: balance;
+  }
+
+  .meta {
+    color: var(--ink-muted);
+    font-size: 14px;
+    margin: 0 0 20px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 23px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 36px 0 8px;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 22px 0 6px;
+  }
+
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 24px; }
+  li { margin: 0 0 6px; }
+  strong { font-weight: 700; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:hover { color: var(--accent-hover); }
+  a:focus-visible, .back:focus-visible, .docnav a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-tile);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    margin: 0 0 16px;
+  }
+  .card > :last-child { margin-bottom: 0; }
+  .card h2:first-child, .card h3:first-child { margin-top: 0; }
+
+  .data { margin: 0 0 12px; padding: 0; }
+  .data > div {
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .data > div:first-child { border-top: 0; padding-top: 0; }
+  .data > div:last-child { padding-bottom: 0; }
+  .data dt { font-weight: 700; }
+  .data dd { margin: 2px 0 0; color: var(--ink); }
+
+  .muted { color: var(--ink-muted); }
+
+  .steps { padding-left: 26px; }
+  .steps li { padding-left: 2px; }
+
+  .ui {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .placeholder {
+    background: var(--warm-wash);
+    border: 1px solid var(--warm);
+    border-radius: 6px;
+    padding: 0 5px;
+    font-weight: 600;
+  }
+
+  .plain {
+    font-weight: 600;
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+  footer p { margin: 0 0 6px; }
+  footer a { white-space: nowrap; }
+
+  h2[id], h3[id] { scroll-margin-top: 16px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <a class="wordmark" href="/">Dinner Decisions</a>
+      <a class="back" href="/">Open the app</a>
+    </div>
+    <nav class="docnav" aria-label="Policies">
+      <ul>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="terms.html" aria-current="page">Terms</a></li>
+        <li><a href="delete.html">Delete your data</a></li>
+        <li><a href="accessibility.html">Accessibility</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <h1>Terms of Use</h1>
+    <!-- TODO before publishing: replace the placeholder with the date this
+         version goes live, and update it on every material change. -->
+    <p class="meta">Effective date: November 17, 2026</p>
+
+    <section class="card" aria-labelledby="short">
+      <h2 id="short">The short version</h2>
+      <ul>
+        <li>Dinner Decisions is a free tool for adults running a household in the United States.</li>
+        <li>What your family types in is yours. Keep it decent and keep your invite code to your family.</li>
+        <li>The app is not dietary or medical advice. Always check food labels for allergies.</li>
+        <li>The app is provided as it is, and we may change or stop it.</li>
+        <li>North Carolina law applies, there is no arbitration, and small claims court is always open to you.</li>
+      </ul>
+      <p class="muted">The short version is a summary. The full terms below are what count.</p>
+    </section>
+
+    <h2 id="agreement">1. These terms</h2>
+    <p>These terms are an agreement between you and Dinner Decisions (Dinner Decisions LLC, North Carolina), called "we" or "us".
+    They cover the Dinner Decisions app at dinnerdecisions.app and these pages, called "the service".</p>
+    <p>By starting a family, joining one, or otherwise using the service, you agree to these terms.
+    If you do not agree, please do not use the service.</p>
+    <p>Our <a href="privacy.html">Privacy Policy</a> explains what we store and why, and is part of these terms.</p>
+
+    <h2 id="who">2. Who can use it</h2>
+    <p>The service is for adults, 18 or older, who manage a household, and it is offered only in the United States.</p>
+    <p>An adult who starts or joins a family may let other members of their household use it, including children, on the adult's phone or on their own.
+    That adult is responsible for how those household members use it, and for making sure only first names are entered for them.</p>
+    <!-- LAWYER: confirm the 18+ line works alongside children tapping votes
+         under a parent's supervision, and whether 18 or "age of majority in
+         your state" is the better test. -->
+
+    <h2 id="family">3. Your family and its invite code</h2>
+    <p>A family is shared.
+    Every phone that joins a family with its invite code can see and change everything in it, remove names and phones, change the code, and delete the family.
+    The Manage code only hides the Manage tab; it does not protect anything.</p>
+    <p>Share your invite code only with people you want in your family.
+    You are responsible for who you give it to.
+    If it reaches someone it should not, replace it in the Manage tab and the old code stops working at once.</p>
+
+    <h2 id="content">4. What your family types in</h2>
+    <p>Family names, first names, meal names, ingredients, icons, suggestions and votes are your family's content, and your family keeps whatever rights it has in them.</p>
+    <p>You let us store, copy and show that content to the phones in your family, only so far as we need to run the service.
+    That permission ends when the content is deleted, apart from the short time it takes Google's systems to finish deleting it.</p>
+    <p>We do not review, check or verify anything a family types in, and we are not responsible for it.
+    Do not type in anything sensitive, such as health details, addresses or account numbers.</p>
+    <!-- PAID TIER: when the shopping list can be sent to a grocery partner,
+         add that sending a list passes those items to the partner at the
+         user's request, and that prices, availability, substitutions and the
+         order itself are between the user and the partner. -->
+
+    <h2 id="use">5. Using it fairly</h2>
+    <p>When you use the service, please do not:</p>
+    <ul>
+      <li>break the law, or use the service to harass, threaten or harm anyone;</li>
+      <li>type in anything hateful, sexually explicit, or that you have no right to share;</li>
+      <li>try to get into a family you were not invited to, or to read data that is not your family's;</li>
+      <li>try to get around the app's security rules, or probe, scan or test them without our written permission;</li>
+      <li>overload the service, for example with automated requests, scripts or bots, or use it to store things other than your household's meals;</li>
+      <li>copy, resell or offer the service as your own.</li>
+    </ul>
+    <p>If someone breaks these rules, we may remove their content, remove a phone from a family, or delete a family that exists only to misuse the service.
+    Where we reasonably can, we will tell the family first.</p>
+    <!-- LAWYER: there is no way to "tell the family" except an in-app
+         notice, since there are no emails. Confirm "where we reasonably can"
+         is enough. -->
+
+    <h2 id="food">6. Food, allergies and health</h2>
+    <p>Dinner Decisions helps a family choose meals and make a shopping list.
+    It is not dietary, nutritional or medical advice, and it does not know anyone's allergies, intolerances or health needs.</p>
+    <p>Meal names and ingredient lists are typed in by families and may be incomplete or wrong.
+    A shopping list built from them may leave something out.
+    Always check food labels and recipes yourself, especially for allergies, and talk to a doctor or dietitian about any health or dietary question.</p>
+
+    <h2 id="free">7. The service is free</h2>
+    <p>Dinner Decisions is free to use today, and there are no ads.</p>
+    <!-- PAID TIER: add a "Paid plans" section here (and renumber), covering:
+         what the paid plan includes; price and billing period shown before
+         purchase; billing through Stripe Managed Payments (Stripe as merchant
+         of record and its terms); automatic renewal, with the clear and
+         conspicuous disclosure and easy online cancellation that automatic
+         renewal laws require (North Carolina N.C.G.S. 75-41, California's
+         Automatic Renewal Law and others); free-trial terms if any; refunds;
+         price changes with advance notice; taxes; and what happens to the
+         family's data if a subscription ends. Add the affiliate commission
+         disclosure for grocery partners (FTC Endorsement Guides). -->
+
+    <h2 id="others">8. Services we rely on</h2>
+    <p>The service runs on Google Firebase, and its share and print buttons use your phone's own share sheet and printer.
+    We are not responsible for services run by others, including the apps you choose to share a list with.</p>
+
+    <h2 id="changes-service">9. Changes to the service, and ending it</h2>
+    <p>We may change the service, add or remove features, or stop offering it, at any time.
+    If we decide to shut it down, we will try to give at least 30 days' notice in the app, so you have time to save your lists.</p>
+    <!-- LAWYER: "try to give" is deliberately soft. Confirm whether to make
+         30 days a firm promise (except for emergencies or legal reasons). -->
+    <p>You can stop using the service at any time.
+    Leave your family on a phone, or delete your family and everything in it, as described on <a href="delete.html">Delete your data</a>.</p>
+
+    <h2 id="disclaimer">10. No promises about the service</h2>
+    <p class="plain">The service is provided "as is" and "as available".
+    To the fullest extent the law allows, we make no warranties of any kind, express or implied, including warranties of merchantability, fitness for a particular purpose, and non-infringement.
+    We do not promise that the service will always be available, free of errors, or that data will never be lost.</p>
+    <p>Some states do not allow some of these disclaimers, so some of them may not apply to you.</p>
+    <!-- LAWYER: warranty disclaimers usually need to be conspicuous. This
+         and the next section are set in heavier type rather than all capitals
+         for readability; confirm that is enough. -->
+
+    <h2 id="liability">11. Limits on our liability</h2>
+    <p class="plain">To the fullest extent the law allows, Dinner Decisions LLC and its owner will not be liable for any indirect, incidental, special, consequential or punitive damages, or for lost data, lost profits or lost goodwill, arising from or related to the service.
+    Our total liability for any claim arising from or related to the service is limited to the greater of the amount you paid us for the service in the 12 months before the claim, or 50 US dollars.</p>
+    <p>Nothing in these terms limits liability that the law does not allow to be limited, such as for fraud, gross negligence or intentional misconduct, or any rights you have as a consumer that cannot be waived.</p>
+    <!-- LAWYER: check the cap figure, and whether naming the owner
+         personally is wise or needed for a single-member LLC. -->
+
+    <h2 id="law">12. Governing law and disputes</h2>
+    <p>These terms are governed by the laws of the State of North Carolina, without regard to its conflict-of-law rules.</p>
+    <p>If you have a problem, please email us first at <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a>, and we will try to put it right.</p>
+    <p>There is no arbitration agreement in these terms.
+    Either of us may bring a claim in small claims court (in North Carolina, magistrate's court) if it qualifies, in the county where you live or another county where the court allows it.
+    Any other claim must be brought in the state or federal courts located in Cumberland County, North Carolina, and you and we agree to those courts' jurisdiction.</p>
+    <!-- LAWYER: pick the county (likely where the LLC's registered office is).
+         Confirm a North Carolina forum clause is fair for consumers in other
+         states, and that the small claims carve-out reads correctly for
+         users outside North Carolina. No class-action waiver is included,
+         since one without arbitration adds little; confirm. -->
+
+    <h2 id="changes">13. Changes to these terms</h2>
+    <p>If we change these terms, we will post the new version on this page and change the effective date at the top.
+    If a change matters, we will also show a notice in the app before it takes effect.
+    If you keep using the service after a change takes effect, the new terms apply.
+    If you do not agree with them, stop using the service and delete your family.</p>
+    <!-- LAWYER/PRODUCT: the in-app notice promised above does not exist yet. -->
+
+    <h2 id="general">14. The rest</h2>
+    <ul>
+      <li>These terms, with the Privacy Policy, are the whole agreement between you and us about the service.</li>
+      <li>If a court finds part of these terms unenforceable, the rest still applies.</li>
+      <li>If we do not enforce a part of these terms straight away, we can still enforce it later.</li>
+      <li>You may not transfer these terms to someone else.
+      We may transfer them to a company that takes over Dinner Decisions, which would be bound by them.</li>
+    </ul>
+
+    <h2 id="contact">15. Contact</h2>
+    <p>Dinner Decisions (Dinner Decisions LLC, North Carolina)<br>
+    <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a></p>
+  </main>
+
+  <footer>
+    <p><a href="/">Open Dinner Decisions</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="delete.html">Delete your data</a> · <a href="accessibility.html">Accessibility</a></p>
+    <p>Dinner Decisions (Dinner Decisions LLC, North Carolina) · <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a></p>
+  </footer>
+</div>
+</body>
+</html>

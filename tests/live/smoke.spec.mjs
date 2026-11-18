@@ -13,7 +13,7 @@ import { phone, startFamily, addMe, tile, noErrors } from "../e2e/helpers.mjs";
 
 // The query string gets past the edge cache, which can hold the previous
 // deploy for up to ten minutes. The invite link keeps it, which is harmless.
-const SITE = (process.env.LIVE_URL || "https://superrcharge.github.io/dinner-decisions/") + "?smoke=" + Date.now();
+const SITE = (process.env.LIVE_URL || "https://dinnerdecisions.app/") + "?smoke=" + Date.now();
 const DB = "https://firestore.googleapis.com/v1/projects/dinner-decisions-6af97/databases/(default)/documents";
 
 function ownerToken() {

@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How to take a phone out of a family, remove a name, or delete a family and all its data in Dinner Decisions.">
+<title>Delete Your Data - Dinner Decisions</title>
+<meta name="theme-color" content="#176B4B">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+  /* Shared by privacy.html, terms.html, delete.html and accessibility.html.
+     Colours and fonts are the app's own tokens from index.html; keep the four
+     copies identical when changing one. */
+  html { color-scheme: light dark; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --ground: #F3F5F0;
+    --surface: #FFFFFF;
+    --surface-sunk: #EAEEE5;
+    --ink: #17201A;
+    --ink-muted: #5C6B5E;
+    --line: #DCE2D6;
+    --line-strong: #C3CCBC;
+    --accent: #176B4B;
+    --accent-hover: #12583D;
+    --accent-ink: #FFFFFF;
+    --warm: #B76D14;
+    --warm-wash: #F7EBD9;
+    --shadow: 0 1px 2px rgba(23, 32, 26, .06), 0 6px 16px -10px rgba(23, 32, 26, .18);
+
+    --display: "Fraunces", Georgia, "Times New Roman", serif;
+    --body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    --r-tile: 14px;
+    --r-pill: 999px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12160F;
+      --surface: #1B2118;
+      --surface-sunk: #232A1F;
+      --ink: #E9EEE4;
+      --ink-muted: #9DAA97;
+      --line: #2D3628;
+      --line-strong: #3E4938;
+      --accent: #57C28E;
+      --accent-hover: #6ED2A0;
+      --accent-ink: #0D1710;
+      --warm: #E0A44E;
+      --warm-wash: #2C2618;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12160F;
+    --surface: #1B2118;
+    --surface-sunk: #232A1F;
+    --ink: #E9EEE4;
+    --ink-muted: #9DAA97;
+    --line: #2D3628;
+    --line-strong: #3E4938;
+    --accent: #57C28E;
+    --accent-hover: #6ED2A0;
+    --accent-ink: #0D1710;
+    --warm: #E0A44E;
+    --warm-wash: #2C2618;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 16px -10px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    overflow-wrap: break-word;
+  }
+
+  .skip {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 10px 16px;
+    border-radius: var(--r-pill);
+    font-weight: 600;
+    text-decoration: none;
+    z-index: 2;
+  }
+  .skip:focus { top: 12px; }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px 56px;
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .back:hover { border-color: var(--accent); }
+
+  .docnav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+  .docnav li { margin: 0; }
+  .docnav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: var(--r-pill);
+    background: var(--surface-sunk);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .docnav a:hover { background: var(--line); }
+  .docnav a[aria-current="page"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 28px 0 6px;
+    text-wrap: balance;
+  }
+
+  .meta {
+    color: var(--ink-muted);
+    font-size: 14px;
+    margin: 0 0 20px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 23px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 36px 0 8px;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 22px 0 6px;
+  }
+
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 24px; }
+  li { margin: 0 0 6px; }
+  strong { font-weight: 700; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:hover { color: var(--accent-hover); }
+  a:focus-visible, .back:focus-visible, .docnav a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-tile);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    margin: 0 0 16px;
+  }
+  .card > :last-child { margin-bottom: 0; }
+  .card h2:first-child, .card h3:first-child { margin-top: 0; }
+
+  .data { margin: 0 0 12px; padding: 0; }
+  .data > div {
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .data > div:first-child { border-top: 0; padding-top: 0; }
+  .data > div:last-child { padding-bottom: 0; }
+  .data dt { font-weight: 700; }
+  .data dd { margin: 2px 0 0; color: var(--ink); }
+
+  .muted { color: var(--ink-muted); }
+
+  .steps { padding-left: 26px; }
+  .steps li { padding-left: 2px; }
+
+  .ui {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .placeholder {
+    background: var(--warm-wash);
+    border: 1px solid var(--warm);
+    border-radius: 6px;
+    padding: 0 5px;
+    font-weight: 600;
+  }
+
+  .plain {
+    font-weight: 600;
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+  footer p { margin: 0 0 6px; }
+  footer a { white-space: nowrap; }
+
+  h2[id], h3[id] { scroll-margin-top: 16px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <a class="wordmark" href="/">Dinner Decisions</a>
+      <a class="back" href="/">Open the app</a>
+    </div>
+    <nav class="docnav" aria-label="Policies">
+      <ul>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="terms.html">Terms</a></li>
+        <li><a href="delete.html" aria-current="page">Delete your data</a></li>
+        <li><a href="accessibility.html">Accessibility</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <h1>Delete your data</h1>
+    <p class="meta">For the Dinner Decisions app at dinnerdecisions.app</p>
+
+    <p>Dinner Decisions has no accounts, so there is nothing to close.
+    Everything your family stores can be deleted from inside the app, by anyone in the family, at any time.</p>
+    <p>Pick the one that fits:</p>
+    <ul>
+      <li><a href="#leave">Take one phone out of a family</a></li>
+      <li><a href="#name">Remove a name from a family</a></li>
+      <li><a href="#family">Delete a whole family and everything in it</a></li>
+      <li><a href="#email">Lost access? Ask us to do it</a></li>
+    </ul>
+
+    <section class="card" aria-labelledby="leave">
+      <h2 id="leave">Take one phone out of a family</h2>
+      <ol class="steps">
+        <li>Open Dinner Decisions on that phone.</li>
+        <li>Tap your name at the top of the screen.
+        If nobody has been chosen yet, it says <span class="ui">Choose…</span></li>
+        <li>Under <span class="ui">Your family</span>, tap <span class="ui">Leave</span>.</li>
+        <li>Tap <span class="ui">Leave on this phone</span>.</li>
+      </ol>
+      <p><strong>What is deleted:</strong> the phone is taken off the family's list of phones, and the copy of the family's lists kept on the phone is cleared.
+      The phone can no longer see or change anything in the family.</p>
+      <p><strong>What stays:</strong> the family's meals, names, votes and plan, because everyone else still uses them.
+      Your name stays on the family's list until it is removed, as described next.
+      Coming back needs the invite code.</p>
+    </section>
+
+    <section class="card" aria-labelledby="name">
+      <h2 id="name">Remove a name from a family</h2>
+      <ol class="steps">
+        <li>Open Dinner Decisions on any phone in the family.</li>
+        <li>Tap <span class="ui">Manage</span> at the bottom of the screen, and enter the Manage code if it asks for one.</li>
+        <li>Under <span class="ui">Who's in the house</span>, tap <span class="ui">Remove</span> next to the name.</li>
+      </ol>
+      <p><strong>What is deleted:</strong> the name, from the family's list of who is picking.</p>
+      <p><strong>What stays:</strong> votes already made under that name stay with the family's weekly history until the family is deleted.
+      To remove those as well, delete the family, or <a href="#email">email us</a> and we will remove them for you.</p>
+      <!-- PRODUCT: removing a name today deletes only the people/<id>
+           document; that name's votes documents (which also carry the name)
+           stay. Consider deleting them with the name, then simplify this. -->
+    </section>
+
+    <section class="card" aria-labelledby="family">
+      <h2 id="family">Delete a whole family and everything in it</h2>
+      <ol class="steps">
+        <li>Open Dinner Decisions on any phone in the family.</li>
+        <li>Tap <span class="ui">Manage</span> at the bottom of the screen, and enter the Manage code if it asks for one.</li>
+        <li>Scroll to the bottom of the Manage tab and tap <span class="ui">Delete this family</span>.</li>
+        <li>Type the family's name exactly as it appears, to confirm.</li>
+        <li>Tap <span class="ui">Delete for everyone</span>.</li>
+      </ol>
+      <p><strong>What is deleted, straight away and for everyone:</strong> the family's name, every meal and ingredient, every suggestion, every name, every vote and weekly plan, the invite code, and the family's list of phones.
+      Every other phone in the family notices within a few seconds and goes back to the welcome screen.</p>
+      <p><strong>This cannot be undone.</strong>
+      We do not keep backups we could restore it from.</p>
+    </section>
+
+    <h2 id="after">What is left afterwards</h2>
+    <ul>
+      <li><strong>On the phone:</strong> nothing of the family.
+      If the app was added to the home screen, you can delete that icon like any other app.
+      To clear the phone's anonymous sign-in as well, clear the website data for dinnerdecisions.app in your browser's settings.</li>
+      <li><strong>The anonymous device id:</strong> a random id that Firebase gave the browser.
+      Once its phone has left, or its family has been deleted, it is connected to nothing and carries no name or other information.
+      When an id is deleted, Google removes it from its systems within 180 days.</li>
+      <li><strong>Google's own systems</strong> may take a short time to finish removing deleted data.</li>
+    </ul>
+    <p>The <a href="privacy.html#retention">Privacy Policy</a> has the full details of what is kept and for how long.</p>
+
+    <h2 id="email">Lost access? Ask us to do it</h2>
+    <p>If you can no longer open your family, for example because a phone was lost, reset or replaced, email <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a> and ask us to delete it.</p>
+    <p>Because there are no accounts, please include enough for us to find the right family and be sure it is yours:</p>
+    <ul>
+      <li>the family's name, as it appeared in the app;</li>
+      <li>the invite code, if you still have it, for example in an old message;</li>
+      <li>some of the first names or meals in the family, and roughly when it was started.</li>
+    </ul>
+    <p>We will delete the family, or just the names or votes you ask about, and reply to confirm, within 30 days.
+    We will only use your email to deal with your request.</p>
+    <!-- LAWYER/OPS: 30 days is shorter than the 45 in the privacy policy on
+         purpose (a deletion is quicker than a general request). Keep or align.
+         Deleting by request means finding the household in the Firebase
+         console as project owner; a short runbook in the README would help. -->
+  </main>
+
+  <footer>
+    <p><a href="/">Open Dinner Decisions</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="delete.html">Delete your data</a> · <a href="accessibility.html">Accessibility</a></p>
+    <p>Dinner Decisions (Dinner Decisions LLC, North Carolina) · <a href="mailto:hello@dinnerdecisions.app">hello@dinnerdecisions.app</a></p>
+  </footer>
+</div>
+</body>
+</html>

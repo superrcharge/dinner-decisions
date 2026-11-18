@@ -181,9 +181,8 @@
     + "batch. Neither households nor invites can be listed, so nobody finds a "
     + "family without being given its code."),
   text(size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
-    "Firestore and Anonymous Authentication are the only Firebase products "
-    + "switched on. GitHub Pages serves the app, so Firebase Hosting and "
-    + "Functions stay off. The free tier allows 1 GiB of storage, 50,000 reads "
+    "Firestore, Anonymous Authentication and Hosting are the only Firebase "
+    + "products switched on; Functions stay off. The free tier allows 1 GiB of storage, 50,000 reads "
     + "and 20,000 writes a day - a household of five voting weekly is nowhere "
     + "near it."),
   text(size: tokens.size-caption, fill: palette.ink-muted, style: "italic",
