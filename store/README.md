@@ -63,6 +63,10 @@ Firebase Authentication's own "Authorized domains" list (Authentication, Setting
 
 ## Known gaps
 
-- **iPhone is untested.** There is no Mac here; the iOS project is generated but has not been built. Firebase's compat SDK has a known history of slow or stuck sign-in inside iOS WebViews; the first GitHub Actions build must check that a new phone reaches "Not joined" and can start a family.
+- **iPhone is untested.** There is no Mac here; the iOS project is generated but has not been built.
+  On the Android emulator, Firebase Auth's compat SDK loads Google's iframe helper from `apis.google.com` at start-up on its own (it does this on every phone, for popup and redirect sign-in, which this app never uses).
+  Android signs in fine with it, but inside an iPhone app (`capacitor://localhost`) that helper is the known cause of slow or stuck sign-in.
+  The first GitHub Actions iPhone build must check that a new phone reaches "Not joined" quickly and can start a family.
+  If it does not, the fix is to load Firebase Auth in the app with `initializeAuth(app, { persistence: indexedDBLocalPersistence })` and no popup/redirect resolver (the modular SDK), which also removes the outside script.
 - **Android Share** copies to the clipboard instead of opening the share sheet, and **Print** does nothing, because Android's WebView has neither. Both need `@capacitor/share` (planned with step 3).
 - Google Play now lists Android 17 (API 37). Capacitor 8 targets API 36, which Play accepts for new apps until its next yearly deadline (normally August).

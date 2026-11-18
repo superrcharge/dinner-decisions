@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The page's own background (the ground colour in index.html), shown behind the
+         status and navigation bars so they blend with the app. -->
+    <color name="page_ground">#F3F5F0</color>
+</resources>

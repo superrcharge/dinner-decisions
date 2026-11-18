@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The ground colour of index.html's dark theme. -->
+    <color name="page_ground">#12160F</color>
+</resources>
