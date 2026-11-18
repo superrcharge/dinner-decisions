@@ -11,6 +11,10 @@ run = "bash diagrams/render.sh"
 description = "Regenerate the home-screen and favicon PNGs"
 run = "bash icons/render-icons.sh"
 
+[tasks.app-icons]
+description = "Regenerate the store apps' icons and splash screens in android/ and ios/"
+run = "bash icons/render-app-assets.sh"
+
 [tasks.clean-diagrams]
 description = "Remove the rendered diagram SVGs"
 run = "find diagrams -type f -name '*.svg' -delete"
