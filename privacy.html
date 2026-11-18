@@ -455,12 +455,16 @@
     <!-- LAWYER/OPS: today nothing removes an anonymous device id after its
          phone leaves. Either add a periodic cleanup of ids that belong to no
          family, or keep the wording above.
-         VERIFIED 2026-11-17: Firestore point-in-time recovery is off, there are
-         no backup schedules and no backups. Firestore's default version
-         retention is 1 hour, which is the "short time" below. If PITR or
-         backups are ever turned on, say how long deleted data lingers. -->
-    <p>We do not keep separate backups of family data.
-    Google may hold deleted data for a short time while its own systems finish deleting it.</p>
+         VERIFIED 2026-11-17: Firestore point-in-time recovery is off. A daily
+         Firestore backup schedule with 7-day retention is on, and
+         admin/backup.mjs keeps a daily copy on Mike's home NAS for 30 days.
+         Firestore's default version retention is 1 hour, which is the "short
+         time" below. If either retention changes, change the 30 days here and
+         in delete.html. -->
+    <p>We keep daily backups of the database so that we can recover from a mistake or a fault: Google's own backups, kept for 7 days, and a copy on a private storage device that only we can reach, kept for 30 days.
+    Both are in the United States.
+    A family that is deleted disappears from the app straight away, and from the backups within 30 days.
+    Google may also hold deleted data for a short time while its own systems finish deleting it.</p>
 
     <h2 id="choices">Your choices</h2>
     <ul>
