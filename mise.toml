@@ -46,3 +46,14 @@ run = "npm run app:build"
 [tasks.app-test]
 description = "Check the store apps' bundle is the website plus only Capacitor and local Firebase"
 run = "npm run test:app"
+
+[tasks.android-debug]
+description = "Build the Android app as a debug APK (build/DinnerDecisions-debug.apk) for a test phone"
+run = "bash scripts/android-debug.sh"
+
+[tasks.android-test]
+description = "Build the emulator test APK and drive it on a running Android emulator, against the Firebase emulators"
+run = [
+  "bash scripts/android-debug.sh --emulators",
+  "npx firebase emulators:exec --only auth,firestore --project demo-dinner-decisions \"playwright test --config playwright.android.config.mjs\"",
+]

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only (src/debug). Lets a test build reach the Firebase
+     emulators on the computer, forwarded to the phone's own 127.0.0.1 with
+     `adb reverse`, over plain http. Release builds never include this file
+     and keep Android's default: encrypted connections only. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

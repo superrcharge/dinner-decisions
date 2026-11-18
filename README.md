@@ -94,6 +94,27 @@ That has one consequence worth knowing: a page running standalone has **no addre
 
 The version check deliberately asks for the same copy a reload would get, rather than going straight to the origin. Querying the origin would let it announce a version that a reload can't actually fetch yet - so it would prompt, you'd reload, nothing would change, and it would prompt again.
 
+## Store apps (Android and iPhone)
+
+The same page also ships as an app for Google Play and the App Store, wrapped with [Capacitor](https://capacitorjs.com/) (`android/`, `ios/`, `capacitor.config.json`, app id `app.dinnerdecisions`).
+Nothing is in either store yet; [store/](store/README.md) has the listing, privacy and rating drafts and what is left before submitting.
+
+- **Bundled, not loaded.** `scripts/build-app.mjs` builds `www/` from exactly what the website serves (`dist/`), with the three Firebase scripts copied in from npm (`firebase-web-compat`, the same version and byte-identical to gstatic) and Capacitor's runtime added. The app opens with no signal, and both stores want an app that is more than the website in a frame.
+- **One page.** `index.html` feature-detects the native layer (`isNativeApp()`); on the website none of it shows. Inside the app, invite links point at dinnerdecisions.app, because the app's own address (`https://localhost` on Android, `capacitor://localhost` on iPhone) means nothing to another phone.
+- **Vote reminders.** Inside the app only, the name menu has *Vote reminders*: one repeating local notification on Sundays at 9 AM, scheduled on the phone, off until turned on. Leaving the family or *Delete My Data* turns it off.
+- **Icon and splash** come from `icons/icon.typ`, the website's own icon (`mise run app-icons`).
+- **The API key.** Firebase's browser key is restricted to the website's addresses, so it refuses the apps' two addresses until they are added in Google Cloud; [store/README.md](store/README.md#the-firebase-api-key-and-the-apps-addresses) has the exact entries.
+
+```bash
+mise run app-sync        # rebuild www/ and copy it into android/ and ios/
+mise run app-test        # check www/ is the website plus only the intended changes
+mise run android-debug   # debug APK at build/DinnerDecisions-debug.apk (needs the Android SDK)
+mise run android-test    # the app on a running Android emulator, against the Firebase emulators
+```
+
+The Android SDK is the command-line tools in `%LOCALAPPDATA%\Android\Sdk` (platform 36, build-tools 36, platform-tools; the emulator and an Android 16 image for `android-test`), with Java 21 from mise.
+iPhone builds need a Mac, so they are planned for GitHub Actions' macOS runners.
+
 ## How a meal gets its icon
 
 Icons aren't stored and aren't looked up - they're worked out in the browser from the meal's name every time a tile renders.

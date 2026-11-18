@@ -68,6 +68,8 @@ test("in the app, invites point at the website and vote reminders switch on and 
   const n = scheduled[0].notifications[0];
   expect(n.id).toBe(7001);
   expect(n.schedule.on).toEqual({ weekday: 1, hour: 9, minute: 0 });
+  // No trip to Android's "Alarms & reminders" settings for a weekly nudge.
+  expect(n.isExactNotification).toBe(false);
   expect(n.body).toContain("Pick the dinners");
 
   // Remembered across a restart.

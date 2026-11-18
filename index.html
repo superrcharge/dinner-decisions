@@ -3487,6 +3487,9 @@
           id: REMINDER.id,
           title: REMINDER.title,
           body: REMINDER.body,
+          // A reminder need not land to the minute. Without this Android
+          // sends the person to the "Alarms & reminders" settings first.
+          isExactNotification: false,
           schedule: { on: REMINDER.on, allowWhileIdle: true }
         }]
       }).then(function () { LS.set("reminders", "1"); return true; });
