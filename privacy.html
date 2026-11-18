@@ -352,6 +352,29 @@
     <p>Please do not type anything sensitive into the app, such as health details, addresses or account numbers.
     Meal names, ingredients and suggestions are visible to everyone in your family.</p>
 
+    <h3>For families using Dinner Decisions Plus</h3>
+    <p>Plus sends your shopping list to a store, starting with Walmart, and is in a free beta.
+    For a family that turns it on, we also store:</p>
+    <dl class="data">
+      <div>
+        <dt>That the family has Plus</dt>
+        <dd>Whether the family is in the beta, and since when.</dd>
+      </div>
+      <div>
+        <dt>Your store</dt>
+        <dd>The Walmart store your family picked (its store number, name and address) and the ZIP code typed to find it.</dd>
+      </div>
+      <div>
+        <dt>Chosen products</dt>
+        <dd>For each item on your list, the Walmart product your family went with (its product number, name, price and a link to its photo), so next week's list can pick it again.</dd>
+      </div>
+      <div>
+        <dt>A daily count of store lookups</dt>
+        <dd>How many times the family looked things up at Walmart that day, kept by our server to stop overuse. It holds nothing else and is replaced each day.</dd>
+      </div>
+    </dl>
+    <p>Plus does not ask for an email address, a Walmart account or any payment details.</p>
+
     <!-- PAID TIER: add "What we store for paid plans" here.
          Likely: an email address for receipts and sign-in to the paid plan,
          subscription status, and the payment record held by Stripe (Stripe
@@ -369,7 +392,7 @@
     <ul>
       <li>No accounts, email addresses, phone numbers or passwords.</li>
       <li>No advertising, and no advertising or analytics tools of any kind.</li>
-      <li>No location, contacts, photos, camera or microphone.</li>
+      <li>No location from your phone, and no contacts, photos, camera or microphone. Plus asks for a ZIP code, which you type, only to find nearby stores.</li>
       <li>No payment details. The app is free.</li>
       <li>No cookies used for tracking or advertising.</li>
     </ul>
@@ -391,6 +414,7 @@
     <p>We use what is stored only to run Dinner Decisions:</p>
     <ul>
       <li>to show your family's meals, votes, plan and shopping list to the phones in your family, and keep them in step with each other;</li>
+      <li>for families using Plus, to find nearby stores and match the shopping list to their products;</li>
       <li>to keep everyone outside your family out;</li>
       <li>to keep the service working and secure, and to fix problems;</li>
       <li>to answer you when you email us.</li>
@@ -406,8 +430,19 @@
         <dd><strong>Cloud Firestore</strong> stores the family data listed above.
         <strong>Firebase Authentication</strong> creates and checks the anonymous device id.
         <strong>Firebase Hosting</strong> delivers the app's pages to your browser.
+        <strong>Cloud Functions</strong> runs our server for Dinner Decisions Plus.
         Google also delivers the fonts the app uses.
         Google's own handling of this data is described in the <a href="https://firebase.google.com/support/privacy">Firebase privacy and security page</a>.</dd>
+      </div>
+    </dl>
+    <p>When a family uses <strong>Dinner Decisions Plus</strong>, its lists also go to the store it chose, and only when someone in the family taps to send them:</p>
+    <dl class="data">
+      <div>
+        <dt>Walmart</dt>
+        <dd>To find stores and products, our server sends Walmart the ZIP code you typed and the items on your list, such as "onion" or "tortillas".
+        It sends nothing about your family, its members or your phone.
+        When you tap <strong>Open Walmart Cart</strong>, your browser opens Walmart's website with the chosen products; from there you are on Walmart's site, and <a href="https://corporate.walmart.com/privacy-security">Walmart's own privacy policy</a> applies.
+        We do not earn a commission on these orders today.</dd>
       </div>
     </dl>
     <!-- PAID TIER: add the payment processor (Stripe, as merchant of record

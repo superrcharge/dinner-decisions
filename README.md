@@ -116,6 +116,14 @@ mise run functions-test     # signing and parsing, no network
 mise run functions-deploy   # publish the functions (Blaze, secrets set first)
 ```
 
+**Launching the beta** (in this order, only with Mike's go):
+
+1. Put the Walmart consumer id and private key into Secret Manager with `npx firebase functions:secrets:set WALMART_CONSUMER_ID` and `... WALMART_PRIVATE_KEY --data-file <path to private_key.pem>`, run by Mike himself so the key never passes through a chat.
+2. `mise run rules-deploy`, then `mise run functions-deploy`.
+3. Set the effective date on `terms.html` and `privacy.html` (they describe Plus and what goes to Walmart), and `currentPolicy()` in `index.html` to the same date, so every family sees the "updated" line.
+4. `mise run site-deploy` from this branch (it contains the legal pages from `main`), then push it to `main` so GitHub matches.
+5. `mise run live-check`, and one real list sent to a real Walmart cart on a phone.
+
 ## Installing it on a phone
 
 Safari: share menu → *Add to Home Screen*. Chrome: ⋮ → *Add to Home screen*.
