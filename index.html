@@ -1627,8 +1627,11 @@
 
   function showCode(code) { return code.slice(0, 5) + "-" + code.slice(5); }
 
+  // Inside the store apps the page's own address belongs to the app, which
+  // no other phone can open, so there an invite always points at the site.
   function inviteLink(code) {
-    return location.origin + location.pathname + location.search + "#join=" + code;
+    var base = isNativeApp() ? "https://dinnerdecisions.app/" : location.origin + location.pathname + location.search;
+    return base + "#join=" + code;
   }
 
   // Firestore holds a write in its offline queue until the server answers and
@@ -2677,6 +2680,7 @@
       '<button class="menu-link" type="button" id="leaveFamily">Leave</button></div>' +
       '<button class="menu-item menu-add" type="button" id="inviteBtn">Invite someone</button>' +
       '<button class="menu-item menu-add" type="button" id="deleteMine">Delete My Data</button>' +
+      remindersRow() +
       '<div class="menu-sep"></div>' +
       '<div class="menu-head">Who is picking</div>' +
       rows + (rows ? '<div class="menu-sep"></div>' : "") + tail;
@@ -3407,7 +3411,9 @@
       .catch(function () {})
       .then(function () {
         disconnect();
-        if (window.DDReminders) window.DDReminders.forget();
+        return setReminders(false).catch(function () {});
+      })
+      .then(function () {
         return S.db.terminate().then(function () { return S.db.clearPersistence(); }).catch(function () {});
       })
       .then(function () {
@@ -3433,6 +3439,100 @@
     if (hit.id === "deleteMineGo") return submitDeleteMine();
     openDeleteMine();
   });
+
+  /* ---------------- the store apps ---------------- */
+
+  // The Android and iPhone apps run this same page inside Capacitor, bundled
+  // with the app (scripts/build-app.mjs). Everything native is asked for only
+  // when it is there, so on the website none of this shows and nothing
+  // changes.
+  function isNativeApp() {
+    var cap = window.Capacitor;
+    return !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+  }
+
+  var nativePlugins = {};
+  function nativePlugin(name) {
+    var cap = window.Capacitor;
+    if (!isNativeApp() || !cap.registerPlugin || !(cap.isPluginAvailable && cap.isPluginAvailable(name))) return null;
+    return nativePlugins[name] || (nativePlugins[name] = cap.registerPlugin(name));
+  }
+
+  // Vote reminders: one notification a week, on Sunday morning, when the new
+  // week's list opens. It is scheduled on the phone itself as a repeating
+  // local notification, so there is no server, and nothing about the family
+  // leaves the phone. Off until someone turns it on, per phone.
+  var REMINDER = {
+    id: 7001,
+    title: "Dinner Decisions",
+    body: "A new week has started. Pick the dinners you’d like.",
+    // The plugin counts weekdays from Sunday = 1.
+    on: { weekday: 1, hour: 9, minute: 0 },
+    when: "Sundays at 9 AM, on this phone."
+  };
+
+  function remindersOn() { return LS.get("reminders") === "1"; }
+
+  function setReminders(on) {
+    var ln = nativePlugin("LocalNotifications");
+    if (!on) LS.del("reminders");
+    if (!ln) return Promise.resolve(false);
+    if (!on) {
+      return ln.cancel({ notifications: [{ id: REMINDER.id }] }).then(function () { return false; }, function () { return false; });
+    }
+    return ln.requestPermissions().then(function (p) {
+      if (!p || p.display !== "granted") return false;
+      return ln.schedule({
+        notifications: [{
+          id: REMINDER.id,
+          title: REMINDER.title,
+          body: REMINDER.body,
+          schedule: { on: REMINDER.on, allowWhileIdle: true }
+        }]
+      }).then(function () { LS.set("reminders", "1"); return true; });
+    });
+  }
+
+  // Reminders belong to being in a family: a phone that has left one, or
+  // whose family was deleted, stops getting them. Checked whenever the app
+  // starts or goes to the background, and only touches the schedule when
+  // something has changed.
+  function syncReminders() {
+    if (remindersOn() && !S.hid) setReminders(false);
+  }
+
+  function remindersRow() {
+    if (!nativePlugin("LocalNotifications")) return "";
+    var on = remindersOn();
+    return '<div class="menu-sep"></div>' +
+      '<div class="menu-row"><span>Vote reminders</span>' +
+      '<button class="menu-link" type="button" id="remindToggle" aria-pressed="' + on + '">' + (on ? "Turn Off" : "Turn On") + "</button></div>" +
+      '<div class="menu-note" id="remindNote">' + REMINDER.when + "</div>";
+  }
+
+  function toggleReminders() {
+    var btn = $("remindToggle");
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    var want = !remindersOn();
+    setReminders(want).catch(function (e) { console.warn("reminders failed", e); return false; }).then(function (on) {
+      var b = $("remindToggle"), note = $("remindNote");
+      if (!b) return;
+      b.disabled = false;
+      b.textContent = on ? "Turn Off" : "Turn On";
+      b.setAttribute("aria-pressed", String(on));
+      note.textContent = !on && want ? "Notifications are turned off for Dinner Decisions in this phone’s settings." : REMINDER.when;
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    if (ev.target.closest && ev.target.closest("#remindToggle")) toggleReminders();
+  });
+
+  if (isNativeApp()) {
+    document.addEventListener("visibilitychange", syncReminders);
+    setTimeout(syncReminders, 0);
+  }
 
   // A listener refused by the rules means this phone may no longer be in the
   // family: someone deleted it, or removed this phone. Ask the server once

@@ -1,0 +1,24 @@
+{
+  "appId": "app.dinnerdecisions",
+  "appName": "Dinner Decisions",
+  "webDir": "www",
+  "backgroundColor": "#F3F5F0",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#176B4B",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notify",
+      "iconColor": "#176B4B"
+    }
+  }
+}

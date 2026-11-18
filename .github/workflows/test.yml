@@ -28,6 +28,9 @@ jobs:
       - name: Security rules
         run: npm run test:rules
 
+      - name: Store app bundle
+        run: npm run test:app
+
       - name: Browser tests
         run: npm run test:e2e
 

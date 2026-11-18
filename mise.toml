@@ -34,3 +34,11 @@ run = "npx firebase deploy --only hosting"
 [tasks.live-check]
 description = "Smoke-test the deployed site with a throwaway family, then delete it (needs `firebase login`)"
 run = "npm run test:live"
+
+[tasks.app-sync]
+description = "Bundle the website into the store apps (www/) and copy it into android/ and ios/"
+run = "npm run app:build"
+
+[tasks.app-test]
+description = "Check the store apps' bundle is the website plus only Capacitor and local Firebase"
+run = "npm run test:app"

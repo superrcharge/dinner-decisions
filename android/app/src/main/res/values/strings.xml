@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dinner Decisions</string>
+    <string name="title_activity_main">Dinner Decisions</string>
+    <string name="package_name">app.dinnerdecisions</string>
+    <string name="custom_url_scheme">app.dinnerdecisions</string>
+</resources>
