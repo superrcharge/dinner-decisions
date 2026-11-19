@@ -53,6 +53,7 @@ Added on Nov 18, 2026, with Mike's yes (Google Cloud, signed in as the project's
 Checked the same way straight after: both app addresses now get through, and an unrelated site (`https://example.com/`) is still refused.
 Adding them does not weaken anything that matters, because the data is protected by the Firestore security rules, not by the key.
 When saving, Google warned the key has seen calls to its geocoding service, which is not on the key's list of allowed services, so those calls are refused; nothing in this repo calls it.
+Later the same night the key's API list was narrowed from Firebase's default 25 services to the four the app uses (see the README's setup steps); the live check passed afterwards.
 Firebase Authentication's own "Authorized domains" list (Authentication, Settings) already includes `localhost` by default; check it still does.
 
 ## Before the first submission

@@ -276,7 +276,7 @@ Moving to the pay-as-you-go plan is the fix if it ever comes to that.
 4. **Project settings → Your apps → `</>`** and copy the config into `FIREBASE_CONFIG` in `index.html`.
 5. Put the project id in `.firebaserc`, then `firebase login` and `mise run rules-deploy`.
 6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → `dinnerdecisions.app/*`, the two Firebase Hosting defaults (`dinner-decisions-6af97.web.app/*`, `dinner-decisions-6af97.firebaseapp.com/*`) and, while it still hands phones over, `superrcharge.github.io/*`; for the store apps also `https://localhost/*` (Android) and `capacitor://localhost/*` (iPhone). API restrictions → only Identity Toolkit, Token Service, Cloud Firestore and Firebase Installations.
-   As of Nov 18, 2026 the live key's website list matches this, but its API list is still Firebase's default of 25 services, not the four above; narrowing it is an open decision on the Open Items page.
+   The live key matches this as of Nov 18, 2026: until then its API list was Firebase's default of 25 services. After narrowing it, each of the four answered as before, Remote Config was refused, and the live check passed. Easy Mode's App Check will need Firebase App Check API added to the list when it is switched on.
 
 No household needs creating by hand; the first one is started from the app.
 
