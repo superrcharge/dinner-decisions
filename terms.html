@@ -142,20 +142,27 @@
   }
   .back:hover { border-color: var(--accent); }
 
+  /* Two even columns on a phone, one row of four once they fit, so the
+     links always line up instead of wrapping unevenly. */
   .docnav ul {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     list-style: none;
     margin: 18px 0 0;
     padding: 0;
   }
+  @media (min-width: 600px) {
+    .docnav ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
   .docnav li { margin: 0; }
   .docnav a {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    min-height: 36px;
-    padding: 0 14px;
+    justify-content: center;
+    text-align: center;
+    min-height: 40px;
+    padding: 0 12px;
     border-radius: var(--r-pill);
     background: var(--surface-sunk);
     color: var(--ink);
