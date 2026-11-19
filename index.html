@@ -1572,6 +1572,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-check-compat.js"></script>
 
 <script>
 (function () {
@@ -3900,6 +3901,7 @@
     messagingSenderId: "43719856083",
     appId: "1:43719856083:web:364169a2206338ccc3a926"
   };
+  var APP_CHECK_SITE_KEY = "6LddWycuAAAAAAAloPhdYupBFxBeJuOL9htVRRIr";
 
   // Local testing only. On localhost with ?emu=1 the page talks to the
   // Firebase emulators instead of the live project, so tests never create or
@@ -3940,6 +3942,14 @@
   if (window.firebase && FIREBASE_CONFIG.apiKey.indexOf("AIza") === 0) {
     try {
       firebase.initializeApp(FIREBASE_CONFIG);
+      // App Check: reCAPTCHA Enterprise quietly vouches that requests come
+      // from this page on its own addresses, never with a puzzle. The site
+      // key is public, like the apiKey. Before any other service starts.
+      if (!EMULATED && firebase.appCheck) {
+        try {
+          firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY), true);
+        } catch (e) { console.warn("App Check did not start", e); }
+      }
       var store = firebase.firestore();
 
       // Must come before anything else touches either service.
