@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Invite links (https://dinnerdecisions.app/#join=CODE) open the app.
+	     iOS checks the site's /.well-known/apple-app-site-association first;
+	     see store/app-links.md. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:dinnerdecisions.app</string>
+	</array>
+	<!-- Apple's Declared Age Range, for the state app-store age laws
+	     (checkAgeSignals in index.html). -->
+	<key>com.apple.developer.declared-age-range</key>
+	<true/>
+</dict>
+</plist>

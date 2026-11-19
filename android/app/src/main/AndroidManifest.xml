@@ -19,6 +19,18 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Invite links (https://dinnerdecisions.app/#join=CODE) open the
+                 app on a phone that has it. Android checks the site's
+                 /.well-known/assetlinks.json before it trusts this (see
+                 store/app-links.md); only the home page's address opens the
+                 app, so the privacy and other pages stay in the browser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="dinnerdecisions.app" android:path="/" />
+            </intent-filter>
         </activity>
 
         <provider

@@ -2199,6 +2199,7 @@
   // The phone's own share sheet (Messages, other apps, Copy and so on).
   // Where there is none, the text is copied and the button shows a tick.
   function shareText(btnId, title, text) {
+    if (shareNative({ title: title, text: text })) return;
     if (navigator.share) {
       navigator.share({ title: title, text: text }).catch(function () {});
       return;
@@ -2237,6 +2238,7 @@
     // it (and Save to Files, Messages and the rest come with it). Built
     // without waiting on anything, so the tap still counts as the gesture
     // the share sheet needs.
+    if (appleTouch() && sharePdfNative(listPdf(items, meals), "Shopping list " + WEEK_LABEL.replace(/^Week of /, "") + ".pdf")) return;
     if (appleTouch() && navigator.share && window.File) {
       var file = new File([listPdf(items, meals)],
         "Shopping list " + WEEK_LABEL.replace(/^Week of /, "") + ".pdf", { type: "application/pdf" });
@@ -2256,6 +2258,7 @@
           (it.meals.length > 1 ? '<span class="print-for">' + esc(it.meals.join(", ")) + "</span>" : "") + "</li>";
       }).join("") + "</ul>" +
       '<p class="print-foot">Dinner Decisions</p>';
+    if (printNative("Shopping list - " + WEEK_LABEL)) return;
     if (!printTitle) printTitle = document.title;
     document.title = "Shopping list - " + WEEK_LABEL;
     document.body.classList.add("printing");
@@ -3008,6 +3011,7 @@
     if (!code) return;
     var link = inviteLink(code);
     var text = "Join " + S.hname + " on Dinner Decisions to vote on this week’s dinners. Code: " + showCode(code);
+    if (shareNative({ title: "Dinner Decisions", text: text, url: link })) return;
     if (navigator.share) {
       navigator.share({ title: "Dinner Decisions", text: text, url: link }).catch(function () {});
       return;
@@ -3537,6 +3541,115 @@
     setTimeout(syncReminders, 0);
   }
 
+  // Sharing inside the apps. Android's WebView has no navigator.share, so
+  // there the website would copy instead; the Share plugin opens the phone's
+  // own share sheet on both platforms. False on the website, whose own path
+  // then runs.
+  function shareNative(opts) {
+    var sh = nativePlugin("Share");
+    if (!sh) return false;
+    sh.share(opts).catch(function () {}); // closing the sheet rejects
+    return true;
+  }
+
+  // Printing on Android. Its WebView ignores window.print(), so the app hands
+  // the page to Android's own print screen (PrintPlugin.java in android/),
+  // which lays it out with the same print styles a browser uses. The
+  // "printing" class only matters to print styles, so it can stay on.
+  function printNative(jobName) {
+    var pr = nativePlugin("Print");
+    if (!pr) return false;
+    document.body.classList.add("printing");
+    pr.print({ name: jobName }).catch(function (e) { console.warn("print failed", e); });
+    return true;
+  }
+
+  // Printing on iPhone: the list goes to the share sheet as a PDF, as the
+  // website does in Safari, and the sheet's Print action prints it. The
+  // file is written to the app's cache first, since the sheet takes files.
+  function sharePdfNative(bytes, name) {
+    var fs = nativePlugin("Filesystem"), sh = nativePlugin("Share");
+    if (!fs || !sh) return false;
+    var bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    fs.writeFile({ path: name, data: btoa(bin), directory: "CACHE" })
+      .then(function (r) { return sh.share({ files: [r.uri] }); })
+      .catch(function (e) { console.warn("share failed", e); });
+    return true;
+  }
+
+  // A light tap under the finger when a dinner is picked or unpicked.
+  document.addEventListener("click", function (ev) {
+    var hp = ev.target.closest && ev.target.closest("[data-meal],[data-unpick]") && nativePlugin("Haptics");
+    if (hp) hp.impact({ style: "LIGHT" }).catch(function () {});
+  }, true);
+
+  // Invite links open the app on a phone that has it (Android App Links,
+  // iPhone universal links). Android passes a cold start's link as the
+  // launch URL and later ones as events; iPhone can pass both for one tap,
+  // so the same link within a few seconds is taken once.
+  var lastLink = { url: "", at: 0 };
+  function openAppLink(url) {
+    if (!url || S.ageHold) return;
+    if (url === lastLink.url && Date.now() - lastLink.at < 5000) return;
+    lastLink = { url: url, at: Date.now() };
+    var code = /join=/.test(url) ? parseCode(url) : "";
+    if (code) openJoin(code);
+  }
+
+  // Age signals. Where a state law asks for it, Google Play and the App
+  // Store tell an app the person's age range and, for a supervised minor,
+  // whether a parent has approved the app's latest changes. The app asks
+  // each time it opens, keeps the answer only in memory, and holds only when
+  // the store says a parent has declined; any other answer, or none, leaves
+  // the app as it is. iPhone asks only where the law applies, so nobody
+  // else sees Apple's prompt.
+  function checkAgeSignals() {
+    var as = nativePlugin("AgeSignals");
+    if (!as) return Promise.resolve(null);
+    var ask = window.Capacitor.getPlatform() === "ios"
+      ? as.getRegulatoryRequirements().then(function (r) {
+          return r && r.ageAssuranceRequired ? as.requestAgeRange({ ageGates: [13, 16, 18] }) : null;
+        })
+      : as.requestAgeRange();
+    return ask.then(function (r) {
+      var declined = !!(r && r.significantChange && r.significantChange.status === "DECLINED");
+      if (declined && !S.ageHold) holdForAge();
+      if (!declined && S.ageHold) { S.ageHold = false; closeSheet(); }
+      return r;
+    }, function () { return null; }); // no store, old store, offline: carry on
+  }
+
+  function holdForAge() {
+    var store = window.Capacitor.getPlatform() === "ios" ? "the App Store" : "Google Play";
+    openDialog("A parent needs to approve this",
+      '<h2 class="dialog-title">A parent needs to approve this</h2>' +
+      '<div class="menu-note" id="ageHoldNote">' + esc(store) + " says a parent or guardian hasn&rsquo;t approved the latest " +
+      "version of Dinner Decisions on this phone. Once they approve it in " + esc(store) + ", open the app again.</div>");
+    S.ageHold = true;
+  }
+
+  if (isNativeApp()) {
+    var appPlugin = nativePlugin("App");
+    if (appPlugin) {
+      appPlugin.addListener("appUrlOpen", function (e) { openAppLink(e && e.url); });
+      // Android keeps the launch link for the app's whole run, so after a
+      // reload (Delete My Data reloads) the same invite is not offered again.
+      appPlugin.getLaunchUrl().then(function (r) {
+        var url = (r && r.url) || "";
+        try {
+          if (sessionStorage.getItem("launchLink") === url) return;
+          sessionStorage.setItem("launchLink", url);
+        } catch (e) {}
+        openAppLink(url);
+      }, function () {});
+      // Android's WebView sends no visibilitychange when the app goes to the
+      // background and comes back, so the app's own resume event is used.
+      appPlugin.addListener("resume", function () { checkAgeSignals(); syncReminders(); });
+    }
+    checkAgeSignals();
+  }
+
   // A listener refused by the rules means this phone may no longer be in the
   // family: someone deleted it, or removed this phone. Ask the server once
   // before acting, so a passing hiccup does not throw a family off a phone.
@@ -3636,8 +3749,9 @@
   }
 
   function closeSheet() {
-    // On the old address the moving notice is all there is to see.
-    if (S.moving) return;
+    // On the old address the moving notice is all there is to see, and in
+    // the apps a parent's "no" from the app store stays up (holdForAge).
+    if (S.moving || S.ageHold) return;
     S.sheetOpen = false;
     S.sheet = null;
     $("sheetHost").innerHTML = "";

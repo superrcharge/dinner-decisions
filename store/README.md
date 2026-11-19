@@ -10,13 +10,15 @@ Nothing here has been submitted; there are no store accounts yet.
 | [apple-privacy.md](apple-privacy.md) | App Store Connect privacy answers, privacy manifest, account deletion, export compliance |
 | [google-data-safety.md](google-data-safety.md) | Play Console Data safety form and the other App content declarations |
 | [content-rating.md](content-rating.md) | Target audience (18+ on Play), IARC and Apple age rating answers |
-| [reviewer-notes.md](reviewer-notes.md) | What to tell the reviewers, and what is still needed against Apple's 4.2 rule |
+| [reviewer-notes.md](reviewer-notes.md) | What to tell the reviewers, and what answers Apple's 4.2 rule |
+| [app-links.md](app-links.md) | Invite links that open the app, and the two values they still need |
 
 ## What is built
 
 - `android/` and `ios/`: Capacitor 8 projects, app id `app.dinnerdecisions`, Android target API 36, iPhone only.
 - The app carries the website's own files (`www/`, made by `scripts/build-app.mjs` from `dist/`), with the Firebase SDK inside the app rather than loaded from Google.
 - Delete My Data, vote reminders (local notifications, Sundays at 9 AM, off by default), icon, splash and notification icon.
+- The phone's own share sheet for Share, Android's print screen for Print (a PDF to the share sheet on iPhone), a haptic tap on a vote, invite links that open the app, and the stores' age signals for the state app-store laws.
 - `mise run android-debug` builds a debug APK on Windows.
 
 ## What needs Mike's accounts or money
@@ -54,19 +56,17 @@ Firebase Authentication's own "Authorized domains" list (Authentication, Setting
 ## Before the first submission
 
 1. LLC approved, D-U-N-S number, then both developer accounts (above).
-2. The rest of Track A step 3, so the app is clearly more than the website (Apple 4.2): invite links that open the app, native share and print on Android, haptics. See `reviewer-notes.md`.
+2. Fill `store/app-links.json` (Apple Team ID, Play signing fingerprints) and publish the website, so invite links open the app. See `app-links.md`.
 3. Release signing: an upload key for Play (kept out of git, with a backup), and Apple certificates in GitHub Actions secrets.
 4. iPhone build and TestFlight from GitHub Actions; check sign-in works in the iPhone app (untested so far, see below).
-5. The age-signal plugins (Texas law), then screenshots, then Play internal testing and TestFlight, then review.
-6. Privacy policy: its "Who we are" line covers the web app only; add the apps when they are published.
+5. Screenshots, then Play internal testing and TestFlight, then review. Have a lawyer read the age-signal handling (`content-rating.md`).
+6. Privacy policy: now covers the apps, reminders and age signals; publish it with the website before the apps go live, and update its effective date then.
 7. Icon artwork: the pot is the Segoe UI Emoji glyph (Microsoft's font), as on the website. Before the icon goes into the stores, redraw it or switch to an openly licensed emoji (Noto, Twemoji) so the store icon carries no font-licensing question.
 
 ## Known gaps
 
 - **iPhone is untested.** There is no Mac here; the iOS project is generated but has not been built.
-  On the Android emulator, Firebase Auth's compat SDK loads Google's iframe helper from `apis.google.com` at start-up on its own (it does this on every phone, for popup and redirect sign-in, which this app never uses).
-  Android signs in fine with it, but inside an iPhone app (`capacitor://localhost`) that helper is the known cause of slow or stuck sign-in.
-  The first GitHub Actions iPhone build must check that a new phone reaches "Not joined" quickly and can start a family.
-  If it does not, the fix is to load Firebase Auth in the app with `initializeAuth(app, { persistence: indexedDBLocalPersistence })` and no popup/redirect resolver (the modular SDK), which also removes the outside script.
-- **Android Share** copies to the clipboard instead of opening the share sheet, and **Print** does nothing, because Android's WebView has neither. Both need `@capacitor/share` (planned with step 3).
+  The known iPhone sign-in problem is dealt with: Firebase Auth's compat SDK loads Google's popup sign-in helper (an iframe from `apis.google.com`) on phones, which is the known cause of slow or stuck sign-in inside iPhone apps.
+  `scripts/build-app.mjs` removes that helper from the app's copy only (the change Firebase recommends for Capacitor), and the Android device test checks no outside script or iframe loads and sign-in works.
+  The first iPhone build should still confirm a new phone reaches "Not joined" quickly, and that Share, Print, invite links and reminders work.
 - Google Play now lists Android 17 (API 37). Capacitor 8 targets API 36, which Play accepts for new apps until its next yearly deadline (normally August).

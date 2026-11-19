@@ -60,5 +60,21 @@ If App Store Connect raises the rating because of the user-generated content ans
 
 ## Age-assurance laws (before public release)
 
-The plan's step 7 adds the age-signal plugins (Apple Declared Age Range, Google Play Age Signals) before public release, because Texas SB 2420 is in force for new accounts there.
-They are not in the app yet.
+Status checked on Nov 18, 2026 (law-firm summaries, not legal advice):
+
+| Law | Status | From |
+|---|---|---|
+| Texas SB 2420 | Enforceable: the Fifth Circuit stayed the injunction in June 2026; appeal argued Aug 2026, no ruling yet | Now |
+| California AB 1043 | Signed; developers must request the OS or store age signal | Jan 1, 2027 |
+| Utah (amended) | Main duties delayed | May 6, 2027 |
+| Louisiana HB 977 (replaces HB 570) | Narrowed to relying on store signals | Jul 1, 2027 |
+
+What the apps do (`checkAgeSignals` in `index.html`, plugin `@capawesome/capacitor-age-signals`):
+
+- Android asks Google Play's Age Signals API each time the app opens or comes back.
+  iPhone first asks Apple whether age assurance applies to this person, and only then asks Declared Age Range (ages 13, 16, 18), so nobody else sees Apple's prompt.
+- The answer stays in memory on the phone; it is not stored or sent anywhere.
+- The app holds (a screen that cannot be closed) only when the store says a parent or guardian has declined approval; it lets go as soon as the store says approved.
+  Any other answer, an error, or no store (a sideloaded copy) leaves the app as it is: the content is suitable for all ages, and the stores handle consent for the download itself.
+- **Before ever declaring a "significant change"** in Play Console or shipping one on iPhone, add the iPhone acknowledgment and consent flow (`showSignificantUpdateAcknowledgment`, Apple's PermissionKit); the plugin does not do Apple's consent part.
+- A lawyer should confirm this meets the developer's duties; the questions are in the HTML comment in `privacy.html` (Age signals in the apps).

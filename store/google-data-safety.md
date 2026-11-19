@@ -37,6 +37,7 @@ Notes for the reviewer field, if Play asks:
 
 - No analytics, crash reporting or advertising SDKs are in the app.
 - Vote reminders are local notifications scheduled on the phone; nothing about them is sent anywhere.
+- The Play Age Signals answer is used only on the phone and is never stored or sent, so it is not "collected" in Google's terms.
 - Android's own backup may copy the app's local storage to the user's Google account; that is the user's backup, not data we collect.
 
 ## Other App content declarations

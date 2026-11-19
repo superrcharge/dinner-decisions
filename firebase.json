@@ -5,7 +5,12 @@
   "hosting": {
     "public": "dist",
     "predeploy": ["node scripts/build-site.mjs"],
+    "ignore": [],
     "headers": [
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [{ "key": "Content-Type", "value": "application/json" }]
+      },
       {
         "source": "**",
         "headers": [

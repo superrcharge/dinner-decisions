@@ -8,7 +8,7 @@
     "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-dinner-decisions \"playwright test\"",
     "rules:deploy": "firebase deploy --only firestore:rules",
     "test:live": "firebase projects:list && playwright test --config playwright.live.config.mjs",
-    "test:app": "node --test tests/app-build.test.mjs",
+    "test:app": "node --test --test-concurrency=1 tests/app-build.test.mjs tests/app-links.test.mjs",
     "app:build": "node scripts/build-app.mjs && cap sync"
   },
   "devDependencies": {
@@ -17,9 +17,13 @@
     "@capacitor/assets": "^4.0.0",
     "@capacitor/cli": "^8.6.2",
     "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.6.2",
     "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.2",
+    "@capawesome/capacitor-age-signals": "^0.5.1",
     "@firebase/rules-unit-testing": "^4.0.1",
     "@playwright/test": "^1.49.0",
     "firebase": "^11.0.0",

@@ -1,6 +1,7 @@
 // The store apps bundle the website's own files (scripts/build-app.mjs).
-// This checks the bundle is the website plus only the two intended
-// differences: Firebase served from inside the app, and Capacitor added.
+// This checks the bundle is the website plus only the intended differences:
+// Firebase served from inside the app (Auth without its popup helper), and
+// Capacitor added.
 //
 //   node --test tests/app-build.test.mjs
 
@@ -21,9 +22,20 @@ test("the app loads Firebase from inside itself, never from gstatic", () => {
   assert.doesNotMatch(app, /gstatic\.com\/firebasejs/);
   for (const name of ["app", "auth", "firestore"]) {
     assert.match(app, new RegExp('<script src="vendor/firebase-' + name + '-compat\\.js"></script>'));
+  }
+  for (const name of ["app", "firestore"]) {
     assert.deepEqual(readFileSync("www/vendor/firebase-" + name + "-compat.js"),
       readFileSync("node_modules/firebase-web-compat/firebase-" + name + "-compat.js"));
   }
+});
+
+test("the app's Firebase Auth is the stock file minus its popup sign-in helper", () => {
+  const stock = readFileSync("node_modules/firebase-web-compat/firebase-auth-compat.js", "utf8");
+  const mine = readFileSync("www/vendor/firebase-auth-compat.js", "utf8");
+  const before = 'var n="undefined"!=typeof window?vi:void 0;this._delegate=t.initialize(';
+  const after = "var n=void 0;this._delegate=t.initialize(";
+  assert.equal(stock.split(before).length, 2);
+  assert.equal(mine, stock.replace(before, after));
 });
 
 test("Capacitor's runtime loads first, before Firebase", () => {

@@ -48,6 +48,11 @@ Dinner Decisions has no accounts, but an anonymous sign-in plus a family is trea
 - **Delete this family** in Manage removes everything for everyone.
 - The web page `https://dinnerdecisions.app/delete.html` explains both, and how to ask us when a phone is lost.
 
+## Age range
+
+The Declared Age Range answer is used only on the phone and never stored or sent, so it is not data "collected" for the privacy label.
+The app's entitlements (`ios/App/App/App.entitlements`) include `com.apple.developer.declared-age-range` and Associated Domains; turn both capabilities on for the App ID `app.dinnerdecisions` in the Apple Developer account (Xcode's automatic signing does it on the first signed build).
+
 ## Export compliance
 
 `ITSAppUsesNonExemptEncryption` is set to `NO` in `Info.plist`, so App Store Connect does not ask on every upload.
@@ -63,4 +68,4 @@ If App Store Connect still asks: "Does your app use encryption?" Yes; "Does it q
 | Advertising identifier (IDFA)? | No. |
 | Made for Kids / Kids Category? | No. Do not choose the Kids Category: it bans links out and restricts the SDKs we need. |
 | Price | Free. |
-| Availability | United States only, to match the Terms. |
+| Availability | United States only, to match the Terms. This also means no EU Digital Services Act trader declaration is needed; if the EU is ever added, declare trader status first. |

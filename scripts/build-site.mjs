@@ -31,4 +31,28 @@ for (const f of [...PAGES, "site.webmanifest"]) {
 for (const f of readdirSync("icons")) {
   if (f.endsWith(".png")) { cpSync("icons/" + f, OUT + "/icons/" + f); copied.push("icons/" + f); }
 }
+// The files that let invite links open the store apps (store/app-links.md).
+// Each is written only once its value exists: the Apple Team ID after the
+// Apple Developer account, the Play signing fingerprints after the Play
+// Console account. Until then the links simply open the website.
+const links = JSON.parse(readFileSync(process.env.APP_LINKS || "store/app-links.json", "utf8"));
+const APP_ID = "app.dinnerdecisions";
+if (links.appleTeamId || (links.androidCertSha256 || []).length) mkdirSync(OUT + "/.well-known", { recursive: true });
+if (links.appleTeamId) {
+  if (!/^[A-Z0-9]{10}$/.test(links.appleTeamId)) throw new Error("appleTeamId should be 10 letters and digits");
+  writeFileSync(OUT + "/.well-known/apple-app-site-association", JSON.stringify({
+    applinks: { details: [{ appIDs: [links.appleTeamId + "." + APP_ID], components: [{ "/": "/", "#": "join=*" }] }] }
+  }, null, 2) + "\n");
+  copied.push(".well-known/apple-app-site-association");
+}
+if ((links.androidCertSha256 || []).length) {
+  for (const f of links.androidCertSha256) {
+    if (!/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(f)) throw new Error("not a SHA-256 fingerprint like AB:CD:...: " + f);
+  }
+  writeFileSync(OUT + "/.well-known/assetlinks.json", JSON.stringify([{
+    relation: ["delegate_permission/common.handle_all_urls"],
+    target: { namespace: "android_app", package_name: APP_ID, sha256_cert_fingerprints: links.androidCertSha256 }
+  }], null, 2) + "\n");
+  copied.push(".well-known/assetlinks.json");
+}
 console.log("dist/: " + copied.join(", "));

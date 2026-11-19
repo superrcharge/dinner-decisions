@@ -3,10 +3,11 @@
 // the page with them instead of loading dinnerdecisions.app, which both
 // stores ask for, and which lets the app open with no signal.
 //
-// Two differences from the website, both made here so index.html itself
+// The differences from the website, all made here so index.html itself
 // stays the same page everywhere:
 //   - the three Firebase scripts the page loads from gstatic.com are copied
-//     in from npm (byte-identical, same version), so they work offline;
+//     in from npm (same version), so they work offline; Auth's copy has its
+//     popup sign-in helper removed (below);
 //   - Capacitor's runtime is added, which is how the page learns it is
 //     running inside the app and reaches the native plugins.
 //
@@ -41,6 +42,22 @@ for (const name of FIREBASE) {
   cpSync("node_modules/firebase-web-compat/firebase-" + name + "-compat.js", OUT + "/vendor/firebase-" + name + "-compat.js");
   html = html.replace(tag, '<script src="vendor/firebase-' + name + '-compat.js"></script>');
 }
+
+// Firebase Auth's compat SDK gives every page its popup and redirect sign-in
+// helper, which on phones loads Google's iframe (apis.google.com) as soon as
+// the page starts. The page only ever signs in anonymously, and inside an
+// iPhone app that iframe is the known cause of slow or stuck sign-in, so the
+// app's copy is built without the helper: the change Firebase recommends for
+// Capacitor apps (initializeAuth with no popupRedirectResolver). The website
+// keeps the stock file.
+const AUTH = OUT + "/vendor/firebase-auth-compat.js";
+const RESOLVER = /var (\w+)="undefined"!=typeof window\?\w+:void 0;(this\._delegate=\w+\.initialize\(\{options:\{persistence:)/g;
+const auth = readFileSync(AUTH, "utf8");
+const found = auth.match(RESOLVER) || [];
+if (found.length !== 1) {
+  throw new Error("firebase-auth-compat.js " + compat + ": expected one popup/redirect resolver to remove, found " + found.length);
+}
+writeFileSync(AUTH, auth.replace(RESOLVER, "var $1=void 0;$2"));
 
 cpSync("node_modules/@capacitor/core/dist/capacitor.js", OUT + "/vendor/capacitor.js");
 html = html.replace('<script src="vendor/firebase-app-compat.js">',
