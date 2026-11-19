@@ -113,22 +113,30 @@ It has no Apple-only wording.
 The first version of Dinner Decisions for Android.
 ```
 
-## Graphics still to make
+## Graphics
 
-These come from the debug APK on the emulator, and from a Mac-free iOS build later (GitHub Actions), with a sample family that has no real names in it.
+Made by `mise run store-screenshots` (tests/store/screens.spec.mjs) from the app itself, with a sample family that has no real names in it ("The Parkers": Sam, Alex, Jordan, Riley), built on the local emulators the way a person would build it.
+Re-run it after any change to how the app looks.
 
-| Store | Asset | Size | Notes |
+| Store | Asset | Size | File |
 |---|---|---|---|
-| Google Play | App icon | 512 x 512 PNG | `assets/icon-only.png` resized; `mise run app-icons` renders it. |
-| Google Play | Feature graphic | 1024 x 500 PNG | Pot on green with the name; still to design. |
-| Google Play | Phone screenshots | 2 to 8, 1080 x 1920 or larger | Pick meals, Shopping with tally, grocery list, invite, Manage. |
-| Apple | iPhone 6.9" screenshots | 1320 x 2868 (portrait), 1 to 10 | Same five screens. |
+| Google Play | App icon | 512 x 512 PNG | `store/graphics/play-icon-512.png` |
+| Google Play | Feature graphic | 1024 x 500 PNG | `store/graphics/play-feature-graphic-1024x500.png` |
+| Google Play | Phone screenshots | 6 at 1080 x 1920 | `store/screenshots/play-phone/` |
+| Google Play | 7-inch tablet screenshots | 6 at 1080 x 1920 | `store/screenshots/play-tablet-7in/` |
+| Google Play | 10-inch tablet screenshots | 6 at 1440 x 2560 | `store/screenshots/play-tablet-10in/` |
+| Apple | iPhone 6.9" screenshots | 6 at 1320 x 2868 | `store/screenshots/apple-iphone-6.9in/` |
 | Apple | App icon | 1024 x 1024 | Already in the Xcode project; App Store Connect takes it from the build. |
 
-Screenshot captions, one per screen:
+Meal icons are emoji, which each phone draws with its own font.
+The Play sets use Google's Noto Color Emoji, as Android does.
+The iPhone set made on Windows uses Noto too; run `mise run store-screenshots` once on the Mac so it shows Apple's emoji, as an iPhone does.
+
+Screenshot captions, one per screen, set above each screen on the app's green:
 
 1. "Everyone taps the dinners they'd like"
 2. "See what won, and who picked it"
 3. "One grocery list for the week"
 4. "Invite the house with a link or a code"
 5. "Your meal list, behind its own code"
+6. "A weekly reminder, only if you want one" (an app-only feature, which helps with Apple's 4.2 rule)

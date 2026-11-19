@@ -57,3 +57,7 @@ run = [
   "bash scripts/android-debug.sh --emulators",
   "npx firebase emulators:exec --only auth,firestore --project demo-dinner-decisions \"playwright test --config playwright.android.config.mjs\"",
 ]
+
+[tasks.store-screenshots]
+description = "Make the store screenshots and Play feature graphic from a sample family on the emulators (store/screenshots, store/graphics)"
+run = "npx firebase emulators:exec --only auth,firestore --project demo-dinner-decisions \"playwright test --config playwright.store.config.mjs\""

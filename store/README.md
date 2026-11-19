@@ -62,7 +62,7 @@ Firebase Authentication's own "Authorized domains" list (Authentication, Setting
 2. Fill `store/app-links.json` (Apple Team ID, Play signing fingerprints) and publish the website, so invite links open the app. See `app-links.md`.
 3. Release signing: an upload key for Play (kept out of git, with a backup), and Apple certificates in GitHub Actions secrets.
 4. iPhone build and TestFlight from GitHub Actions; check sign-in works in the iPhone app (untested so far, see below).
-5. Screenshots, then Play internal testing and TestFlight, then review. Have a lawyer read the age-signal handling (`content-rating.md`).
+5. Screenshots and the feature graphic are made (`mise run store-screenshots`, see `listing.md`); redo the iPhone set on the Mac. Then Play internal testing and TestFlight, then review. Have a lawyer read the age-signal handling (`content-rating.md`).
 6. Privacy policy: now covers the apps, reminders and age signals; publish it with the website before the apps go live, and update its effective date then.
 7. Icon artwork: done. The pot is now `icons/pot.svg`, Microsoft's Fluent Emoji "Pot of food" under the MIT License, the same drawing the Windows emoji font showed, so the icon looks the same. The licence's copyright notice is kept in `icons/pot-LICENSE.txt` and on the Terms page.
 
