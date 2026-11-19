@@ -366,6 +366,6 @@ mise run render   # diagrams → dual-theme SVGs
 mise run icons    # home-screen and favicon PNGs
 ```
 
-Diagrams need `typst` and the **CaskaydiaMono NFP** font. Each source compiles once per theme, and the fixed pt dimensions are stripped so the SVGs scale to the README's width. Icons need a colour emoji font - Segoe UI Emoji on Windows, Apple Color Emoji on macOS - and compile at 72 ppi so the page size in points equals the pixel size exactly.
+Diagrams need `typst` and the **CaskaydiaMono NFP** font. Each source compiles once per theme, and the fixed pt dimensions are stripped so the SVGs scale to the README's width. Icons draw `icons/pot.svg`, Microsoft's Fluent Emoji "Pot of food" under the MIT License (`icons/pot-LICENSE.txt`), so they need no emoji font; they compile at 72 ppi so the page size in points equals the pixel size exactly.
 
 The first `mise` run in a fresh clone needs `mise trust`.

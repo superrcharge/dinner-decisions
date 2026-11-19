@@ -63,7 +63,7 @@ Firebase Authentication's own "Authorized domains" list (Authentication, Setting
 4. iPhone build and TestFlight from GitHub Actions; check sign-in works in the iPhone app (untested so far, see below).
 5. Screenshots, then Play internal testing and TestFlight, then review. Have a lawyer read the age-signal handling (`content-rating.md`).
 6. Privacy policy: now covers the apps, reminders and age signals; publish it with the website before the apps go live, and update its effective date then.
-7. Icon artwork: the pot is the Segoe UI Emoji glyph (Microsoft's font), as on the website. Before the icon goes into the stores, redraw it or switch to an openly licensed emoji (Noto, Twemoji) so the store icon carries no font-licensing question.
+7. Icon artwork: done. The pot is now `icons/pot.svg`, Microsoft's Fluent Emoji "Pot of food" under the MIT License, the same drawing the Windows emoji font showed, so the icon looks the same. The licence's copyright notice is kept in `icons/pot-LICENSE.txt` and on the Terms page.
 
 ## Known gaps
 

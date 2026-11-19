@@ -2,7 +2,7 @@
 # Regenerate the home-screen and favicon PNGs.
 #
 # Compiled at 72 ppi so the pt page size equals the pixel size exactly.
-# Needs a colour emoji font: Segoe UI Emoji on Windows, Apple Color Emoji on macOS.
+# Needs only typst: the pot is icons/pot.svg.
 set -euo pipefail
 
 cd "$(dirname "$0")"

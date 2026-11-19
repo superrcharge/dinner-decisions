@@ -29,7 +29,8 @@ for (const f of [...PAGES, "site.webmanifest"]) {
   copied.push(f);
 }
 for (const f of readdirSync("icons")) {
-  if (f.endsWith(".png")) { cpSync("icons/" + f, OUT + "/icons/" + f); copied.push("icons/" + f); }
+  // The icons, and the licence notice for the pot they draw (pot-LICENSE.txt).
+  if (f.endsWith(".png") || f.endsWith("-LICENSE.txt")) { cpSync("icons/" + f, OUT + "/icons/" + f); copied.push("icons/" + f); }
 }
 // The files that let invite links open the store apps (store/app-links.md).
 // Each is written only once its value exists: the Apple Team ID after the

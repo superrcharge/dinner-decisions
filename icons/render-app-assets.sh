@@ -4,7 +4,7 @@
 #
 # Renders the sources into assets/, then Capacitor's generator turns them
 # into every size Android and iOS ask for, inside android/ and ios/.
-# Needs typst and a colour emoji font, like render-icons.sh.
+# Needs typst; the pot is icons/pot.svg.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

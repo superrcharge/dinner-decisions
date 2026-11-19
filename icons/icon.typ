@@ -4,7 +4,11 @@
 // gives an exact pixel square. The pot sits at 62% of the square, which keeps
 // it inside the safe zone Android crops to for maskable icons and inside the
 // rounded-square mask iOS applies.
-
+//
+// The pot is pot.svg, Microsoft's Fluent Emoji "Pot of food" under the MIT
+// License (pot-LICENSE.txt): the same drawing Windows' emoji font shows, but
+// as a file we may ship, so the icon needs no font and carries no font
+// licence question in the app stores.
 //
 // The store apps reuse it (icons/render-app-assets.sh) with two more inputs:
 // bg=none for the transparent front layer of Android's adaptive icon, and a
@@ -21,6 +25,8 @@
   fill: if bg == "none" { none } else { rgb(bg) },
 )
 
-#set text(font: ("Segoe UI Emoji", "Apple Color Emoji"), size: size * scale * 1pt)
-
-#align(center + horizon)[🍲]
+// `scale` was first measured as the emoji font's size; the SVG has more
+// space around the pot, so 1.12 times that width draws the same pot.
+#if scale > 0 {
+  align(center + horizon, image("pot.svg", width: size * scale * 1.12 * 1pt))
+}
