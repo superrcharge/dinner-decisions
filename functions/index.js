@@ -23,6 +23,11 @@ const db = getFirestore();
 
 setGlobalOptions({ region: "us-central1", maxInstances: 5 });
 
+// Every callable needs the App Check pass the page gets from reCAPTCHA
+// Enterprise, so only the real app can spend Walmart calls. The emulator has
+// no reCAPTCHA, so tests run without it.
+const CALL = { enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true" };
+
 const WALMART_CONSUMER_ID = defineSecret("WALMART_CONSUMER_ID");
 const WALMART_PRIVATE_KEY = defineSecret("WALMART_PRIVATE_KEY");
 const WALMART_KEY_VERSION = defineString("WALMART_KEY_VERSION", { default: "1" });
@@ -84,7 +89,7 @@ function unavailable(e) {
 
 // A family turns the beta on from Manage. Spots are limited; config/plusBeta
 // holds the cap and which families have one.
-export const joinPlusBeta = onCall(async (req) => {
+export const joinPlusBeta = onCall(CALL, async (req) => {
   const hid = await member(req);
   const planRef = db.doc(`households/${hid}/billing/plan`);
   const cfgRef = db.doc("config/plusBeta");
@@ -103,7 +108,7 @@ export const joinPlusBeta = onCall(async (req) => {
   });
 });
 
-export const leavePlusBeta = onCall(async (req) => {
+export const leavePlusBeta = onCall(CALL, async (req) => {
   const hid = await member(req);
   await freeSpot(hid);
   return { status: "off" };
@@ -131,7 +136,7 @@ export const familyDeleted = onDocumentDeleted("households/{hid}", async (event)
 
 /* ---------------- Walmart ---------------- */
 
-export const walmartStores = onCall({ secrets: [WALMART_CONSUMER_ID, WALMART_PRIVATE_KEY] }, async (req) => {
+export const walmartStores = onCall({ ...CALL, secrets: [WALMART_CONSUMER_ID, WALMART_PRIVATE_KEY] }, async (req) => {
   const hid = await member(req);
   await plus(hid);
   const zip = String((req.data && req.data.zip) || "").trim();
@@ -147,7 +152,7 @@ export const walmartStores = onCall({ secrets: [WALMART_CONSUMER_ID, WALMART_PRI
 // For each item on the list: the product the family chose before, or the
 // top Walmart matches. With refresh, items are searched again even when a
 // product is remembered, which is how "Change" offers other choices.
-export const walmartMatch = onCall({ secrets: [WALMART_CONSUMER_ID, WALMART_PRIVATE_KEY], timeoutSeconds: 120 }, async (req) => {
+export const walmartMatch = onCall({ ...CALL, secrets: [WALMART_CONSUMER_ID, WALMART_PRIVATE_KEY], timeoutSeconds: 120 }, async (req) => {
   const hid = await member(req);
   await plus(hid);
   const raw = Array.isArray(req.data && req.data.items) ? req.data.items : [];

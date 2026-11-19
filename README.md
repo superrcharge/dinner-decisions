@@ -291,6 +291,16 @@ Publish rules before the page that depends on them; the rules here are written t
 
 `create`/`update` and `delete` are written as separate clauses on purpose: a delete carries no `request.resource`, so a single combined rule with a field check silently blocks every delete - removing a meal, dismissing a suggestion, clearing a week.
 
+### App Check
+
+The page gets an App Check pass from Google with an invisible reCAPTCHA Enterprise key, so nobody ever sees a checkbox, a puzzle or a badge.
+The pass renews every hour and rides along with every Firestore request, so the project can tell the real page on its own addresses from a script that copied the public config.
+The reCAPTCHA key allows dinnerdecisions.app, www.dinnerdecisions.app, the two Firebase Hosting addresses and superrcharge.github.io (the old address still reads a family's code during the hand-off).
+Firestore runs it watch-only since Nov 18, 2026: the console counts requests with and without a pass and refuses none.
+Once nearly all requests pass, turn on enforcement for Cloud Firestore under App Check in the Firebase console.
+Every Easy Mode server function requires the pass from its first day live (`enforceAppCheck`), except in the emulator, which has no reCAPTCHA.
+The page skips App Check under the emulator for the same reason.
+
 ### Cost
 
 The project is on the pay-as-you-go Blaze plan, which Cloud Functions needs, with the same free allowances as before: 1 GiB of storage, 50,000 reads and 20,000 writes a day, and 2 million function calls a month.
@@ -398,9 +408,10 @@ It needs `firebase login` on the machine, so it is not part of CI, and it never 
 
 ## Configuration
 
-Two things in `index.html`:
+Three things in `index.html`:
 
-- `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the site's own addresses, and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
+- `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the site's own addresses and to the five services the page uses (sign-in and its tokens, Firestore, Firebase Installations and App Check), and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
+- `APP_CHECK_SITE_KEY` - the reCAPTCHA Enterprise site key App Check uses (see [App Check](#app-check)). Like the `apiKey`, it is public by design.
 - `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the other phones in the house. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
 
 And two things that are deliberately **not** here:
