@@ -167,6 +167,13 @@ async function rawShots(browser, set) {
   const emoji = emojiOverride(set);
   if (emoji) await useEmojiFont(page, emoji);
   await buildFamily(page);
+  // The one-time "Privacy Policy and Terms were updated" line is for phones
+  // that were in a family before the change; a store screenshot shows the
+  // app as it looks once that has been read.
+  if (await page.locator("#policyOk").count()) {
+    await page.click("#policyOk");
+    await expect(page.locator("#policyOk")).toHaveCount(0);
+  }
 
   const raw = {};
   const settle = async () => {

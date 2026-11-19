@@ -106,7 +106,10 @@ test("the Android app runs the bundled page, signs in, and its native features w
     "https://localhost/vendor/capacitor.js",
     "https://localhost/vendor/firebase-app-compat.js",
     "https://localhost/vendor/firebase-auth-compat.js",
-    "https://localhost/vendor/firebase-firestore-compat.js"
+    "https://localhost/vendor/firebase-firestore-compat.js",
+    // Bundled but not started: reCAPTCHA cannot pass at the app's address,
+    // so the apps skip it (no reCAPTCHA iframe, checked just below).
+    "https://localhost/vendor/firebase-app-check-compat.js"
   ]);
   expect(await page.evaluate(() => document.querySelectorAll("iframe").length)).toBe(0);
   await shot("01-welcome");
