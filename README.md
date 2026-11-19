@@ -19,7 +19,7 @@ A stranger who finds the URL can start a family of their own, and can see nothin
 
 - **Pick meals** - tap tiles to vote. Everything you've chosen is gathered into a **Your picks** strip at the top, so you can read your own selections back without hunting for green tiles. Type anything that isn't on the list and it joins that week's options straight away.
 - **Shopping** - meals ranked by votes, with who picked each one and who hasn't voted yet. Build the week's plan by tapping *Add*.
-- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the kids suggested, set a meal's icon, list what a meal needs, clear the week.
+- **Manage** - hidden behind its own separate code, not the family one. Edit the master meal list, keep or dismiss what the family suggested, set a meal's icon, list what a meal needs, clear the week.
 
 The tab strip sticks to the top of the screen, so the three views stay reachable however far down the list you've scrolled.
 
@@ -53,6 +53,9 @@ Everyone else keeps everything, and coming back needs the invite code.
 It does what Leave does, and also removes the name this phone picks as, every vote made under that name, Firestore's offline copy on the phone, and the phone's anonymous sign-in, then starts the page again on the welcome screen.
 The family's meals stay for everyone else.
 This is what both app stores mean by deleting an account; [delete.html](delete.html) describes it for families.
+
+**Removing a name:** **Manage → Who's in the house → Remove**, confirmed once.
+It deletes the name and every vote made under it, this week's and earlier ones, on every phone.
 
 **Deleting:** **Manage → Delete this family**, confirmed by typing the family's name.
 It removes every meal, vote, name, ingredient and invite for everyone.
@@ -129,6 +132,22 @@ Icons aren't stored and aren't looked up - they're worked out in the browser fro
 The override is the normal way to fix a glyph - it needs no code change and no deploy. Editing the keyword table only makes sense for a whole category that keeps recurring.
 
 The Icon button appears on meals in the master list, not on pending suggestions, so *Keep* one first and then set its icon.
+
+## Legal pages, deletion requests and search
+
+`privacy.html`, `terms.html`, `delete.html` and `accessibility.html` are linked under the welcome card (the homepage link to the privacy policy that California's CalOPPA expects) and from the help screen.
+Their HTML comments are notes for the lawyer and for later work; `scripts/build-site.mjs` strips them from what is served.
+
+**Announcing a change.** The policy and terms promise a notice in the app before a change that matters takes effect.
+Publish the new pages with an effective date about two weeks ahead, then change `currentPolicy()` in `index.html` to the new version and date.
+Every phone in a family then shows one line saying the policy was updated, with links, until someone taps **OK** on it.
+
+**Deletion requests by email.** Someone who has lost access to their family can ask hello@dinnerdecisions.app to delete it.
+The private `admin/delete-family.mjs` finds the family by name or invite code, lists what it would delete, and deletes it with `--apply`; its header is the runbook, including how to check the request really comes from that family.
+
+**Search.** `robots.txt` lets every crawler in and points at `sitemap.xml`, which lists every public page.
+`index.html` carries the page title and description shown in search results, a canonical link to `dinnerdecisions.app`, structured data describing the app, and the link preview card (Open Graph tags and `icons/og-image.png`) shown when a link is texted or posted.
+Google Search Console, verified by a DNS record at Cloudflare, shows which searches find the site without adding any tracking to it.
 
 ## How it's put together
 
@@ -216,7 +235,7 @@ The code must be 10 characters from the code alphabet; the rules check that too,
 
 The rules do not distinguish between members.
 Anyone in a family can edit its meals, change its code, remove a phone, or delete it - the intended shape for a household.
-`MANAGE_PIN` in `index.html` is still only a UI gate: it keeps the Manage tab off the kids' phones and defends nothing, and it is the same for every family.
+`MANAGE_PIN` in `index.html` is still only a UI gate: it keeps the Manage tab off the other family members' phones and defends nothing, and it is the same for every family.
 
 The uid lives in the browser's IndexedDB, so clearing site data means joining with the code once more.
 
@@ -259,15 +278,29 @@ Publish rules before the page that depends on them; the rules here are written t
 
 `create`/`update` and `delete` are written as separate clauses on purpose: a delete carries no `request.resource`, so a single combined rule with a field check silently blocks every delete - removing a meal, dismissing a suggestion, clearing a week.
 
-### Free tier
+### App Check
 
-1 GiB of storage, 50,000 reads and 20,000 writes per day, and anonymous sign-in at no cost.
-A family of five voting weekly is nowhere near any of those.
+The page gets an App Check pass from Google with an invisible reCAPTCHA Enterprise key, so nobody ever sees a checkbox, a puzzle or a badge.
+The pass renews every hour and rides along with every Firestore request, so the project can tell the real page on its own addresses from a script that copied the public config.
+The reCAPTCHA key allows dinnerdecisions.app, www.dinnerdecisions.app, the two Firebase Hosting addresses and superrcharge.github.io (the old address still reads a family's code during the hand-off).
+Firestore runs it watch-only since Nov 18, 2026: the console counts requests with and without a pass and refuses none.
+Once nearly all requests pass, turn on enforcement for Cloud Firestore under App Check in the Firebase console.
+The store apps run the same page at `https://localhost` and `capacitor://localhost`, where reCAPTCHA cannot pass, so inside the apps the page does not start it.
+Firestore enforcement therefore waits until the apps have native App Check (Play Integrity on Android, App Attest on iPhone), which needs the store accounts; allowing localhost on the reCAPTCHA key instead would let any copy of the page pass.
+The page skips App Check under the emulator, which has no reCAPTCHA.
 
-The daily limits are shared by every family on the project.
-Opening the app costs roughly one read per meal, person and vote, so on the order of a hundred, and the reads run out at around 500 opens a day.
-Past that the app keeps working from its cached copy until the daily reset; nothing is billed, because the free plan has no card on it.
-Moving to the pay-as-you-go plan is the fix if it ever comes to that.
+### Cost
+
+The project is on the pay-as-you-go Blaze plan, with the same free allowances as before: 1 GiB of storage, 50,000 reads and 20,000 writes a day.
+Opening the app costs roughly one read per meal, person and vote, so on the order of a hundred; at the current size the bill is $0.
+A monthly budget of $25 emails alerts at $5, $12.50, $22.50 and $25, and when Google forecasts the month will pass $25.
+
+### Backups
+
+Google backs the database up every day and keeps each backup for 7 days (a Firestore backup schedule).
+A second copy is made every morning onto the home NAS by the private `admin/backup.mjs`, kept 30 days, and `admin/restore.mjs` puts one family or everything back from it.
+Delete protection is on, so the database itself cannot be deleted by accident.
+The privacy policy and the deletion page say how long backups keep data; change them together if either retention changes.
 
 ### Recreating it from scratch
 
@@ -276,8 +309,9 @@ Moving to the pay-as-you-go plan is the fix if it ever comes to that.
 3. **Authentication → Sign-in method → Anonymous → Enable.**
 4. **Project settings → Your apps → `</>`** and copy the config into `FIREBASE_CONFIG` in `index.html`.
 5. Put the project id in `.firebaserc`, then `firebase login` and `mise run rules-deploy`.
-6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → `dinnerdecisions.app/*`, the two Firebase Hosting defaults (`dinner-decisions-6af97.web.app/*`, `dinner-decisions-6af97.firebaseapp.com/*`) and, while it still hands phones over, `superrcharge.github.io/*`; for the store apps also `https://localhost/*` (Android) and `capacitor://localhost/*` (iPhone). API restrictions → only Identity Toolkit, Token Service, Cloud Firestore and Firebase Installations.
-   The live key matches this as of Nov 18, 2026: until then its API list was Firebase's default of 25 services. After narrowing it, each of the four answered as before, Remote Config was refused, and the live check passed. Easy Mode's App Check will need Firebase App Check API added to the list when it is switched on.
+6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → `dinnerdecisions.app/*`, the two Firebase Hosting defaults (`dinner-decisions-6af97.web.app/*`, `dinner-decisions-6af97.firebaseapp.com/*`) and, while it still hands phones over, `superrcharge.github.io/*`; for the store apps also `https://localhost/*` (Android) and `capacitor://localhost/*` (iPhone). API restrictions → only Identity Toolkit, Token Service, Cloud Firestore, Firebase Installations and Firebase App Check.
+   The live key matches this as of Nov 18, 2026: until then its API list was Firebase's default of 25 services. After narrowing it, each of the four answered as before, Remote Config was refused, and the live check passed. Firebase App Check was added the same night, when App Check went on.
+7. App Check: create a reCAPTCHA Enterprise score key (website, the addresses above without the store apps' localhost), register it under **App Check → Apps** with a 1 hour token, and put its site key in `APP_CHECK_SITE_KEY`.
 
 No household needs creating by hand; the first one is started from the app.
 
@@ -314,7 +348,8 @@ The app is a single static file, `index.html`, with no build step - open it and 
 ```
 index.html            the whole app
 privacy.html, terms.html, delete.html, accessibility.html
-                      the legal pages, linked from the help screen
+                      the legal pages, linked from the welcome and help screens
+robots.txt, sitemap.xml  for search engines; add new public pages to the sitemap
 site.webmanifest      home-screen name and icons
 firestore.rules       the security rules; mise run rules-deploy publishes them
 firebase.json         emulator ports, the rules file and Hosting headers
@@ -323,7 +358,8 @@ tests/rules.test.mjs  every rule against the emulator, negative cases first
 tests/e2e/            two- and three-phone browser tests, and screenshots
 tests/live/           a smoke test of the deployed site; mise run live-check
 tests/serve.mjs       a static server with an ETag, like the real host
-icons/                home-screen and favicon PNGs, generated from icon.typ
+icons/                home-screen and favicon PNGs, generated from icon.typ,
+                      and og-image.png, the link preview card, from og.html
 diagrams/             Typst sources and rendered SVGs
   design/             palette and tokens shared by every diagram
 ```
@@ -351,10 +387,11 @@ It needs `firebase login` on the machine, so it is not part of CI, and it never 
 
 ## Configuration
 
-Two things in `index.html`:
+Three things in `index.html`:
 
-- `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the site's own addresses, and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
-- `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the kids' phones. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
+- `FIREBASE_CONFIG` - the web app config from the Firebase console. The `apiKey` is not a secret; it identifies the project, and it ships to every browser that loads the page whatever the repo's visibility. It is restricted in Google Cloud to the site's own addresses and to the five services the page uses (sign-in and its tokens, Firestore, Firebase Installations and App Check), and access to the data is controlled by the security rules. GitHub's secret scanner flags it anyway, because it cannot tell a Firebase browser key from a server-side Google key.
+- `APP_CHECK_SITE_KEY` - the reCAPTCHA Enterprise site key App Check uses (see [App Check](#app-check)). Like the `apiKey`, it is public by design.
+- `MANAGE_PIN` - the code that reveals the Manage tab, the same for every family and shown inside Manage so a second parent can unlock it. It hides Manage from the other phones in the house. It is **not** security: it sits in the page source of a public repo, so anyone who opens dev tools can read it.
 
 And two things that are deliberately **not** here:
 
@@ -365,7 +402,7 @@ And two things that are deliberately **not** here:
 
 ```bash
 mise run render   # diagrams → dual-theme SVGs
-mise run icons    # home-screen and favicon PNGs
+mise run icons    # home-screen and favicon PNGs, and the link preview card
 ```
 
 Diagrams need `typst` and the **CaskaydiaMono NFP** font. Each source compiles once per theme, and the fixed pt dimensions are stripped so the SVGs scale to the README's width. Icons draw `icons/pot.svg`, Microsoft's Fluent Emoji "Pot of food" under the MIT License (`icons/pot-LICENSE.txt`), so they need no emoji font; they compile at 72 ppi so the page size in points equals the pixel size exactly.

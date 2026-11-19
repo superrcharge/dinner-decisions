@@ -142,20 +142,27 @@
   }
   .back:hover { border-color: var(--accent); }
 
+  /* Two even columns on a phone, one row of four once they fit, so the
+     links always line up instead of wrapping unevenly. */
   .docnav ul {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     list-style: none;
     margin: 18px 0 0;
     padding: 0;
   }
+  @media (min-width: 600px) {
+    .docnav ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
   .docnav li { margin: 0; }
   .docnav a {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    min-height: 36px;
-    padding: 0 14px;
+    justify-content: center;
+    text-align: center;
+    min-height: 40px;
+    padding: 0 12px;
     border-radius: var(--r-pill);
     background: var(--surface-sunk);
     color: var(--ink);
@@ -316,7 +323,8 @@
     <p>Our <a href="privacy.html">Privacy Policy</a> explains what we store and why, and is part of these terms.</p>
 
     <h2 id="who">2. Who can use it</h2>
-    <p>The service is for adults, 18 or older, who manage a household, and it is offered only in the United States.</p>
+    <p>The service is for adults who manage a household: 18 or older, or the age of majority where you live if that is higher.
+    It is offered only in the United States.</p>
     <p>An adult who starts or joins a family may let other members of their household use it, including children, on the adult's phone or on their own.
     That adult is responsible for how those household members use it, and for making sure only first names are entered for them.</p>
     <!-- LAWYER: confirm the 18+ line works alongside children tapping votes
@@ -400,7 +408,7 @@
          for readability; confirm that is enough. -->
 
     <h2 id="liability">11. Limits on our liability</h2>
-    <p class="plain">To the fullest extent the law allows, Dinner Decisions LLC and its owner will not be liable for any indirect, incidental, special, consequential or punitive damages, or for lost data, lost profits or lost goodwill, arising from or related to the service.
+    <p class="plain">To the fullest extent the law allows, Dinner Decisions LLC and its members will not be liable for any indirect, incidental, special, consequential or punitive damages, or for lost data, lost profits or lost goodwill, arising from or related to the service.
     Our total liability for any claim arising from or related to the service is limited to the greater of the amount you paid us for the service in the 12 months before the claim, or 50 US dollars.</p>
     <p>Nothing in these terms limits liability that the law does not allow to be limited, such as for fraud, gross negligence or intentional misconduct, or any rights you have as a consumer that cannot be waived.</p>
     <!-- LAWYER: check the cap figure, and whether naming the owner
@@ -423,7 +431,8 @@
     If a change matters, we will also show a notice in the app before it takes effect.
     If you keep using the service after a change takes effect, the new terms apply.
     If you do not agree with them, stop using the service and delete your family.</p>
-    <!-- LAWYER/PRODUCT: the in-app notice promised above does not exist yet. -->
+    <!-- The in-app notice promised above exists: currentPolicy() in index.html.
+         See the matching note in privacy.html for how to announce a change. -->
 
     <h2 id="general">14. The rest</h2>
     <ul>

@@ -19,7 +19,7 @@ rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT + "/icons", { recursive: true });
 
 const copied = [];
-for (const f of [...PAGES, "site.webmanifest"]) {
+for (const f of [...PAGES, "site.webmanifest", "robots.txt", "sitemap.xml"]) {
   if (!existsSync(f)) throw new Error("missing " + f);
   if (STRIP_COMMENTS.has(f)) {
     writeFileSync(OUT + "/" + f, readFileSync(f, "utf8").replace(/[ \t]*<!--[\s\S]*?-->[ \t]*\r?\n?/g, ""));

@@ -142,20 +142,27 @@
   }
   .back:hover { border-color: var(--accent); }
 
+  /* Two even columns on a phone, one row of four once they fit, so the
+     links always line up instead of wrapping unevenly. */
   .docnav ul {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     list-style: none;
     margin: 18px 0 0;
     padding: 0;
   }
+  @media (min-width: 600px) {
+    .docnav ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
   .docnav li { margin: 0; }
   .docnav a {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    min-height: 36px;
-    padding: 0 14px;
+    justify-content: center;
+    text-align: center;
+    min-height: 40px;
+    padding: 0 12px;
     border-radius: var(--r-pill);
     background: var(--surface-sunk);
     color: var(--ink);
@@ -443,6 +450,9 @@
          access exists because the operator owns the Firebase project. -->
     <p>As the people who run the service, we can technically reach the database.
     We look at a family's data only when we need to fix a problem, when you ask us to help, or when the law requires it.</p>
+    <p>Two automatic jobs also read the database every day.
+    One makes the backups described below.
+    The other counts how many families and phones use the app, listing each family by its name, when it started and how many phones it has; it does not read first names, meals or votes.</p>
 
     <h2 id="children">Children</h2>
     <p>Dinner Decisions is made for adults running a household.
@@ -471,12 +481,16 @@
     <!-- LAWYER/OPS: today nothing removes an anonymous device id after its
          phone leaves. Either add a periodic cleanup of ids that belong to no
          family, or keep the wording above.
-         VERIFIED 2026-11-17: Firestore point-in-time recovery is off, there are
-         no backup schedules and no backups. Firestore's default version
-         retention is 1 hour, which is the "short time" below. If PITR or
-         backups are ever turned on, say how long deleted data lingers. -->
-    <p>We do not keep separate backups of family data.
-    Google may hold deleted data for a short time while its own systems finish deleting it.</p>
+         VERIFIED 2026-11-17: Firestore point-in-time recovery is off. A daily
+         Firestore backup schedule with 7-day retention is on, and
+         admin/backup.mjs keeps a daily copy on Mike's home NAS for 30 days.
+         Firestore's default version retention is 1 hour, which is the "short
+         time" below. If either retention changes, change the 30 days here and
+         in delete.html. -->
+    <p>We keep daily backups of the database so that we can recover from a mistake or a fault: Google's own backups, kept for 7 days, and a copy on a private storage device that only we can reach, kept for 30 days.
+    Both are in the United States.
+    A family that is deleted disappears from the app straight away, and from the backups within 30 days.
+    Google may also hold deleted data for a short time while its own systems finish deleting it.</p>
 
     <h2 id="choices">Your choices</h2>
     <ul>
@@ -495,7 +509,7 @@
       Families cannot be listed or searched for.</li>
       <li>Invite codes are 10 random characters, too many to guess.
       Anyone in the family can replace the code at any time, and the old one stops working at once.</li>
-      <li>The Manage code keeps the Manage tab off children's phones.
+      <li>The Manage code keeps the Manage tab off the other phones in the house.
       It is a convenience, not a password, and it is not a security measure.</li>
     </ul>
     <p>Treat your invite code like a house key: anyone who has it can join your family.
@@ -532,8 +546,10 @@
     <p>If we change this policy, we will post the new version on this page and change the effective date at the top.</p>
     <p>If a change makes a real difference to what we collect or who it goes to, we will also show a notice in the app before the change takes effect.
     We will not start using information already collected in a materially different way without asking first.</p>
-    <!-- LAWYER/PRODUCT: the in-app notice promised above does not exist yet.
-         Build it before the first material change, or soften the promise. -->
+    <!-- The in-app notice promised above exists: currentPolicy() in index.html
+         shows each phone in a family one "updated" line until OK is tapped.
+         For a change, publish the new pages with an effective date about two
+         weeks ahead and bump currentPolicy() the same day. -->
 
     <h2 id="contact">Contact</h2>
     <p>Dinner Decisions (Dinner Decisions LLC, North Carolina)<br>
