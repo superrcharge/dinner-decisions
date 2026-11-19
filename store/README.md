@@ -42,15 +42,17 @@ Inside the apps the page's address is not dinnerdecisions.app but the app's own:
 
 The key is restricted to the website's addresses in Google Cloud (APIs & Services, Credentials, the browser key for project `dinner-decisions-6af97`).
 Checked on Nov 17, 2026 with a request that reads and writes nothing: Google answers "Requests from referer https://localhost/ are blocked" and the same for `capacitor://localhost/`.
-So the apps cannot sign in to the live project, and the debug APK only shows "On this device", until these two are added to the key's website restrictions:
+Until these two were added to the key's website restrictions, the apps could not sign in to the live project:
 
 ```
 https://localhost/*
 capacitor://localhost/*
 ```
 
-This has **not** been changed: it is the live key, and changing it waits for Mike's yes.
+Added on Nov 18, 2026, with Mike's yes (Google Cloud, signed in as the project's owner account).
+Checked the same way straight after: both app addresses now get through, and an unrelated site (`https://example.com/`) is still refused.
 Adding them does not weaken anything that matters, because the data is protected by the Firestore security rules, not by the key.
+When saving, Google warned the key has seen calls to its geocoding service, which is not on the key's list of allowed services, so those calls are refused; nothing in this repo calls it.
 Firebase Authentication's own "Authorized domains" list (Authentication, Settings) already includes `localhost` by default; check it still does.
 
 ## Before the first submission
