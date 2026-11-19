@@ -30,6 +30,8 @@ test("a phone on the old address moves to the new one: same family, same person,
 
   await expect(page.locator("#whoName")).toHaveText("Ana");
   await expect(page.locator("#tab-manage")).toBeVisible();
+  // A family from before the update hears about it on the new address too.
+  await expect(page.locator(".policy-notice")).toBeVisible();
 
   // The new address is a new member; the old address's place is gone, so
   // the family's device count stays honest.

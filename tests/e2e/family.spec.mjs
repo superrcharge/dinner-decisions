@@ -386,6 +386,47 @@ test("families cannot see each other", async ({ browser }) => {
   noErrors(ana, eve);
 });
 
+test("a phone that has just joined says Loading until the family's names and meals arrive", async ({ browser }) => {
+  const ana = await phone(browser);
+  const { code } = await startFamily(ana, "The Riveras", "Ana");
+  await ana.click("#starterBtn");
+  await expect(ana.locator(".tile")).toHaveCount(16);
+
+  for (const scheme of ["light", "dark"]) {
+    const ben = await phone(browser, { colorScheme: scheme });
+    await expect(ben.locator("#barStatus")).toHaveText(/Not joined/i);
+    // Watches for the empty-family card showing at any moment.
+    await ben.evaluate(() => {
+      window.sawNoMeals = false;
+      new MutationObserver(() => {
+        const card = document.querySelector("#mealGrid .starter");
+        if (card && card.getClientRects().length) window.sawNoMeals = true;
+      })
+        .observe(document.body, { childList: true, subtree: true });
+    });
+    // A slow connection, so the names come in well after the menu opens.
+    const cdp = await ben.context().newCDPSession(ben);
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 1500, downloadThroughput: -1, uploadThroughput: -1 });
+    await joinWith(ben, code);
+
+    const menu = ben.locator("#whoMenu");
+    await expect(menu.locator(".menu-loading")).toHaveText("Loading…", { timeout: 20000 });
+    await expect(menu.locator("#showAddName")).toHaveCount(0);
+    await ben.screenshot({ path: `test-results/screens/${scheme}-who-loading.png` });
+
+    await expect(menu.locator('[data-person]')).toHaveText(["Ana"], { timeout: 20000 });
+    await expect(menu.locator(".menu-loading")).toHaveCount(0);
+    await expect(menu.locator("#showAddName")).toBeVisible();
+    await expect(ben.locator(".tile")).toHaveCount(16);
+    // Placeholders until the meals came, never "No meals yet" with a button
+    // that would add the starters on top of the family's own list.
+    expect(await ben.evaluate(() => window.sawNoMeals)).toBe(false);
+    noErrors(ben);
+  }
+  noErrors(ana);
+});
+
 test("leave, come back, then delete the family for everyone", async ({ browser }) => {
   const ana = await phone(browser);
   const { code } = await startFamily(ana, "The Riveras", "Ana");
@@ -404,7 +445,8 @@ test("leave, come back, then delete the family for everyone", async ({ browser }
   await ben.click("#leaveGo");
   await expect(ben.locator(".welcome")).toBeVisible();
   await expect(ben.locator("#banner .notice")).toHaveText("You left The Riveras on this phone.");
-  expect(await ben.evaluate(() => Object.keys(localStorage).filter((k) => k.indexOf("dinner.") === 0 && k !== "dinner.manager"))).toEqual([]);
+  // Only what belongs to the phone itself stays: Manage, and which policy it has seen.
+  expect(await ben.evaluate(() => Object.keys(localStorage).filter((k) => k.indexOf("dinner.") === 0 && k !== "dinner.manager" && k !== "dinner.policySeen"))).toEqual([]);
   await expect(ana.locator(".tile")).toHaveCount(16);
 
   // And back again with the same code.
