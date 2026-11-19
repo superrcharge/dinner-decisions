@@ -1034,6 +1034,12 @@
     padding: 6px 6px 4px;
   }
 
+  .menu-loading {
+    font-size: 16px;
+    color: var(--ink-muted);
+    padding: 11px 12px;
+  }
+
   .menu-note {
     font-size: 13px;
     line-height: 1.4;
@@ -2304,7 +2310,9 @@
   // enough ahead that phones open the app before it (two weeks is a fair
   // default), then change the version and date below. A phone that has never
   // tapped OK sees the current version once, which is how the families from
-  // before the policy existed hear about it.
+  // before the policy existed hear about it, phones moved from the old
+  // address included. A phone that starts or joins a family now came through
+  // the welcome screen, which links the current pages, so it is not told.
   //
   // A function rather than two vars, so it is ready however early the first
   // render runs.
@@ -2320,10 +2328,12 @@
       '<button class="btn btn-quiet btn-tiny" id="policyOk" type="button">OK</button></div>';
   }
 
+  function policyCurrent() { LS.set("policySeen", currentPolicy().version); }
+
   document.addEventListener("click", function (ev) {
     var hit = ev.target.closest ? ev.target.closest("#policyOk") : null;
     if (!hit) return;
-    LS.set("policySeen", currentPolicy().version);
+    policyCurrent();
     renderBanner();
   });
 
@@ -2352,7 +2362,10 @@
     var grid = $("mealGrid");
     var items = pickable();
 
-    if (!S.ready && !items.length) {
+    // Placeholders until the family's meals arrive, as on a phone that has
+    // just joined: "No meals yet" would be wrong, and its starter button
+    // would add the starters on top of the family's own list.
+    if ((!S.ready || (S.hid && !S.mealsLoaded)) && !items.length) {
       grid.innerHTML = "<div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div><div class=\"skeleton\"></div>";
       $("addRow").hidden = true;
       return;
@@ -2982,18 +2995,28 @@
       return '<button class="menu-item" type="button" data-person="' + esc(p.id) + '" aria-current="' + (p.id === S.meId) + '">' + esc(p.name) + "</button>";
     }).join("");
 
+    // A phone that has just joined has no names yet. Say so instead of an
+    // empty list, and hold back adding one, which could repeat a name the
+    // family already has.
+    if (!rows && S.connected && !S.peopleLoaded) {
+      return rosterTop() + '<div class="menu-loading" role="status">Loading&hellip;</div>';
+    }
+
     var tail = showAdd
       ? '<div class="menu-form"><input type="text" id="personInput" placeholder="Name" autocomplete="off" maxlength="24">' +
         '<button class="btn btn-primary" id="personAdd" type="button">Add</button></div>'
       : '<button class="menu-item menu-add" type="button" id="showAddName">+ Add a name</button>';
 
+    return rosterTop() + rows + (rows ? '<div class="menu-sep"></div>' : "") + tail;
+  }
+
+  function rosterTop() {
     return '<div class="menu-head">Your family</div>' +
       '<div class="menu-row"><span>' + esc(S.hname || S.hid) + '</span>' +
       '<button class="menu-link" type="button" id="leaveFamily">Leave</button></div>' +
       '<button class="menu-item menu-add" type="button" id="inviteBtn">Invite someone</button>' +
       '<div class="menu-sep"></div>' +
-      '<div class="menu-head">Who is picking</div>' +
-      rows + (rows ? '<div class="menu-sep"></div>' : "") + tail;
+      '<div class="menu-head">Who is picking</div>';
   }
 
   function enterHousehold(hid, hname) {
@@ -3197,6 +3220,7 @@
     dialogError("");
     busy("startGo", true, "Creating…");
     withTimeout(batch.commit()).then(function () {
+      policyCurrent();
       enterHousehold(hid, fam);
       S.admin = true;
       LS.set("manager", "1");
@@ -3416,6 +3440,7 @@
         S.db.collection("households").doc(prev).collection("members").doc(S.uid).delete().catch(function () {});
         forgetCache(prev);
       }
+      policyCurrent();
       enterHousehold(hid, hname);
       openSheet();
     }).catch(function (e) {
@@ -4265,8 +4290,10 @@
     S.connected = false;
     S.votesLoaded = false;
     S.meals = [];
+    S.mealsLoaded = false;
     S.suggestions = [];
     S.people = [];
+    S.peopleLoaded = false;
     S.votes = [];
     S.chosen = [];
     S.localPicks = [];
@@ -4292,6 +4319,7 @@
       S.meals = listOf(snap, function (id, d) {
         return { id: id, name: str(d.name, id), icon: str(d.icon), ingredients: strList(d.ingredients) };
       }).sort(byName);
+      if (!snap.metadata.fromCache || S.meals.length) S.mealsLoaded = true;
       cacheWrite(hkey("meals"), S.meals);
       render();
     }, function (e) { console.warn("meals subscription ended", e); lostAccess(e); }));
@@ -4306,6 +4334,7 @@
 
     S.subs.push(root.collection("people").onSnapshot(function (snap) {
       S.people = listOf(snap, function (id, d) { return { id: id, name: str(d.name, id) }; }).sort(byName);
+      if (!snap.metadata.fromCache || S.people.length) S.peopleLoaded = true;
       cacheWrite(hkey("people"), S.people);
       render();
     }, function (e) { console.warn("people subscription ended", e); lostAccess(e); }));
