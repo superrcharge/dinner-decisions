@@ -1604,7 +1604,8 @@
     chosen: [],
     meId: null,
     localPicks: [],
-    saveTimer: null,
+    saveTimers: {},     // person id -> that person's pending vote write
+    pendingPicks: {},   // person id -> picks tapped but not yet written
     openMeals: {},      // meal ids whose ingredient panel is expanded, in Manage
     sheetOpen: false
   };
@@ -1879,6 +1880,23 @@
     el.className = "bar-status" + (ok ? " saved" : "");
   }
 
+  // The family's votes as they arrived, with this phone's taps that are still
+  // waiting to be written laid over them.
+  function withPendingPicks(votes) {
+    var seen = {};
+    var out = votes.map(function (v) {
+      if (!S.pendingPicks[v.personId]) return v;
+      seen[v.personId] = true;
+      return { id: v.id, personId: v.personId, name: v.name, mealIds: S.pendingPicks[v.personId] };
+    });
+    Object.keys(S.pendingPicks).forEach(function (pid) {
+      if (seen[pid]) return;
+      var p = S.people.filter(function (x) { return x.id === pid; })[0];
+      out.push({ id: WEEK_ID + "__" + pid, personId: pid, name: p ? p.name : "", mealIds: S.pendingPicks[pid] });
+    });
+    return out;
+  }
+
   function savePicks(ids) {
     if (!S.connected) {
       S.localPicks = ids;
@@ -1889,9 +1907,17 @@
     var person = me();
     if (!person) return;
 
+    // A burst of taps is written once. Each person has their own wait, so on
+    // a shared phone the next person's first tap never cancels the last
+    // person's write. Until the write goes out, the taps are kept apart
+    // (pendingPicks) so a vote arriving from the family meanwhile cannot
+    // wipe them; once written, Firestore's own copy carries them.
     status("Saving");
-    clearTimeout(S.saveTimer);
-    S.saveTimer = setTimeout(function () {
+    S.pendingPicks[person.id] = ids;
+    clearTimeout(S.saveTimers[person.id]);
+    S.saveTimers[person.id] = setTimeout(function () {
+      delete S.saveTimers[person.id];
+      delete S.pendingPicks[person.id];
       ref("votes/" + WEEK_ID + "__" + person.id).set({
         weekId: WEEK_ID,
         personId: person.id,
@@ -3790,6 +3816,11 @@
     S.chosen = [];
     S.localPicks = [];
     S.meId = null;
+    // Taps still waiting to be written belong to the old family; never let
+    // them land in the next one.
+    Object.keys(S.saveTimers).forEach(function (pid) { clearTimeout(S.saveTimers[pid]); });
+    S.saveTimers = {};
+    S.pendingPicks = {};
   }
 
   function connect(db) {
@@ -3824,9 +3855,9 @@
     var flushed = false;
 
     S.subs.push(root.collection("votes").where("weekId", "==", WEEK_ID).onSnapshot(function (snap) {
-      S.votes = listOf(snap, function (id, d) {
+      S.votes = withPendingPicks(listOf(snap, function (id, d) {
         return { id: id, personId: str(d.personId), name: str(d.name), mealIds: strList(d.mealIds) };
-      });
+      }));
       S.votesLoaded = true;
 
       // Picks taken while the store was unreachable only live on this device.
