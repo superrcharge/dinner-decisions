@@ -1831,15 +1831,30 @@
   // giving up on the first try.
   function serverGet(ref, ms) {
     var until = Date.now() + (ms || 10000);
+    var woken = false;
     function attempt() {
       return withTimeout(ref.get({ source: "server" }), Math.max(until - Date.now(), 1000)).catch(function (e) {
         if (e && e.code === "unavailable" && Date.now() + 1500 < until) {
-          return new Promise(function (r) { setTimeout(r, 1500); }).then(attempt);
+          var wait = new Promise(function (r) { setTimeout(r, 1500); });
+          if (!woken) { woken = true; wait = Promise.all([wait, wakeNetwork()]); }
+          return wait.then(attempt);
         }
         throw e;
       });
     }
     return attempt();
+  }
+
+  // A phone back from the background (an iPhone above all) often has a dead
+  // connection without ever reporting it was offline. The database then waits
+  // longer and longer between its own reconnect tries, up to a minute.
+  // Turning its network off and on reconnects at once.
+  var lastWake = 0;
+  function wakeNetwork() {
+    if (!S.db || Date.now() - lastWake < 5000) return Promise.resolve();
+    lastWake = Date.now();
+    var db = S.db;
+    return db.disableNetwork().then(function () { return db.enableNetwork(); }).catch(function () {});
   }
 
   // The family's code only changes when someone makes a new one, so with no
@@ -4323,8 +4338,13 @@
   setInterval(function () {
     if (!document.hidden) checkForUpdate();
   }, 300000);
+  var hiddenAt = 0;
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) checkForUpdate();
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    checkForUpdate();
+    // Back after a while: reconnect now, so the family's latest picks and
+    // the code show without waiting on a connection that died meanwhile.
+    if (hiddenAt && Date.now() - hiddenAt > 30000) wakeNetwork();
   });
 
   hydrateFromCache();
