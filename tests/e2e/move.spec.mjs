@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { phone, startFamily, joinWith, addMe, stored, noErrors } from "./helpers.mjs";
+import { phone, startFamily, joinWith, addMe, pick, stored, storedCount, noErrors } from "./helpers.mjs";
 
 // The move from GitHub Pages to dinnerdecisions.app. In tests the old address
 // is localhost with &oldhost=1 and the new one is 127.0.0.1: two origins, so
@@ -13,6 +13,8 @@ async function familyOnOldAddress(browser, opts = {}) {
   await expect(page.locator("#barStatus")).toHaveText(/Not joined/i);
   const { code } = await startFamily(page, "The Riveras", "Ana");
   const hid = await page.evaluate(() => localStorage.getItem("dinner.householdId"));
+  // A family that moves set itself up long before: its names are saved.
+  await expect.poll(() => storedCount(`households/${hid}/people`)).toBe(1);
   return { page, code, hid, oldUid: await uid(page) };
 }
 
@@ -35,6 +37,27 @@ test("a phone on the old address moves to the new one: same family, same person,
   expect(newUid).not.toBe(oldUid);
   await expect.poll(() => stored(`households/${hid}/members/${oldUid}`)).toBeNull();
   expect(await stored(`households/${hid}/members/${newUid}`)).not.toBeNull();
+  noErrors(page);
+});
+
+test("a pick made just before the move, not yet sent, still reaches the family", async ({ browser }) => {
+  const { page, hid } = await familyOnOldAddress(browser);
+  await page.click("#starterBtn");
+  await expect(page.locator(".tile")).toHaveCount(16);
+
+  // Picked on a dead connection, so it waits in this address's own storage,
+  // which the new address cannot read.
+  await page.context().setOffline(true);
+  await pick(page, "Tacos");
+  await page.waitForTimeout(1500);
+  await page.context().setOffline(false);
+
+  await page.goto(OLD + "&oldhost=1");
+  await page.waitForURL(NEW);
+  await expect(page.locator("#dialog .dialog-title")).toHaveText("You’re all moved");
+  const votes = await stored(`households/${hid}/votes`);
+  const picked = (votes.documents || []).flatMap((d) => (d.fields.mealIds.arrayValue.values || []).map((v) => v.stringValue));
+  expect(picked).toContain("tacos");
   noErrors(page);
 });
 

@@ -3297,7 +3297,12 @@
     }
     showMoving("");
     var house = S.db.collection("households").doc(S.hid);
-    joinGet(house.collection("private").doc("join")).then(function (snap) {
+    // Changes this phone made but has not sent yet (a pick or a name added
+    // just before) live only in this address's storage, which the new
+    // address cannot read. Send them first, or give up waiting after a while.
+    var sent = withTimeout(S.db.waitForPendingWrites(), 8000).catch(function () {});
+    Promise.all([joinGet(house.collection("private").doc("join")), sent]).then(function (r) {
+      var snap = r[0];
       var move = { h: S.hid, c: str((snap.data() || {}).code), p: S.meId || "", a: S.admin ? 1 : 0, u: S.uid };
       var url = HOME + "#move=" + encodeURIComponent(JSON.stringify(move));
       showMoving(url, false, move.c);
