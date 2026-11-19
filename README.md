@@ -143,6 +143,7 @@ Deploying a change is `mise run site-deploy`.
 It copies only the files the site serves (`index.html`, the legal pages, the manifest and icons) into `dist/` with `scripts/build-site.mjs`, and releases them to Firebase Hosting.
 A page is published only once it is listed in that script, and the review notes the legal pages carry as HTML comments are stripped on the way out.
 Every response is `Cache-Control: no-cache`, so the app's update check and a reload always see the newest release.
+`www.dinnerdecisions.app` is a Firebase Hosting redirect to `dinnerdecisions.app` (added Nov 18, 2026): a `www` CNAME to `dinner-decisions-6af97.web.app` at Cloudflare, DNS only, like the main domain's record.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./diagrams/hosting-dark.svg">
