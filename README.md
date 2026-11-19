@@ -298,8 +298,9 @@ The pass renews every hour and rides along with every Firestore request, so the 
 The reCAPTCHA key allows dinnerdecisions.app, www.dinnerdecisions.app, the two Firebase Hosting addresses and superrcharge.github.io (the old address still reads a family's code during the hand-off).
 Firestore runs it watch-only since Nov 18, 2026: the console counts requests with and without a pass and refuses none.
 Once nearly all requests pass, turn on enforcement for Cloud Firestore under App Check in the Firebase console.
-Every Easy Mode server function requires the pass from its first day live (`enforceAppCheck`), except in the emulator, which has no reCAPTCHA.
-The page skips App Check under the emulator for the same reason.
+Enforcement also waits for the store apps: they cannot pass reCAPTCHA (they run at localhost) and need native App Check (Play Integrity, App Attest) first.
+Every Easy Mode server function requires the pass from its first day live (`enforceAppCheck`), so Easy Mode inside the store apps needs native App Check too.
+The page and the server both skip App Check under the emulator, which has no reCAPTCHA.
 
 ### Cost
 
@@ -321,7 +322,8 @@ The privacy policy and the deletion page say how long backups keep data; change 
 3. **Authentication → Sign-in method → Anonymous → Enable.**
 4. **Project settings → Your apps → `</>`** and copy the config into `FIREBASE_CONFIG` in `index.html`.
 5. Put the project id in `.firebaserc`, then `firebase login` and `mise run rules-deploy`.
-6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → `dinnerdecisions.app/*`, the two Firebase Hosting defaults (`dinner-decisions-6af97.web.app/*`, `dinner-decisions-6af97.firebaseapp.com/*`) and, while it still hands phones over, `superrcharge.github.io/*`. API restrictions → only Identity Toolkit, Token Service, Cloud Firestore and Firebase Installations.
+6. Restrict the web API key: **Google Cloud Console → APIs & Services → Credentials**. Application restrictions → Websites → `dinnerdecisions.app/*`, the two Firebase Hosting defaults (`dinner-decisions-6af97.web.app/*`, `dinner-decisions-6af97.firebaseapp.com/*`) and, while it still hands phones over, `superrcharge.github.io/*`. API restrictions → only Identity Toolkit, Token Service, Cloud Firestore, Firebase Installations and Firebase App Check.
+7. App Check: create a reCAPTCHA Enterprise score key (website, the addresses above without the store apps' localhost), register it under **App Check → Apps** with a 1 hour token, and put its site key in `APP_CHECK_SITE_KEY`.
 
 No household needs creating by hand; the first one is started from the app.
 
