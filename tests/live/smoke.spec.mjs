@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import { test, expect } from "@playwright/test";
-import { phone, startFamily, addMe, tile, noErrors } from "../e2e/helpers.mjs";
+import { phone, startFamily, addMe, pick, noErrors } from "../e2e/helpers.mjs";
 
 // The query string gets past the edge cache, which can hold the previous
 // deploy for up to ten minutes. The invite link keeps it, which is harmless.
@@ -50,8 +50,8 @@ test("a throwaway family works end to end on the live site, then leaves nothing 
   await addMe(ben, "Ben");
   await expect(ben.locator(".tile")).toHaveCount(16);
 
-  await (await tile(ben, "Tacos")).click();
-  await (await tile(ana, "Tacos")).click();
+  await pick(ben, "Tacos");
+  await pick(ana, "Tacos");
   await ana.click("#tab-shop");
   const top = ana.locator(".tally-row").first();
   await expect(top.locator(".tally-name")).toHaveText("Tacos");
