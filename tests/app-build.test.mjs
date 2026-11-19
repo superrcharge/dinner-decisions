@@ -20,10 +20,10 @@ test("the website's index.html is the repo's, untouched", () => {
 
 test("the app loads Firebase from inside itself, never from gstatic", () => {
   assert.doesNotMatch(app, /gstatic\.com\/firebasejs/);
-  for (const name of ["app", "auth", "firestore"]) {
+  for (const name of ["app", "auth", "firestore", "app-check"]) {
     assert.match(app, new RegExp('<script src="vendor/firebase-' + name + '-compat\\.js"></script>'));
   }
-  for (const name of ["app", "firestore"]) {
+  for (const name of ["app", "firestore", "app-check"]) {
     assert.deepEqual(readFileSync("www/vendor/firebase-" + name + "-compat.js"),
       readFileSync("node_modules/firebase-web-compat/firebase-" + name + "-compat.js"));
   }

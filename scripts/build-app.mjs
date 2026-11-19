@@ -17,7 +17,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
 const OUT = "www";
-const FIREBASE = ["app", "auth", "firestore"];
+const FIREBASE = ["app", "auth", "firestore", "app-check"];
 
 if (!existsSync("index.html")) throw new Error("run from the repo root");
 execFileSync(process.execPath, ["scripts/build-site.mjs"], { stdio: "inherit" });

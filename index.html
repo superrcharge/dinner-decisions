@@ -4306,7 +4306,11 @@
       // App Check: reCAPTCHA Enterprise quietly vouches that requests come
       // from this page on its own addresses, never with a puzzle. The site
       // key is public, like the apiKey. Before any other service starts.
-      if (!EMULATED && firebase.appCheck) {
+      // Not inside the store apps: they run at localhost, where reCAPTCHA
+      // cannot pass, and its scripts would load from outside the app. The
+      // apps need native App Check (Play Integrity, App Attest) before
+      // Firestore enforcement is turned on.
+      if (!EMULATED && firebase.appCheck && !isNativeApp()) {
         try {
           firebase.appCheck().activate(new firebase.appCheck.ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY), true);
         } catch (e) { console.warn("App Check did not start", e); }
