@@ -116,10 +116,13 @@ mise run app-sync        # rebuild www/ and copy it into android/ and ios/
 mise run app-test        # check www/ is the website plus only the intended changes
 mise run android-debug   # debug APK at build/DinnerDecisions-debug.apk (needs the Android SDK)
 mise run android-test    # the app on a running Android emulator, against the Firebase emulators
+mise run ios-sim         # the iPhone app in the iOS Simulator (Mac only; --emulators for the Firebase emulators)
+mise run ios-test        # the iPhone app installed fresh in the simulator: starts and signs in, against the emulators
 ```
 
 The Android SDK is the command-line tools in `%LOCALAPPDATA%\Android\Sdk` (platform 36, build-tools 36, platform-tools; the emulator and an Android 16 image for `android-test`), with Java 21 from mise.
-iPhone builds need a Mac, so they are planned for GitHub Actions' macOS runners.
+iPhone builds need a Mac with Xcode 26 or later and its iOS platform; `scripts/ios-sim.sh` builds and runs the app in the simulator, and App Store builds are planned for GitHub Actions' macOS runners.
+On iPhone the page runs under the status bar, so `index.html` pads the top by the safe-area inset and `ios/App/App/ViewController.swift` paints the web view's own background in the page's ground color for light and dark, which iOS 26 fades in under the status bar.
 
 ## How a meal gets its icon
 

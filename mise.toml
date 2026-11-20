@@ -51,6 +51,14 @@ run = "npm run test:app"
 description = "Build the Android app as a debug APK (build/DinnerDecisions-debug.apk) for a test phone"
 run = "bash scripts/android-debug.sh"
 
+[tasks.ios-sim]
+description = "Build the iPhone app and run it in the iOS Simulator (Mac only; --emulators for the Firebase emulators)"
+run = "bash scripts/ios-sim.sh"
+
+[tasks.ios-test]
+description = "Build the iPhone app, run it fresh in the iOS Simulator against the Firebase emulators, and check it starts and signs in (Mac only)"
+run = "npx firebase emulators:exec --only auth,firestore --project demo-dinner-decisions \"node --test tests/ios/simulator.test.mjs\""
+
 [tasks.android-test]
 description = "Build the emulator test APK and drive it on a running Android emulator, against the Firebase emulators"
 run = [

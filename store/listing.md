@@ -130,7 +130,7 @@ Re-run it after any change to how the app looks.
 
 Meal icons are emoji, which each phone draws with its own font.
 The Play sets use Google's Noto Color Emoji, as Android does.
-The iPhone set made on Windows uses Noto too; run `mise run store-screenshots` once on the Mac so it shows Apple's emoji, as an iPhone does.
+The iPhone set is made on the Mac (last on Nov 20, 2026), so it shows Apple's emoji, as an iPhone does; made on Windows it would fall back to Noto.
 
 Screenshot captions, one per screen, set above each screen on the app's green:
 

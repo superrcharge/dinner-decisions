@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Everyone in the house votes on this week's dinners from their own phone, and the shopping list builds itself. Free, with no accounts and no email.">
 <title>Dinner Decisions - Family dinner voting and shopping list</title>
 <link rel="canonical" href="https://dinnerdecisions.app/">
@@ -134,7 +134,7 @@
   .wrap {
     max-width: 680px;
     margin: 0 auto;
-    padding: 20px 16px 0;
+    padding: max(20px, calc(env(safe-area-inset-top, 0px) + 10px)) 16px 0;
   }
 
   /* ---------- masthead ---------- */
@@ -301,6 +301,18 @@
 
   /* ---------- tabs ---------- */
 
+  /* Inside the phone apps the page runs under the status bar. This paints the
+     ground color there, so nothing scrolls through above the stuck tab strip.
+     On the website the inset is 0 and it has no height. */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--ground);
+    z-index: 21;
+  }
+
   /* Sticks to the top so the tabs stay reachable from anywhere in a long
      list. It bleeds past the wrap's padding so the ground and the rule run
      the full width rather than leaving gutters for content to show through.
@@ -310,7 +322,7 @@
      stay for when the bar is stuck to the top of the screen. */
   .tabbar {
     position: sticky;
-    top: 0;
+    top: env(safe-area-inset-top, 0px);
     z-index: 20;
     margin: -3px -16px 18px;
     padding: 8px 16px 12px;

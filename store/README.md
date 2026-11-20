@@ -91,15 +91,16 @@ Firebase Authentication's own "Authorized domains" list (Authentication, Setting
 1. LLC approved, D-U-N-S number, then both developer accounts (above).
 2. Fill `store/app-links.json` (Apple Team ID, Play signing fingerprints) and publish the website, so invite links open the app. See `app-links.md`.
 3. Release signing: an upload key for Play (kept out of git, with a backup), and Apple certificates in GitHub Actions secrets.
-4. iPhone build and TestFlight from GitHub Actions; check sign-in works in the iPhone app (untested so far, see below).
-5. Screenshots and the feature graphic are made (`mise run store-screenshots`, see `listing.md`); redo the iPhone set on the Mac. Then Play internal testing and TestFlight, then review. Have a lawyer read the age-signal handling (`content-rating.md`).
+4. iPhone build and TestFlight from GitHub Actions; sign-in works in the iPhone app (checked in the simulator, see below).
+5. Screenshots and the feature graphic are made (`mise run store-screenshots`, see `listing.md`); the iPhone set was redone on the Mac on Nov 20, 2026. Then Play internal testing and TestFlight, then review. Have a lawyer read the age-signal handling (`content-rating.md`).
 6. Privacy policy: now covers the apps, reminders and age signals; publish it with the website before the apps go live, and update its effective date then.
 7. Icon artwork: done. The pot is now `icons/pot.svg`, Microsoft's Fluent Emoji "Pot of food" under the MIT License, the same drawing the Windows emoji font showed, so the icon looks the same. The licence's copyright notice is kept in `icons/pot-LICENSE.txt` and on the Terms page.
 
 ## Known gaps
 
-- **iPhone is untested.** The iOS project is generated on Windows and has not been built; the first build is on Mike's MacBook (started Nov 20, 2026, steps on his "iPhone Build Handoff" page).
+- **iPhone: built and tried in the simulator on Nov 20, 2026** (Xcode 27.2, iOS 27.2, `mise run ios-sim`), not yet on a real iPhone.
+  Sign-in, starting a family, Share invite, Share plan, Print (a PDF to the share sheet, and its Print action), Vote reminders (the permission prompt and Turn On), Delete My Data, dark mode and the icon all work.
   The known iPhone sign-in problem is dealt with: Firebase Auth's compat SDK loads Google's popup sign-in helper (an iframe from `apis.google.com`) on phones, which is the known cause of slow or stuck sign-in inside iPhone apps.
-  `scripts/build-app.mjs` removes that helper from the app's copy only (the change Firebase recommends for Capacitor), and the Android device test checks no outside script or iframe loads and sign-in works.
-  The first iPhone build should still confirm a new phone reaches "Not joined" quickly, and that Share, Print, invite links and reminders work.
+  `scripts/build-app.mjs` removes that helper from the app's copy only (the change Firebase recommends for Capacitor); the Android device test and `mise run ios-test` check a fresh install signs in within seconds.
+  Still to try on a real iPhone: the haptic tap, and invite links once `store/app-links.json` has the Team ID.
 - Google Play now lists Android 17 (API 37). Capacitor 8 targets API 36, which Play accepts for new apps until its next yearly deadline (normally August).
