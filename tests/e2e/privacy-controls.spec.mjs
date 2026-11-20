@@ -25,10 +25,18 @@ test("the welcome screen links to the four legal pages, the privacy link in the 
   noErrors(page);
 });
 
-test("a phone in a family is told once that the policy was updated, until OK is tapped", async ({ browser }) => {
+test("a phone from before the update is told once that the policy was updated, until OK is tapped", async ({ browser }) => {
   const ana = await phone(browser);
   const { code } = await startFamily(ana, "The Riveras", "Ana");
   const note = ana.locator(".policy-notice");
+  // Starting a family went through the welcome screen's links to the current
+  // pages, so there is nothing to announce.
+  await expect(ana.locator("#whoName")).toHaveText("Ana");
+  await expect(note).toHaveCount(0);
+
+  // A phone that was in the family before the update has never tapped OK.
+  await ana.evaluate(() => localStorage.removeItem("dinner.policySeen"));
+  await ana.reload();
   await expect(note).toContainText("Privacy Policy and Terms were updated");
   await expect(note.locator('a[href="privacy.html"]')).toBeVisible();
   await ana.screenshot({ path: "test-results/screens/policy-notice.png" });
@@ -39,11 +47,12 @@ test("a phone in a family is told once that the policy was updated, until OK is 
   await expect(ana.locator("#whoName")).toHaveText("Ana");
   await expect(note).toHaveCount(0);
 
-  // Another phone has not tapped OK, so it is told too.
+  // A phone joining now came through the welcome screen too.
   const ben = await phone(browser);
   await joinWith(ben, code);
   await addMe(ben, "Ben");
-  await expect(ben.locator(".policy-notice")).toBeVisible();
+  await expect(ben.locator("#whoName")).toHaveText("Ben");
+  await expect(ben.locator(".policy-notice")).toHaveCount(0);
   noErrors(ana, ben);
 });
 
