@@ -98,9 +98,11 @@ Firebase Authentication's own "Authorized domains" list (Authentication, Setting
 
 ## Known gaps
 
-- **iPhone: built and tried in the simulator on Nov 20, 2026** (Xcode 27.2, iOS 27.2, `mise run ios-sim`), not yet on a real iPhone.
-  Sign-in, starting a family, Share invite, Share plan, Print (a PDF to the share sheet, and its Print action), Vote reminders (the permission prompt and Turn On), Delete My Data, dark mode and the icon all work.
+- **iPhone: built and tried on Nov 20, 2026** in the simulator (Xcode 27.2, iOS 27.2, `mise run ios-sim`) and on Mike's iPhone 17 Pro Max (iOS 27.2.1, free Apple ID, Developer Mode).
+  Simulator: sign-in, starting a family, Share invite, Share plan, Share list, Print (a PDF to the share sheet, and its Print action), Vote reminders (the prompt, Turn On, Turn Off), Delete My Data, dark mode, the splash and the icon all work.
+  Phone, on the live project in the demo family: sign-in, the haptic tap on a pick, Share invite, Share plan, Share list, Print and the reminder prompt (declined, and the note about the phone's settings showed) all work.
   The known iPhone sign-in problem is dealt with: Firebase Auth's compat SDK loads Google's popup sign-in helper (an iframe from `apis.google.com`) on phones, which is the known cause of slow or stuck sign-in inside iPhone apps.
   `scripts/build-app.mjs` removes that helper from the app's copy only (the change Firebase recommends for Capacitor); the Android device test and `mise run ios-test` check a fresh install signs in within seconds.
-  Still to try on a real iPhone: the haptic tap, and invite links once `store/app-links.json` has the Team ID.
+  Left for the TestFlight build: turning reminders on on a real phone, and invite links once `store/app-links.json` has the Team ID.
+  A free team cannot carry the two entitlements in `App.entitlements`, so the device build used a local empty copy (never committed); the project file is unchanged.
 - Google Play now lists Android 17 (API 37). Capacitor 8 targets API 36, which Play accepts for new apps until its next yearly deadline (normally August).
